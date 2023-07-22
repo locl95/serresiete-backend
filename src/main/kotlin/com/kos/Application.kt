@@ -50,6 +50,7 @@ fun Application.module() {
 
 
     configureAuthentication(authService)
+    configureCors()
     configureRouting(authService, viewsService)
     configureSerialization()
 }

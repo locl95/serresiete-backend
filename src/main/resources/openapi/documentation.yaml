@@ -1,0 +1,377 @@
+openapi: "3.0.3"
+info:
+  title: "raiderio_ladder_backend API"
+  description: "raiderio_ladder_backend API"
+  version: "1.0.0"
+servers:
+- url: "https://raiderio_ladder_backend"
+paths:
+  /api/auth:
+    delete:
+      description: ""
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+    post:
+      description: ""
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Authorization"
+  /api/views:
+    get:
+      description: ""
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/SimpleView"
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ViewRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ViewResult"
+  /api/views/{id}:
+    get:
+      description: ""
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ViewNotFound"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/View"
+        "403":
+          description: "Forbidden"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+    put:
+      description: ""
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ViewRequest"
+        required: true
+      responses:
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "403":
+          description: "Forbidden"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /api/views/{id}/cached-data:
+    get:
+      description: ""
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ViewNotFound"
+        "500":
+          description: "Internal Server Error"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/RaiderIoData"
+        "403":
+          description: "Forbidden"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /api/views/{id}/data:
+    get:
+      description: ""
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ViewNotFound"
+        "500":
+          description: "Internal Server Error"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/RaiderIoData"
+        "403":
+          description: "Forbidden"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+components:
+  schemas:
+    Authorization:
+      type: "object"
+      properties:
+        userName:
+          type: "string"
+        token:
+          type: "string"
+        lastUsed:
+          type: "string"
+          format: "date-time"
+        validUntil:
+          type: "string"
+          format: "date-time"
+    SimpleView:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        owner:
+          type: "string"
+        characterIds:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int64"
+    ViewResult:
+      type: "object"
+      properties: {}
+    CharacterRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        region:
+          type: "string"
+        realm:
+          type: "string"
+    ViewRequest:
+      type: "object"
+      properties:
+        characters:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CharacterRequest"
+    ViewNotFound:
+      type: "object"
+      properties:
+        viewId:
+          type: "string"
+    Character:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        region:
+          type: "string"
+        realm:
+          type: "string"
+    View:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        owner:
+          type: "string"
+        characters:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Character"
+    MythicPlusRank:
+      type: "object"
+      properties:
+        world:
+          type: "integer"
+          format: "int32"
+        region:
+          type: "integer"
+          format: "int32"
+        realm:
+          type: "integer"
+          format: "int32"
+    MythicPlusRankWithSpecName:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        score:
+          type: "number"
+          format: "double"
+        world:
+          type: "integer"
+          format: "int32"
+        region:
+          type: "integer"
+          format: "int32"
+        realm:
+          type: "integer"
+          format: "int32"
+    MythicPlusRanksWithSpecs:
+      type: "object"
+      properties:
+        overall:
+          $ref: "#/components/schemas/MythicPlusRank"
+        class:
+          $ref: "#/components/schemas/MythicPlusRank"
+        specs:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MythicPlusRankWithSpecName"
+    MythicPlusRun:
+      type: "object"
+      properties:
+        dungeon:
+          type: "string"
+        shortName:
+          type: "string"
+        keyLevel:
+          type: "integer"
+          format: "int32"
+        upgrades:
+          type: "integer"
+          format: "int32"
+        score:
+          type: "number"
+          format: "float"
+        url:
+          type: "string"
+    RaiderIoData:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        score:
+          type: "number"
+          format: "double"
+        class:
+          type: "string"
+        spec:
+          type: "string"
+        quantile:
+          type: "number"
+          format: "double"
+        mythicPlusRanks:
+          $ref: "#/components/schemas/MythicPlusRanksWithSpecs"
+        mythicPlusBestRuns:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MythicPlusRun"
+        mythicPlusAlternateRuns:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MythicPlusRun"

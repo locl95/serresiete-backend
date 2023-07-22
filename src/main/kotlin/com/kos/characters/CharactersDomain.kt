@@ -1,0 +1,197 @@
+package com.kos.characters
+
+import kotlinx.serialization.Serializable
+
+data class Spec(val name: String, val externalSpec: Int, val internalSpec: Int)
+data class Class(val `class`: String, val specs: List<Spec>)
+
+@Serializable
+data class CharacterRequest(val name: String, val region: String, val realm: String) {
+    fun toCharacter(id: Long) = Character(id, name, region, realm)
+    fun same(other: Character): Boolean =
+        this.name == other.name && this.region == other.region && this.realm == other.realm
+}
+
+@Serializable
+data class Character(val id: Long, val name: String, val region: String, val realm: String) {
+    fun specsWithName(`class`: String): List<Spec> = classes.find { it.`class` == `class` }?.specs.orEmpty()
+}
+
+val classes: List<Class> = listOf(
+    Class(
+        "Priest", listOf(
+            Spec(
+                "Discipline",
+                256,
+                0
+            ),
+            Spec(
+                "Holy Priest",
+                257,
+                1
+            ),
+            Spec(
+                "Shadow",
+                258,
+                2
+            )
+        )
+    ),
+    Class(
+        "Paladin", listOf(
+            Spec(
+                "Holy Paladin",
+                65,
+                0
+            ),
+            Spec(
+                "Protection Paladin",
+                66,
+                1
+            ),
+            Spec(
+                "Retribution",
+                70,
+                2
+            )
+        )
+    ),
+    Class(
+        "Paladin", listOf(
+            Spec(
+                "Holy Paladin",
+                65,
+                0
+            ),
+            Spec(
+                "Protection Paladin",
+                66,
+                1
+            ),
+            Spec(
+                "Retribution",
+                70,
+                2
+            )
+        )
+    ),
+    Class(
+        "Rogue", listOf(
+            Spec(
+                "Subtlety",
+                261,
+                2
+            ),
+            Spec(
+                "Outlaw",
+                260,
+                2
+            ),
+            Spec(
+                "Assassination",
+                259,
+                0
+            )
+        )
+    ),
+    Class(
+        "Druid", listOf(
+            Spec(
+                "Balance",
+                102,
+                0
+            ),
+            Spec(
+                "Feral",
+                103,
+                1
+            ),
+            Spec(
+                "Guardian",
+                104,
+                2
+            ),
+            Spec(
+                "Restoration Druid",
+                105,
+                3
+            )
+        )
+    ),
+    Class(
+        "Monk", listOf(
+            Spec(
+                "Brew Master?",
+                268,
+                0
+            ),
+            Spec(
+                "Wind Walker",
+                269,
+                2
+            ),
+            Spec(
+                "Mist Weaver?",
+                270,
+                1
+            )
+        )
+    ),
+    Class(
+        "Evoker", listOf(
+            Spec(
+                "Devastation",
+                1467,
+                0
+            ),
+            Spec(
+                "Preservation",
+                1468,
+                1
+            ),
+            Spec(
+                "Augmentation",
+                1473,
+                2
+            )
+        )
+    ),
+    Class(
+        "Shaman", listOf(
+            Spec(
+                "Elemental",
+                262,
+                0
+            ),
+            Spec(
+                "Enhancement",
+                263,
+                1
+            ),
+            Spec(
+                "Restoration Shaman",
+                264,
+                2
+            )
+        )
+    ),
+    Class(
+        "Warrior", listOf(
+            Spec(
+                "Arms",
+                71,
+                0
+            ),
+            Spec(
+                "Fury",
+                72,
+                1
+            ),
+            Spec(
+                "Protection Warrior",
+                73,
+                2
+            )
+        )
+    ),
+)

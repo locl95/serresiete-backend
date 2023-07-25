@@ -27,12 +27,10 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/views",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views"
@@ -43,10 +41,6 @@
 				},
 				{
 					"name": "Get View",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true,
-						"disabledSystemHeaders": {}
-					},
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -59,23 +53,23 @@
 							]
 						},
 						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+						"header": [
+							{
+								"key": "Referer",
+								"value": "http://localhost:3000",
+								"type": "default"
+							},
+							{
+								"key": "Access-Control-Allow-Origin",
+								"value": "*",
+								"type": "default"
 							}
-						},
+						],
 						"url": {
-							"raw": "http://localhost:8080/api/views/{{viewId}}",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views/{{viewId}}",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views",
@@ -114,16 +108,15 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/views/{{viewId}}",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views/{{viewId}}/data",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views",
-								"{{viewId}}"
+								"{{viewId}}",
+								"data"
 							]
 						}
 					},
@@ -158,16 +151,15 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/views/{{viewId}}",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views/{{viewId}}/cached-data",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views",
-								"{{viewId}}"
+								"{{viewId}}",
+								"cached-data"
 							]
 						}
 					},
@@ -202,7 +194,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [\n        {\n            \"id\": \"1\",\n            \"name\": \"kakarøna\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        }\n    ]\n}",
+							"raw": "{\n    \"characters\": [\n        {\n            \"name\": \"kakarona\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"osborno\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"sanxxei\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -210,12 +202,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/views",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views"
@@ -241,7 +231,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"id\": 1,\n        \"name\": \"kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
+							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -249,12 +239,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/views/{{viewId}}",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/views/{{viewId}}",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"views",
@@ -302,12 +290,10 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/auth",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/auth",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"auth"
@@ -343,12 +329,10 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/auth",
-							"protocol": "http",
+							"raw": "{{baseUri}}/api/auth",
 							"host": [
-								"localhost"
+								"{{baseUri}}"
 							],
-							"port": "8080",
 							"path": [
 								"api",
 								"auth"
@@ -405,7 +389,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://raider.io/api/v1/characters/profile?region=eu&realm=zuljin&name=kakarøna&fields=mythic_plus_scores_by_season%3Acurrent,mythic_plus_best_runs%3Aall,mythic_plus_ranks,mythic_plus_alternate_runs%3Aall",
+					"raw": "https://raider.io/api/v1/mythic-plus/season-cutoffs?region=eu&season=season-df-2",
 					"protocol": "https",
 					"host": [
 						"raider",
@@ -414,8 +398,8 @@
 					"path": [
 						"api",
 						"v1",
-						"characters",
-						"profile"
+						"mythic-plus",
+						"season-cutoffs"
 					],
 					"query": [
 						{
@@ -423,16 +407,8 @@
 							"value": "eu"
 						},
 						{
-							"key": "realm",
-							"value": "zuljin"
-						},
-						{
-							"key": "name",
-							"value": "kakarøna"
-						},
-						{
-							"key": "fields",
-							"value": "mythic_plus_scores_by_season%3Acurrent,mythic_plus_best_runs%3Aall,mythic_plus_ranks,mythic_plus_alternate_runs%3Aall"
+							"key": "season",
+							"value": "season-df-2"
 						}
 					]
 				}
@@ -478,6 +454,10 @@
 			"key": "password",
 			"value": "1234",
 			"type": "default"
+		},
+		{
+			"key": "baseUri",
+			"value": "http://localhost:8080"
 		}
 	]
 }

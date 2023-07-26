@@ -17,4 +17,4 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Check coverage metrics
-        run: ./gradlew jacocoTestReport jacocoTestCoverageVerification
+        run: ./gradlew jacocoTestReport -i jacocoTestCoverageVerification

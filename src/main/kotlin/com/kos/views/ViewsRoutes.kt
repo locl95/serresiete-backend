@@ -77,7 +77,11 @@ fun Route.viewsRouting(viewsService: ViewsService) {
             post {
                 when (val id = call.principal<UserIdPrincipal>()) {
                     null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> call.respond(viewsService.create(id.name, call.receive()))
+                    else ->
+                        when(val res = viewsService.create(id.name, call.receive())) {
+                            is Either.Right -> call.respond(HttpStatusCode.OK, res.value)
+                            is Either.Left -> call.respond(HttpStatusCode.BadRequest, "Too much views")
+                        }
                 }
             }
         }

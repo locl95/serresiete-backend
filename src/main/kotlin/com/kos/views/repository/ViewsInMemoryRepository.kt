@@ -17,7 +17,7 @@ class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : Views
 
     override fun get(id: String): SimpleView? = views.find { it.id == id }
 
-    override fun create(owner: String, characterIds: List<Long>): ViewResult {
+    override fun create(owner: String, characterIds: List<Long>): ViewSuccess {
         val id = UUID.randomUUID().toString()
         views.add(SimpleView(id, owner, characterIds))
         return ViewSuccess(id)

@@ -16,16 +16,20 @@ data class ViewRequest(val characters: List<CharacterRequest>)
 
 @Serializable
 sealed interface ViewResult {
-    val viewId: String
     val isSuccess: Boolean
 }
 
 @Serializable
-data class ViewSuccess(override val viewId: String) : ViewResult {
+data class ViewSuccess(val viewId: String) : ViewResult {
     override val isSuccess: Boolean = true
 }
 
 @Serializable
-data class ViewNotFound(override val viewId: String) : ViewResult {
+data class ViewNotFound(val viewId: String) : ViewResult {
+    override val isSuccess: Boolean = false
+}
+
+@Serializable
+class TooMuchViews : ViewResult {
     override val isSuccess: Boolean = false
 }

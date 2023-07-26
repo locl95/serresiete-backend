@@ -2,6 +2,7 @@ package com.kos.views
 
 import arrow.core.Either
 import arrow.core.traverse
+import com.kos.characters.CharacterRequest
 import com.kos.characters.CharactersService
 import com.kos.common.JsonParseError
 import com.kos.datacache.DataCache
@@ -26,6 +27,8 @@ class ViewsService(
         ignoreUnknownKeys = true
     }
 
+    private val maxNumberOfViews: Int = 2
+
     fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
     fun get(id: String): View? {
         return when (val simpleView = viewsRepository.get(id)) {
@@ -40,9 +43,10 @@ class ViewsService(
 
     fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    fun create(owner: String, request: ViewRequest): ViewResult {
-        val characterIds = charactersService.create(request.characters)
-        return viewsRepository.create(owner, characterIds)
+    fun create(owner: String, characters: List<CharacterRequest>): Either<TooMuchViews, ViewSuccess> {
+        if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
+        val characterIds = charactersService.create(characters)
+        return Either.Right(viewsRepository.create(owner, characterIds))
     }
 
     fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {

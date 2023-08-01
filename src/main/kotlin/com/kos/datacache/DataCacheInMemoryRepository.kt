@@ -14,5 +14,5 @@ class DataCacheInMemoryRepository(initialState: List<DataCache> = listOf()): Dat
     }
 
     override fun get(characterId: Long): DataCache? = cachedData.find { it.characterId == characterId }
-    override fun state(): List<DataCache> = cachedData
+    override suspend fun state(): List<DataCache> = cachedData
 }

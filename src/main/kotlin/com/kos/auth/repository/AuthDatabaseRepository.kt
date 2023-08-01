@@ -5,11 +5,30 @@ import com.kos.auth.Authorization
 import com.kos.auth.TokenNotFound
 import com.kos.auth.User
 import com.kos.common.DatabaseFactory.dbQuery
+import com.kos.views.SimpleView
+import com.kos.views.repository.ViewsDatabaseRepository
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.OffsetDateTime
 import java.util.*
 
 class AuthDatabaseRepository : AuthRepository {
+
+    suspend fun withState(initialState: Pair<List<User>, List<Authorization>>): AuthDatabaseRepository {
+        dbQuery {
+            Users.batchInsert(initialState.first) {
+                this[Users.userName] = it.userName
+                this[Users.password] = it.password
+            }
+            Users.batchInsert(initialState.second) {
+                this[Authorizations.userName] = it.userName
+                this[Authorizations.token] = it.token
+                this[Authorizations.lastUsed] = it.lastUsed.toString()
+                this[Authorizations.validUntil] = it.validUntil.toString()
+            }
+        }
+        return this
+    }
 
     object Users : Table() {
         val userName = varchar("user_name", 48)
@@ -28,6 +47,8 @@ class AuthDatabaseRepository : AuthRepository {
         val token = varchar("token", 128)
         val lastUsed = text("last_used")
         val validUntil = text("valid_until")
+
+        override val primaryKey = PrimaryKey(token)
     }
 
     private fun resultRowToAuthorization(row: ResultRow) = Authorization(
@@ -49,8 +70,11 @@ class AuthDatabaseRepository : AuthRepository {
             insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) }
         }
 
-    override fun deleteToken(token: String): Boolean {
-        TODO("Not yet implemented")
+    override suspend fun deleteToken(token: String): Boolean {
+        dbQuery {
+            Authorizations.deleteWhere { Authorizations.token.eq(token) }
+        }
+        return true
     }
 
     override suspend fun validateCredentials(userName: String, password: String): Boolean =
@@ -69,7 +93,12 @@ class AuthDatabaseRepository : AuthRepository {
             else -> Either.Right(maybeAuthorization.userName)
         }
 
-    override fun state(): Pair<List<User>, List<Authorization>> {
-        TODO("Not yet implemented")
+    override suspend fun state(): Pair<List<User>, List<Authorization>> {
+        return dbQuery {
+            Pair(
+                Users.selectAll().map { resultRowToUser(it) },
+                Authorizations.selectAll().map { resultRowToAuthorization(it) }
+            )
+        }
     }
 }

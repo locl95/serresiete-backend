@@ -6,6 +6,7 @@ import com.kos.datacache.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
 import com.kos.views.repository.ViewsInMemoryRepository
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,9 +21,9 @@ class ViewsServiceTest {
         val charactersService = CharactersService(charactersRepository)
         val dataCacheRepository = DataCacheInMemoryRepository(listOf())
         val dataCacheService = DataCacheService(dataCacheRepository)
-        val service = ViewsService(viewsRepository, charactersService,dataCacheService,raiderIoClient)
+        val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
 
-        assertEquals(listOf(simpleView), service.getOwnViews("owner"))
+        runBlocking { assertEquals(listOf(simpleView), service.getOwnViews("owner")) }
     }
 
     @Test
@@ -32,9 +33,9 @@ class ViewsServiceTest {
         val charactersService = CharactersService(charactersRepository)
         val dataCacheRepository = DataCacheInMemoryRepository(listOf())
         val dataCacheService = DataCacheService(dataCacheRepository)
-        val service = ViewsService(viewsRepository, charactersService,dataCacheService,raiderIoClient)
+        val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
 
-        assertEquals(simpleView, service.getSimple("1"))
+        runBlocking { assertEquals(simpleView, service.getSimple("1")) }
     }
 
     @Test
@@ -44,12 +45,13 @@ class ViewsServiceTest {
         val charactersService = CharactersService(charactersRepository)
         val dataCacheRepository = DataCacheInMemoryRepository(listOf())
         val dataCacheService = DataCacheService(dataCacheRepository)
-        val service = ViewsService(viewsRepository, charactersService,dataCacheService,raiderIoClient)
-
-        assertTrue(viewsRepository.state().isEmpty())
-        assertTrue(service.create("owner", listOf()).isRight())
-        assertTrue(viewsRepository.state().size == 1)
-        assertTrue(viewsRepository.state().all {it.owner == "owner"})
+        val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+        runBlocking {
+            assertTrue(viewsRepository.state().isEmpty())
+            assertTrue(service.create("owner", listOf()).isRight())
+            assertTrue(viewsRepository.state().size == 1)
+            assertTrue(viewsRepository.state().all { it.owner == "owner" })
+        }
     }
 
     @Test
@@ -59,11 +61,13 @@ class ViewsServiceTest {
         val charactersService = CharactersService(charactersRepository)
         val dataCacheRepository = DataCacheInMemoryRepository(listOf())
         val dataCacheService = DataCacheService(dataCacheRepository)
-        val service = ViewsService(viewsRepository, charactersService,dataCacheService,raiderIoClient)
+        val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
 
-        assertTrue(viewsRepository.state().size == 2)
-        assertTrue(viewsRepository.state().all {it.owner == "owner"})
-        assertTrue(service.create("owner", listOf()).isLeft())
-        assertTrue(viewsRepository.state().size == 2)
+        runBlocking {
+            assertTrue(viewsRepository.state().size == 2)
+            assertTrue(viewsRepository.state().all { it.owner == "owner" })
+            assertTrue(service.create("owner", listOf()).isLeft())
+            assertTrue(viewsRepository.state().size == 2)
+        }
     }
 }

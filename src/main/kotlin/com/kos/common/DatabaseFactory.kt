@@ -1,22 +1,43 @@
 package com.kos.common
 
-import com.kos.auth.repository.AuthDatabaseRepository
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import javax.print.attribute.standard.JobOriginatingUserName
+import javax.sql.DataSource
 
 object DatabaseFactory {
-    fun init() {
-        val driverClassName = "org.h2.Driver"
-        val jdbcURL = "jdbc:h2:file:./build/db"
-        val database = Database.connect(jdbcURL, driverClassName)
 
-        transaction(database) {
-            SchemaUtils.create(AuthDatabaseRepository.Users)
-            SchemaUtils.create(AuthDatabaseRepository.Authorizations)
-        }
+    //private val dbUrl: String = TODO("appConfig.property(\"db.jdbcUrl\").getString()")
+    //private val dbUser: String = TODO("appConfig.property(\"db.dbUser\").getString()")
+    //private val dbPassword: String = TODO("appConfig.property(\"db.dbPassword\").getString()")
+    private fun hikari(driver: String, url: String, userName: String, password: String): DataSource {
+        val config = HikariConfig()
+        //TODO: POSTGRESQL DB config.driverClassName = "org.postgresql.Driver"
+        config.driverClassName = driver
+        config.jdbcUrl = url //TODO: dbUrl
+        config.username = userName //TODO: dbUser
+        config.password = password  //TODO:dbPassword
+        config.maximumPoolSize = 3
+        config.isAutoCommit = false
+        config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+        config.validate()
+        return HikariDataSource(config)
+    }
+
+
+    fun init(driver: String, url: String, userName: String, password: String, mustClean: Boolean) {
+        val flyway = Flyway
+            .configure()
+            .dataSource(url, userName, password)
+            .cleanDisabled(false)
+            .load()
+        Database.connect(hikari(driver, url, userName, password))
+        if (mustClean) flyway.clean()
+        flyway.migrate()
     }
 
     suspend fun <T> dbQuery(block: suspend () -> T): T =

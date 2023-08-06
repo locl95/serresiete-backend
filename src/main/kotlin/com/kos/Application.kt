@@ -4,6 +4,7 @@ import com.kos.auth.AuthService
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.CharactersService
+import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
 import com.kos.datacache.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
@@ -32,17 +33,10 @@ fun Application.module() {
         mustClean = false
     )
 
-    /* val authRepository = AuthInMemoryRepository(
-         Pair(
-             listOf(User("eric", "1234")),
-             listOf(Authorization("admin", "admin", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-         )
-     ) */
-
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
 
-    val charactersRepository = CharactersInMemoryRepository()
+    val charactersRepository = CharactersDatabaseRepository()
     val charactersService = CharactersService(charactersRepository)
 
     val dataCacheRepository = DataCacheInMemoryRepository()

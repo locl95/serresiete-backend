@@ -15,7 +15,7 @@ class CharactersInMemoryRepository(initialState: List<Character> = listOf()): Ch
         else characters.map {it.id}.maxBy { it } + 1
     }
 
-    override fun insert(character: CharacterRequest) =
+    override suspend fun insert(character: CharacterRequest) =
         when (val maybeChar = characters.find { character.same(it)  }) {
             null -> {
                 val element = character.toCharacter(nextVersion())
@@ -25,6 +25,9 @@ class CharactersInMemoryRepository(initialState: List<Character> = listOf()): Ch
             else -> maybeChar
         }
 
-    override fun get(id: Long): Character? = characters.find {it.id == id}
+    override suspend fun get(id: Long): Character? = characters.find {it.id == id}
+    override suspend fun state(): List<Character> {
+        return characters
+    }
 
 }

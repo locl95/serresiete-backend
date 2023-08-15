@@ -61,7 +61,7 @@ class CharactersDatabaseRepository : CharactersRepository {
     }
 
     override suspend fun get(): List<Character> =
-        Characters.selectAll().map { resultRowToCharacter(it) }
+         dbQuery { Characters.selectAll().map { resultRowToCharacter(it) } }
 
     override suspend fun state(): List<Character> {
         return dbQuery {

@@ -3,6 +3,7 @@ package com.kos.datacache
 import arrow.core.Either
 import arrow.core.sequence
 import com.kos.common.JsonParseError
+import com.kos.datacache.repository.DataCacheRepository
 import com.kos.raiderio.RaiderIoData
 import com.kos.views.SimpleView
 import kotlinx.serialization.SerializationException
@@ -16,7 +17,7 @@ data class DataCacheService(private val dataCacheRepository: DataCacheRepository
         ignoreUnknownKeys = true
     }
 
-    fun insert(dataCache: DataCache): Boolean =
+    suspend fun insert(dataCache: DataCache): Boolean =
         when(val dc = dataCacheRepository.get(dataCache.characterId)) {
             null -> dataCacheRepository.insert(dataCache)
             else -> {
@@ -25,8 +26,8 @@ data class DataCacheService(private val dataCacheRepository: DataCacheRepository
             }
     }
 
-    fun get(characterId: Long) = dataCacheRepository.get(characterId)
-    fun getData(simpleView: SimpleView):Either<JsonParseError, List<RaiderIoData>>  {
+    suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
+    suspend fun getData(simpleView: SimpleView):Either<JsonParseError, List<RaiderIoData>>  {
         return simpleView.characterIds.mapNotNull {
             when(val data = dataCacheRepository.get(it)) {
                 null -> null

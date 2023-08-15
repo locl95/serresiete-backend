@@ -2,7 +2,7 @@ package com.kos.views
 
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersInMemoryRepository
-import com.kos.datacache.DataCacheInMemoryRepository
+import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
 import com.kos.views.repository.ViewsInMemoryRepository
 import junit.framework.TestCase.assertTrue

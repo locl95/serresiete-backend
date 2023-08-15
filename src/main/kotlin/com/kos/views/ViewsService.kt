@@ -101,5 +101,5 @@ class ViewsService(
         return eitherJsonErrorOrData
     }
 
-    fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
 }

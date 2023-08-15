@@ -20,7 +20,7 @@ class AuthDatabaseRepository : AuthRepository {
                 this[Users.userName] = it.userName
                 this[Users.password] = it.password
             }
-            Users.batchInsert(initialState.second) {
+            Authorizations.batchInsert(initialState.second) {
                 this[Authorizations.userName] = it.userName
                 this[Authorizations.token] = it.token
                 this[Authorizations.lastUsed] = it.lastUsed.toString()

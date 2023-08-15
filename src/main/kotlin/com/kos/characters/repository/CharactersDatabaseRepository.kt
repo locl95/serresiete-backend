@@ -38,16 +38,17 @@ class CharactersDatabaseRepository : CharactersRepository {
         row[Characters.realm]
     )
 
-    override suspend fun insert(character: CharacterRequest): Character? {
-        val id = selectNextId()
-        /* https://github.com/JetBrains/Exposed/issues/167 */
+    override suspend fun insert(characters: List<CharacterRequest>): List<Character> {
         return dbQuery {
-            Characters.insert {
-                it[Characters.id] = id
-                it[name] = character.name
-                it[realm] = character.realm
-                it[region] = character.region
-            }.resultedValues?.singleOrNull()?.let { resultRowToCharacter(it) }
+            val charsToInsert = characters.map {
+                Character(selectNextId(), it.name, it.region, it.realm)
+            }
+            Characters.batchInsert(charsToInsert) {
+                this[Characters.id] = it.id
+                this[Characters.name] = it.name
+                this[Characters.region] = it.region
+                this[Characters.realm] = it.realm
+            }.map { resultRowToCharacter(it) }
         }
     }
 
@@ -58,6 +59,9 @@ class CharactersDatabaseRepository : CharactersRepository {
             }
         }
     }
+
+    override suspend fun get(): List<Character> =
+        Characters.selectAll().map { resultRowToCharacter(it) }
 
     override suspend fun state(): List<Character> {
         return dbQuery {

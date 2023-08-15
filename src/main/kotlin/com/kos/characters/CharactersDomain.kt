@@ -15,6 +15,7 @@ data class CharacterRequest(val name: String, val region: String, val realm: Str
 @Serializable
 data class Character(val id: Long, val name: String, val region: String, val realm: String) {
     fun specsWithName(`class`: String): List<Spec> = classes.find { it.`class` == `class` }?.specs.orEmpty()
+    fun toCharacterRequest() = CharacterRequest(name, region, realm)
 }
 
 val classes: List<Class> = listOf(

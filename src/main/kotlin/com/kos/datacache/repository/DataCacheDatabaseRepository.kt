@@ -13,6 +13,7 @@ class DataCacheDatabaseRepository : DataCacheRepository {
         val inserted = text("inserted")
 
         override val primaryKey = PrimaryKey(characterId)
+        override val tableName = "data_cache"
     }
 
     private fun resultRowToDataCache(row: ResultRow) = DataCache(

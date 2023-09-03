@@ -27,13 +27,7 @@ fun main() {
 
 fun Application.module() {
 
-    DatabaseFactory.init(
-        "org.h2.Driver",
-        "jdbc:h2:file:./build/db",
-        "",
-        "",
-        mustClean = false
-    )
+    DatabaseFactory.init(mustClean = false)
 
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)

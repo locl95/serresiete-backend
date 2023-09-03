@@ -3,39 +3,41 @@ package com.kos.common
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.Serializable
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import javax.print.attribute.standard.JobOriginatingUserName
 import javax.sql.DataSource
 
 object DatabaseFactory {
 
-    //private val dbUrl: String = TODO("appConfig.property(\"db.jdbcUrl\").getString()")
-    //private val dbUser: String = TODO("appConfig.property(\"db.dbUser\").getString()")
-    //private val dbPassword: String = TODO("appConfig.property(\"db.dbPassword\").getString()")
-    private fun hikari(driver: String, url: String, userName: String, password: String): DataSource {
-        val config = HikariConfig()
-        //TODO: POSTGRESQL DB config.driverClassName = "org.postgresql.Driver"
-        config.driverClassName = driver
-        config.jdbcUrl = url //TODO: dbUrl
-        config.username = userName //TODO: dbUser
-        config.password = password  //TODO:dbPassword
-        config.maximumPoolSize = 3
-        config.isAutoCommit = false
-        config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        config.validate()
-        return HikariDataSource(config)
-    }
+    private val url = System.getenv("POSTGRES_URL") ?: "jdbc:h2:file:./build/db"
+    private val user = System.getenv("POSTGRES_USER") ?: ""
+    private val password = System.getenv("POSTGRES_PASSWORD") ?: ""
+    private val driver = System.getenv("POSTGRES_DRIVER") ?: "org.h2.Driver"
 
+    fun init(mustClean: Boolean) {
 
-    fun init(driver: String, url: String, userName: String, password: String, mustClean: Boolean) {
+        fun hikari(): DataSource {
+            val config = HikariConfig()
+            config.driverClassName = driver
+            config.jdbcUrl = url
+            config.username = user
+            config.password = password
+            config.maximumPoolSize = 3
+            config.isAutoCommit = false
+            config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+            config.validate()
+            return HikariDataSource(config)
+        }
+
         val flyway = Flyway
             .configure()
-            .dataSource(url, userName, password)
+            .dataSource(url, user, password)
             .cleanDisabled(false)
             .load()
-        Database.connect(hikari(driver, url, userName, password))
+
+        Database.connect(hikari())
         if (mustClean) flyway.clean()
         flyway.migrate()
     }

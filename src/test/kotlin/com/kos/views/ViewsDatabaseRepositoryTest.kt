@@ -2,7 +2,6 @@ package com.kos.views
 
 import com.kos.common.DatabaseFactory
 import com.kos.views.repository.ViewsDatabaseRepository
-import com.kos.views.repository.ViewsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import kotlin.test.Test
@@ -12,13 +11,7 @@ class ViewsDatabaseRepositoryTest : ViewsRepositoryTest {
 
    @Before fun beforeEach() {
 
-       DatabaseFactory.init(
-           "org.h2.Driver",
-           "jdbc:h2:file:./build/db-test",
-           "",
-           "",
-           mustClean = true
-       )
+       DatabaseFactory.init(mustClean = true)
    }
 
     @Test

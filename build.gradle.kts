@@ -3,6 +3,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
 val h2_version: String by project
+val jackson_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.0"

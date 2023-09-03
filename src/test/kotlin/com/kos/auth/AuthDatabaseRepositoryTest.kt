@@ -2,7 +2,6 @@ package com.kos.auth
 
 import arrow.core.contains
 import com.kos.auth.repository.AuthDatabaseRepository
-import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -16,13 +15,7 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
 
     @Before
     fun beforeEach() {
-        DatabaseFactory.init(
-            "org.h2.Driver",
-            "jdbc:h2:file:./build/db-test",
-            "",
-            "",
-            mustClean = true
-        )
+        DatabaseFactory.init(mustClean = true)
     }
 
     @Test

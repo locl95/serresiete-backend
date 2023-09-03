@@ -1,7 +1,7 @@
 
 create table data_cache
 (
-    character_id number primary key,
+    character_id integer primary key,
     data text not null,
     inserted text not null
 );

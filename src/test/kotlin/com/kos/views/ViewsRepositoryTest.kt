@@ -14,6 +14,4 @@ interface ViewsRepositoryTest {
     fun ICanCreateAView(): Unit
     @Test
     fun ICanEditAView(): Unit
-    @Test
-    fun IfNoViewsEditingReturnsNotFound(): Unit
 }

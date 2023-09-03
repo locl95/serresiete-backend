@@ -1,6 +1,7 @@
 package com.kos.characters
 
 import com.kos.characters.repository.CharactersInMemoryRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -16,7 +17,7 @@ class CharactersServiceTest {
         )
         val expected: List<Long> = listOf(1,2)
 
-        assertEquals(expected, charactersService.create(request))
+        runBlocking { assertEquals(expected, charactersService.create(request)) }
 
     }
 }

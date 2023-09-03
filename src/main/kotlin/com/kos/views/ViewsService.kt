@@ -29,8 +29,8 @@ class ViewsService(
 
     private val maxNumberOfViews: Int = 2
 
-    fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
-    fun get(id: String): View? {
+    suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
+    suspend fun get(id: String): View? {
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
             else -> {
@@ -41,17 +41,21 @@ class ViewsService(
         }
     }
 
-    fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
+    suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    fun create(owner: String, characters: List<CharacterRequest>): Either<TooMuchViews, ViewSuccess> {
+    suspend fun create(owner: String, characters: List<CharacterRequest>): Either<TooMuchViews, ViewSuccess> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
         val characterIds = charactersService.create(characters)
         return Either.Right(viewsRepository.create(owner, characterIds))
     }
 
-    fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {
+    suspend fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {
         val characters = charactersService.create(request.characters)
-        return viewsRepository.edit(id, characters)
+        return when (viewsRepository.get(id)) {
+            null -> Either.Left(ViewNotFound(id))
+            else -> Either.Right(viewsRepository.edit(id, characters))
+        }
+
     }
 
     suspend fun getData(view: View): Either<JsonParseError, List<RaiderIoData>> {
@@ -97,5 +101,5 @@ class ViewsService(
         return eitherJsonErrorOrData
     }
 
-    fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
 }

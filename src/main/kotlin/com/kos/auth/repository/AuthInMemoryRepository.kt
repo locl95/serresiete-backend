@@ -27,7 +27,7 @@ class AuthInMemoryRepository(
         return authorization
     }
 
-    override fun deleteToken(user: String) = authorizations.removeIf {it.userName == user}
+    override suspend fun deleteToken(token: String) = authorizations.removeIf {it.token == token}
 
     override suspend fun validateCredentials(userName: String, password: String): Boolean {
         return users.contains(User(userName, password))
@@ -40,7 +40,7 @@ class AuthInMemoryRepository(
         }
     }
 
-    override fun state(): Pair<List<User>, List<Authorization>> {
+    override suspend fun state(): Pair<List<User>, List<Authorization>> {
        return Pair(users, authorizations)
     }
 

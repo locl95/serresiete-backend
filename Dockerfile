@@ -10,4 +10,4 @@ EXPOSE 8080
 RUN mkdir /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/
 USER 1001
-ENTRYPOINT ["java", "-jar", "/app/your-app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/raiderio-ladder-backend-all.jar"]

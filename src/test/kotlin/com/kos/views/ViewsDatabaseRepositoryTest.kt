@@ -50,4 +50,13 @@ class ViewsDatabaseRepositoryTest : ViewsRepositoryTest {
         assertEquals(ViewSuccess("1"), edit)
         assertEquals(finalState, listOf(SimpleView("1", "a", listOf(1))))
     }
+
+    @Test
+    override fun ICanEditAViewModifyingMoreThanOneCharacter() {
+        val repository = runBlocking {ViewsDatabaseRepository().withState(listOf(SimpleView("1", "a", listOf(1)))) }
+        val edit = runBlocking { repository.edit("1", listOf(1,2,3,4)) }
+        val finalState = runBlocking { repository.state() }
+        assertEquals(ViewSuccess("1"), edit)
+        assertEquals(finalState, listOf(SimpleView("1", "a", listOf(1,2,3,4))))
+    }
 }

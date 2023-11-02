@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 
 class CharactersServiceTest {
     @Test
-    fun foo() {
+    fun CreateAndReturnIds() {
         val charactersRepository = CharactersInMemoryRepository()
         val charactersService = CharactersService(charactersRepository)
 
@@ -17,7 +17,7 @@ class CharactersServiceTest {
         )
         val expected: List<Long> = listOf(1,2)
 
-        runBlocking { assertEquals(expected, charactersService.create(request)) }
+        runBlocking { assertEquals(expected, charactersService.createAndReturnIds(request)) }
 
     }
 }

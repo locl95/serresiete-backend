@@ -45,12 +45,12 @@ class ViewsService(
 
     suspend fun create(owner: String, characters: List<CharacterRequest>): Either<TooMuchViews, ViewSuccess> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
-        val characterIds = charactersService.create(characters)
+        val characterIds = charactersService.createAndReturnIds(characters)
         return Either.Right(viewsRepository.create(owner, characterIds))
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {
-        val characters = charactersService.create(request.characters)
+        val characters = charactersService.createAndReturnIds(request.characters)
         return when (viewsRepository.get(id)) {
             null -> Either.Left(ViewNotFound(id))
             else -> Either.Right(viewsRepository.edit(id, characters))

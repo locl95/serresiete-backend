@@ -14,4 +14,6 @@ interface ViewsRepositoryTest {
     fun ICanCreateAView(): Unit
     @Test
     fun ICanEditAView(): Unit
+    @Test
+    fun ICanEditAViewModifyingMoreThanOneCharacter(): Unit
 }

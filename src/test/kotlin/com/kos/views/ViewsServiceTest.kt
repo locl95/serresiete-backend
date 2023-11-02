@@ -1,5 +1,6 @@
 package com.kos.views
 
+import com.kos.characters.CharacterRequest
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.datacache.repository.DataCacheInMemoryRepository
@@ -68,6 +69,26 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().all { it.owner == "owner" })
             assertTrue(service.create("owner", listOf()).isLeft())
             assertTrue(viewsRepository.state().size == 2)
+        }
+    }
+
+    @Test
+    fun ICanEditAViewModifyingMoreThanOneCharacter(): Unit {
+        val viewsRepository = ViewsInMemoryRepository(listOf(simpleView.copy(characterIds = listOf(1))))
+        val charactersRepository = CharactersInMemoryRepository(listOf())
+        val charactersService = CharactersService(charactersRepository)
+        val dataCacheRepository = DataCacheInMemoryRepository(listOf())
+        val dataCacheService = DataCacheService(dataCacheRepository)
+        val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+        runBlocking {
+            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 } )
+            assertTrue(service.edit("1", ViewRequest(listOf(
+                CharacterRequest("a", "r", "r"),
+                CharacterRequest("b", "r", "r"),
+                CharacterRequest("c", "r", "r"),
+                CharacterRequest("d", "r", "r")
+            ))).isRight())
+            assertTrue(viewsRepository.state().all {it.characterIds.size == 4})
         }
     }
 }

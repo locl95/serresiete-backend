@@ -1,5 +1,6 @@
 package com.kos.views
 
+import com.kos.views.repository.ViewsDatabaseRepository
 import com.kos.views.repository.ViewsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -41,5 +42,13 @@ class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
         val finalState = runBlocking { inMemoryRepository.state() }
         assertEquals(ViewSuccess("1"), edit)
         assertEquals(finalState, listOf(SimpleView("1", "a", listOf(1))))
+    }
+    @Test
+    override fun ICanEditAViewModifyingMoreThanOneCharacter() {
+        val repository = runBlocking { ViewsInMemoryRepository((listOf(SimpleView("1", "a", listOf(1))))) }
+        val edit = runBlocking { repository.edit("1", listOf(1,2,3,4)) }
+        val finalState = runBlocking { repository.state() }
+        assertEquals(ViewSuccess("1"), edit)
+        assertEquals(finalState, listOf(SimpleView("1", "a", listOf(1,2,3,4))))
     }
 }

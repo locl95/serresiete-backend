@@ -113,6 +113,12 @@ data class MythicPlusRanksWithSpecs(
 )
 
 @Serializable
+data class Affix(
+    @SerialName("name")
+    val affix: String
+)
+
+@Serializable
 data class MythicPlusRun(
     val dungeon: String,
     @SerialName("short_name")
@@ -122,7 +128,8 @@ data class MythicPlusRun(
     @SerialName("num_keystone_upgrades")
     val upgrades: Int,
     val score: Float,
-    val url: String
+    val url: String,
+    val affixes: List<Affix>
 )
 
 @Serializable

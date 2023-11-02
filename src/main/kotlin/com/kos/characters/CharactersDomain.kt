@@ -195,4 +195,23 @@ val classes: List<Class> = listOf(
             )
         )
     ),
+    Class(
+        "Hunter", listOf(
+            Spec(
+                "Beast Mastery",
+                253,
+                0
+            ),
+            Spec(
+                "Marksmanship",
+                254,
+                1
+            ),
+            Spec(
+                "Survival",
+                255,
+                2
+            )
+        )
+    ),
 )

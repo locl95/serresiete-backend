@@ -9,7 +9,7 @@ data class CharactersService(private val charactersRepository: CharactersReposit
         fun splitExistentAndNew(charactersRequest: List<CharacterRequest>, currentCharacters: List<Character>): List<Either<Character, CharacterRequest>> {
             return charactersRequest.fold(emptyList()) { acc, character ->
                 when (val maybeCharacter =
-                    currentCharacters.find { it.realm == character.realm && it.name == character.name && it.region == character.region }) {
+                    currentCharacters.find { character.same(it) }) {
                     null -> acc + Either.Right(character)
                     else -> acc + Either.Left(maybeCharacter)
                 }

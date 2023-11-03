@@ -9,6 +9,8 @@ interface AuthRepositoryTest {
     @Test
     fun ICanValidateToken(): Unit
     @Test
+    fun ICanValidateExpiredToken(): Unit
+    @Test
     fun ICanLogin(): Unit
     @Test
     fun ICanLogout(): Unit

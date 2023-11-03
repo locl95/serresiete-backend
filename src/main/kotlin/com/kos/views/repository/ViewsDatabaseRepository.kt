@@ -13,6 +13,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         dbQuery {
             Views.batchInsert(initialState) {
                 this[Views.id] = it.id
+                this[Views.name] = it.name
                 this[Views.owner] = it.owner
             }
             initialState.forEach { sv ->
@@ -26,6 +27,7 @@ class ViewsDatabaseRepository : ViewsRepository {
     }
     object Views : Table() {
         val id = varchar("id", 48)
+        val name = varchar("name", 128)
         val owner = varchar("owner", 48)
 
         override val primaryKey = PrimaryKey(id)
@@ -33,6 +35,7 @@ class ViewsDatabaseRepository : ViewsRepository {
 
     private fun resultRowToSimpleView(row: ResultRow, characters: List<Long>) = SimpleView(
         row[Views.id],
+        row[Views.name],
         row[Views.owner],
         characters
     )
@@ -73,11 +76,12 @@ class ViewsDatabaseRepository : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(owner: String, characterIds: List<Long>): ViewSuccess {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewSuccess {
         val id = UUID.randomUUID().toString()
         dbQuery {
             Views.insert {
                 it[Views.id] = id
+                it[Views.name] = name
                 it[Views.owner] = owner
             }
             CharactersView.batchInsert(characterIds) {
@@ -88,8 +92,11 @@ class ViewsDatabaseRepository : ViewsRepository {
         return ViewSuccess(id)
     }
 
-    override suspend fun edit(id: String, characters: List<Long>): ViewSuccess {
+    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewSuccess {
         dbQuery {
+            Views.update({Views.id.eq(id)}) {
+                it[Views.name] = name
+            }
             CharactersView.deleteWhere { viewId.eq(id) }
             CharactersView.batchInsert(characters) {
                 this[CharactersView.viewId] = id

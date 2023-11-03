@@ -17,17 +17,17 @@ class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : Views
 
     override suspend fun get(id: String): SimpleView? = views.find { it.id == id }
 
-    override suspend fun create(owner: String, characterIds: List<Long>): ViewSuccess {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewSuccess {
         val id = UUID.randomUUID().toString()
-        views.add(SimpleView(id, owner, characterIds))
+        views.add(SimpleView(id, name, owner, characterIds))
         return ViewSuccess(id)
     }
 
-    override suspend fun edit(id: String, characters: List<Long>): ViewSuccess {
+    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewSuccess {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
         views.removeAt(index)
-        views.add(index, SimpleView(id, oldView.owner, characters))
+        views.add(index, SimpleView(id, name, oldView.owner, characters))
         return ViewSuccess(id)
     }
 

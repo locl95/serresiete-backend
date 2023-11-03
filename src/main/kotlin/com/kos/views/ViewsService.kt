@@ -34,7 +34,7 @@ class ViewsService(
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
             else -> {
-                View(simpleView.id, simpleView.owner, simpleView.characterIds.mapNotNull {
+                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.characterIds.mapNotNull {
                     charactersService.get(it)
                 })
             }
@@ -43,17 +43,17 @@ class ViewsService(
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, characters: List<CharacterRequest>): Either<TooMuchViews, ViewSuccess> {
+    suspend fun create(owner: String, request: ViewRequest): Either<TooMuchViews, ViewSuccess> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
-        val characterIds = charactersService.createAndReturnIds(characters)
-        return Either.Right(viewsRepository.create(owner, characterIds))
+        val characterIds = charactersService.createAndReturnIds(request.characters)
+        return Either.Right(viewsRepository.create(request.name, owner, characterIds))
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {
         val characters = charactersService.createAndReturnIds(request.characters)
         return when (viewsRepository.get(id)) {
             null -> Either.Left(ViewNotFound(id))
-            else -> Either.Right(viewsRepository.edit(id, characters))
+            else -> Either.Right(viewsRepository.edit(id, request.name, characters))
         }
 
     }

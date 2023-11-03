@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ViewsServiceTest {
-    private val simpleView = SimpleView("1", "owner", listOf())
+    private val simpleView = SimpleView("1",  "name","owner", listOf())
     private val raiderIoClient = RaiderIoMockClient()
 
     @Test
@@ -49,7 +49,7 @@ class ViewsServiceTest {
         val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
         runBlocking {
             assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create("owner", listOf()).isRight())
+            assertTrue(service.create("owner", ViewRequest( "name", listOf())).isRight())
             assertTrue(viewsRepository.state().size == 1)
             assertTrue(viewsRepository.state().all { it.owner == "owner" })
         }
@@ -67,7 +67,7 @@ class ViewsServiceTest {
         runBlocking {
             assertTrue(viewsRepository.state().size == 2)
             assertTrue(viewsRepository.state().all { it.owner == "owner" })
-            assertTrue(service.create("owner", listOf()).isLeft())
+            assertTrue(service.create("owner", ViewRequest( "name", listOf())).isLeft())
             assertTrue(viewsRepository.state().size == 2)
         }
     }
@@ -82,7 +82,7 @@ class ViewsServiceTest {
         val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
         runBlocking {
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 } )
-            assertTrue(service.edit("1", ViewRequest(listOf(
+            assertTrue(service.edit("1", ViewRequest( "name", listOf(
                 CharacterRequest("a", "r", "r"),
                 CharacterRequest("b", "r", "r"),
                 CharacterRequest("c", "r", "r"),

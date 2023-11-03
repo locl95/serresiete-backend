@@ -10,6 +10,6 @@ import com.kos.views.ViewSuccess
 interface ViewsRepository : WithState<List<SimpleView>> {
     suspend fun getOwnViews(owner: String): List<SimpleView>
     suspend fun get(id: String): SimpleView?
-    suspend fun create(owner: String, characterIds: List<Long>): ViewSuccess
-    suspend fun edit(id:String, characters: List<Long>): ViewSuccess
+    suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewSuccess
+    suspend fun edit(id:String, name: String, characters: List<Long>): ViewSuccess
 }

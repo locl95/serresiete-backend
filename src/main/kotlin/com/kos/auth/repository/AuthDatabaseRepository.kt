@@ -1,18 +1,16 @@
 package com.kos.auth.repository
 
 import arrow.core.Either
-import com.kos.auth.Authorization
-import com.kos.auth.TokenNotFound
-import com.kos.auth.User
+import com.kos.auth.*
 import com.kos.common.DatabaseFactory.dbQuery
-import com.kos.views.SimpleView
-import com.kos.views.repository.ViewsDatabaseRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.OffsetDateTime
 import java.util.*
 
 class AuthDatabaseRepository : AuthRepository {
+
+    private val hoursBeforeExpiration = 24L
 
     suspend fun withState(initialState: Pair<List<User>, List<Authorization>>): AuthDatabaseRepository {
         dbQuery {
@@ -64,7 +62,7 @@ class AuthDatabaseRepository : AuthRepository {
                 it[Authorizations.userName] = userName
                 it[token] = UUID.randomUUID().toString()
                 it[lastUsed] = OffsetDateTime.now().toString()
-                it[validUntil] = OffsetDateTime.now().plusHours(24).toString()
+                it[validUntil] = OffsetDateTime.now().plusHours(hoursBeforeExpiration).toString()
             }
 
             insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) }
@@ -85,12 +83,15 @@ class AuthDatabaseRepository : AuthRepository {
             else -> true
         }
 
-    override suspend fun validateToken(token: String): Either<TokenNotFound, String> =
+    override suspend fun validateToken(token: String): Either<TokenError, String> =
         when (val maybeAuthorization = dbQuery {
             Authorizations.select { Authorizations.token eq token }.singleOrNull()
         }?.let { resultRowToAuthorization(it) }) {
             null -> Either.Left(TokenNotFound(token))
-            else -> Either.Right(maybeAuthorization.userName)
+            else -> {
+                if (maybeAuthorization.validUntil >= OffsetDateTime.now()) Either.Right(maybeAuthorization.userName)
+                else Either.Left(TokenExpired(maybeAuthorization.token, maybeAuthorization.validUntil))
+            }
         }
 
     override suspend fun state(): Pair<List<User>, List<Authorization>> {

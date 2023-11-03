@@ -1,13 +1,11 @@
 package com.kos.auth
 
+import arrow.core.Either
 import arrow.core.contains
 import com.kos.auth.repository.AuthInMemoryRepository
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
-import kotlin.test.assertContains
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class AuthInMemoryRepositoryTest : AuthRepositoryTest {
     @Test
@@ -28,6 +26,23 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
                 )
             )
             assertTrue(authInMemoryRepository.validateToken("test").contains("test"))
+            assertEquals(1, authInMemoryRepository.state().second.size)
+        }
+    }
+
+    @Test
+    override fun ICanValidateExpiredToken() {
+        val validUntil = OffsetDateTime.now().minusHours(1)
+
+        runBlocking {
+            val authInMemoryRepository = AuthInMemoryRepository(
+                Pair(
+                    listOf(),
+                    listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
+                )
+            )
+            val tokenOrError = authInMemoryRepository.validateToken("test")
+            assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
             assertEquals(1, authInMemoryRepository.state().second.size)
         }
     }

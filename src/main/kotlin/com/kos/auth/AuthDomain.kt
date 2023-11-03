@@ -22,6 +22,7 @@ object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
 }
 
 data class User(val userName: String, val password: String)
+
 @Serializable
 data class Authorization(
     val userName: String,
@@ -29,6 +30,12 @@ data class Authorization(
     @Serializable(with = OffsetDateTimeSerializer::class)
     val lastUsed: OffsetDateTime,
     @Serializable(with = OffsetDateTimeSerializer::class)
-    val validUntil: OffsetDateTime)
+    val validUntil: OffsetDateTime
+)
 
-data class TokenNotFound(val token: String)
+interface TokenError {
+    val token: String
+}
+
+data class TokenNotFound(override val token: String) : TokenError
+data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError

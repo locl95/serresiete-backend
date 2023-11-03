@@ -1,9 +1,7 @@
 package com.kos.auth.repository
 
 import arrow.core.Either
-import com.kos.auth.Authorization
-import com.kos.auth.TokenNotFound
-import com.kos.auth.User
+import com.kos.auth.*
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -13,6 +11,8 @@ class AuthInMemoryRepository(
         mutableListOf()
     )
 ) : AuthRepository {
+
+    private val hoursBeforeExpiration: Long = 24
     private val users = mutableListOf<User>()
     private val authorizations = mutableListOf<Authorization>()
 
@@ -22,26 +22,33 @@ class AuthInMemoryRepository(
     }
 
     override suspend fun insertToken(userName: String): Authorization {
-        val authorization = Authorization(userName, UUID.randomUUID().toString(), OffsetDateTime.now(), OffsetDateTime.now().plusHours(24))
+        val authorization = Authorization(
+            userName, UUID.randomUUID().toString(), OffsetDateTime.now(), OffsetDateTime.now().plusHours(
+                hoursBeforeExpiration
+            )
+        )
         authorizations.add(authorization)
         return authorization
     }
 
-    override suspend fun deleteToken(token: String) = authorizations.removeIf {it.token == token}
+    override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
 
     override suspend fun validateCredentials(userName: String, password: String): Boolean {
         return users.contains(User(userName, password))
     }
 
-    override suspend fun validateToken(token: String): Either<TokenNotFound, String> {
-        return when(val authorization = authorizations.find {it.token == token}) {
+    override suspend fun validateToken(token: String): Either<TokenError, String> {
+        return when (val authorization = authorizations.find { it.token == token }) {
             null -> Either.Left(TokenNotFound(token))
-            else -> Either.Right(authorization.userName)
+            else -> {
+                if (authorization.validUntil >= OffsetDateTime.now()) Either.Right(authorization.userName)
+                else Either.Left(TokenExpired(authorization.token, authorization.validUntil))
+            }
         }
     }
 
     override suspend fun state(): Pair<List<User>, List<Authorization>> {
-       return Pair(users, authorizations)
+        return Pair(users, authorizations)
     }
 
 }

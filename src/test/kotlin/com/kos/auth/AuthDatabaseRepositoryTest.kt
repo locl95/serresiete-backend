@@ -1,5 +1,6 @@
 package com.kos.auth
 
+import arrow.core.Either
 import arrow.core.contains
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory
@@ -35,6 +36,22 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
                 )
             )
             assertTrue(repository.validateToken("test").contains("test"))
+            assertEquals(1, repository.state().second.size)
+        }
+    }
+
+    @Test
+    override fun ICanValidateExpiredToken() {
+        runBlocking {
+            val validUntil = OffsetDateTime.now().minusHours(1)
+            val repository = AuthDatabaseRepository().withState(
+                Pair(
+                    listOf(),
+                    listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
+                )
+            )
+            val tokenOrError = repository.validateToken("test")
+            assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
             assertEquals(1, repository.state().second.size)
         }
     }

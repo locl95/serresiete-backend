@@ -57,4 +57,13 @@ class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
         assertEquals(ViewSuccess("1"), edit)
         assertEquals(finalState, listOf(SimpleView("1", "name", "a", listOf(1, 2, 3, 4))))
     }
+
+    @Test
+    override fun ICanDeleteAView() {
+        val repository = runBlocking { ViewsInMemoryRepository((listOf(SimpleView("1", "name", "a", listOf(1))))) }
+        val delete = runBlocking { repository.delete("1") }
+        val finalState = runBlocking { repository.state() }
+        assertEquals(ViewSuccess("1"), delete)
+        assertEquals(finalState, listOf())
+    }
 }

@@ -31,6 +31,12 @@ class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : Views
         return ViewSuccess(id)
     }
 
+    override suspend fun delete(id: String): ViewSuccess {
+        val index = views.indexOfFirst { it.id == id }
+        views.removeAt(index)
+        return ViewSuccess(id)
+    }
+
     override suspend fun state(): List<SimpleView> {
         return views
     }

@@ -78,7 +78,7 @@ fun Route.viewsRouting(viewsService: ViewsService) {
                 when (val id = call.principal<UserIdPrincipal>()) {
                     null -> call.respond(HttpStatusCode.Unauthorized)
                     else ->
-                        when(val res = viewsService.create(id.name, call.receive())) {
+                        when (val res = viewsService.create(id.name, call.receive())) {
                             is Either.Right -> call.respond(HttpStatusCode.OK, res.value)
                             is Either.Left -> call.respond(HttpStatusCode.BadRequest, "Too much views")
                         }
@@ -92,10 +92,22 @@ fun Route.viewsRouting(viewsService: ViewsService) {
                     null -> call.respond(HttpStatusCode.NotFound, ViewNotFound(id))
                     else -> {
                         if (maybeView.owner == call.principal<UserIdPrincipal>()?.name) {
-                            when (viewsService.edit(maybeView.id, call.receive())) {
-                                is Either.Right -> call.respond(HttpStatusCode.OK)
-                                is Either.Left -> call.respond(HttpStatusCode.NotFound)
-                            }
+                            viewsService.edit(maybeView.id, call.receive())
+                            call.respond(HttpStatusCode.OK)
+                        } else call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
+            }
+        }
+        authenticate("auth-bearer") {
+            delete("/{id}") {
+                val id = call.parameters["id"].orEmpty()
+                when (val maybeView = viewsService.get(id)) {
+                    null -> call.respond(HttpStatusCode.NotFound, ViewNotFound(id))
+                    else -> {
+                        if (maybeView.owner == call.principal<UserIdPrincipal>()?.name) {
+                            viewsService.delete(maybeView.id)
+                            call.respond(HttpStatusCode.NotFound)
                         } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }

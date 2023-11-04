@@ -9,7 +9,7 @@ import java.util.*
 
 class ViewsDatabaseRepository : ViewsRepository {
 
-     suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
+    suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
         dbQuery {
             Views.batchInsert(initialState) {
                 this[Views.id] = it.id
@@ -23,8 +23,9 @@ class ViewsDatabaseRepository : ViewsRepository {
                 }
             }
         }
-         return this
+        return this
     }
+
     object Views : Table() {
         val id = varchar("id", 48)
         val name = varchar("name", 128)
@@ -94,7 +95,7 @@ class ViewsDatabaseRepository : ViewsRepository {
 
     override suspend fun edit(id: String, name: String, characters: List<Long>): ViewSuccess {
         dbQuery {
-            Views.update({Views.id.eq(id)}) {
+            Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
             }
             CharactersView.deleteWhere { viewId.eq(id) }
@@ -102,6 +103,13 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[CharactersView.viewId] = id
                 this[CharactersView.characterId] = it
             }
+        }
+        return ViewSuccess(id)
+    }
+
+    override suspend fun delete(id: String): ViewSuccess {
+        dbQuery {
+            Views.deleteWhere { Views.id.eq(id) }
         }
         return ViewSuccess(id)
     }

@@ -8,5 +8,7 @@ interface DataCacheRepositoryTest {
     @Test
     fun ICanUpdateData()
     @Test
+    fun ICanUpdateDataWithMoreThan2Characters()
+    @Test
     fun ICanGetData()
 }

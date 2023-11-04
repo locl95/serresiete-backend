@@ -4,8 +4,20 @@ import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import org.jetbrains.exposed.sql.*
 import java.time.OffsetDateTime
+import javax.xml.crypto.Data
 
 class DataCacheDatabaseRepository : DataCacheRepository {
+
+    suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
+        dbQuery {
+            DataCaches.batchInsert(initialState) {
+                this[DataCaches.characterId] = it.characterId
+                this[DataCaches.data] = it.data
+                this[DataCaches.inserted] = it.inserted.toString()
+            }
+        }
+        return this
+    }
 
     object DataCaches : Table() {
         val characterId = long("character_id")
@@ -35,7 +47,7 @@ class DataCacheDatabaseRepository : DataCacheRepository {
 
     override suspend fun update(dataCache: DataCache): Boolean {
         dbQuery {
-            DataCaches.update {
+            DataCaches.update({ DataCaches.characterId.eq(dataCache.characterId) }) {
                 it[characterId] = dataCache.characterId
                 it[data] = dataCache.data
                 it[inserted] = dataCache.inserted.toString()

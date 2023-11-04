@@ -47,6 +47,20 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
         }
     }
 
+    override fun ICanValidatePersistentToken() {
+        runBlocking {
+            val authInMemoryRepository = AuthInMemoryRepository(
+                Pair(
+                    listOf(),
+                    listOf(Authorization("test", "test", OffsetDateTime.now(), null))
+                )
+            )
+            val tokenOrError = authInMemoryRepository.validateToken("test")
+            assertEquals(tokenOrError, Either.Right("test"))
+            assertEquals(1, authInMemoryRepository.state().second.size)
+        }
+    }
+
     @Test
     override fun ICanLogin() {
         runBlocking {

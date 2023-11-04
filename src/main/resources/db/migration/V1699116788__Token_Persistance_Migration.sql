@@ -1,0 +1,1 @@
+alter table authorizations alter column valid_until varchar(128) null;

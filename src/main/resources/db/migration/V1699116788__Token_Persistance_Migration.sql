@@ -1,1 +1,1 @@
-alter table authorizations alter column valid_until varchar(128) null;
+ALTER TABLE authorizations ALTER COLUMN valid_until DROP NOT NULL;

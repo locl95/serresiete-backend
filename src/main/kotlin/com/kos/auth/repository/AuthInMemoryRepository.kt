@@ -41,8 +41,9 @@ class AuthInMemoryRepository(
         return when (val authorization = authorizations.find { it.token == token }) {
             null -> Either.Left(TokenNotFound(token))
             else -> {
-                if (authorization.validUntil >= OffsetDateTime.now()) Either.Right(authorization.userName)
-                else Either.Left(TokenExpired(authorization.token, authorization.validUntil))
+                authorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
+                    Either.Left(TokenExpired(authorization.token, it))
+                } ?: Either.Right(authorization.userName)
             }
         }
     }

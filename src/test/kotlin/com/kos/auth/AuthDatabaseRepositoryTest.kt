@@ -57,6 +57,21 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
     }
 
     @Test
+    override fun ICanValidatePersistentToken() {
+        runBlocking {
+            val repository = AuthDatabaseRepository().withState(
+                Pair(
+                    listOf(),
+                    listOf(Authorization("test", "test", OffsetDateTime.now(), null))
+                )
+            )
+            val tokenOrError = repository.validateToken("test")
+            assertEquals(tokenOrError, Either.Right("test"))
+            assertEquals(1, repository.state().second.size)
+        }
+    }
+
+    @Test
     override fun ICanLogin() {
         runBlocking {
             val repository = AuthDatabaseRepository()

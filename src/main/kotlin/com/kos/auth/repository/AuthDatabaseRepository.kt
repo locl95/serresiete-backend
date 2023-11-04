@@ -22,7 +22,7 @@ class AuthDatabaseRepository : AuthRepository {
                 this[Authorizations.userName] = it.userName
                 this[Authorizations.token] = it.token
                 this[Authorizations.lastUsed] = it.lastUsed.toString()
-                this[Authorizations.validUntil] = it.validUntil.toString()
+                this[Authorizations.validUntil] = it.validUntil?.toString()
             }
         }
         return this
@@ -44,7 +44,7 @@ class AuthDatabaseRepository : AuthRepository {
         val userName = varchar("user_name", 48)
         val token = varchar("token", 128)
         val lastUsed = text("last_used")
-        val validUntil = text("valid_until")
+        val validUntil = text("valid_until").nullable()
 
         override val primaryKey = PrimaryKey(token)
     }
@@ -53,7 +53,9 @@ class AuthDatabaseRepository : AuthRepository {
         row[Authorizations.userName],
         row[Authorizations.token],
         OffsetDateTime.parse(row[Authorizations.lastUsed]),
-        OffsetDateTime.parse(row[Authorizations.validUntil])
+        row[Authorizations.validUntil]?.let {
+            OffsetDateTime.parse(it)
+        },
     )
 
     override suspend fun insertToken(userName: String): Authorization? =
@@ -89,8 +91,9 @@ class AuthDatabaseRepository : AuthRepository {
         }?.let { resultRowToAuthorization(it) }) {
             null -> Either.Left(TokenNotFound(token))
             else -> {
-                if (maybeAuthorization.validUntil >= OffsetDateTime.now()) Either.Right(maybeAuthorization.userName)
-                else Either.Left(TokenExpired(maybeAuthorization.token, maybeAuthorization.validUntil))
+                maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
+                    Either.Left(TokenExpired(maybeAuthorization.token, it))
+                } ?: Either.Right(maybeAuthorization.userName)
             }
         }
 

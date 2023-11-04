@@ -30,7 +30,7 @@ data class Authorization(
     @Serializable(with = OffsetDateTimeSerializer::class)
     val lastUsed: OffsetDateTime,
     @Serializable(with = OffsetDateTimeSerializer::class)
-    val validUntil: OffsetDateTime
+    val validUntil: OffsetDateTime?
 )
 
 interface TokenError {

@@ -11,6 +11,8 @@ interface AuthRepositoryTest {
     @Test
     fun ICanValidateExpiredToken(): Unit
     @Test
+    fun ICanValidatePersistentToken(): Unit
+    @Test
     fun ICanLogin(): Unit
     @Test
     fun ICanLogout(): Unit

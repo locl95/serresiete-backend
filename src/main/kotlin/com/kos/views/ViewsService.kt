@@ -2,7 +2,6 @@ package com.kos.views
 
 import arrow.core.Either
 import arrow.core.traverse
-import com.kos.characters.CharacterRequest
 import com.kos.characters.CharactersService
 import com.kos.common.JsonParseError
 import com.kos.datacache.DataCache
@@ -49,13 +48,13 @@ class ViewsService(
         return Either.Right(viewsRepository.create(request.name, owner, characterIds))
     }
 
-    suspend fun edit(id: String, request: ViewRequest): Either<ViewNotFound, ViewSuccess> {
+    suspend fun edit(id: String, request: ViewRequest): ViewSuccess {
         val characters = charactersService.createAndReturnIds(request.characters)
-        return when (viewsRepository.get(id)) {
-            null -> Either.Left(ViewNotFound(id))
-            else -> Either.Right(viewsRepository.edit(id, request.name, characters))
-        }
+        return viewsRepository.edit(id, request.name, characters)
+    }
 
+    suspend fun delete(id: String): ViewSuccess {
+        return viewsRepository.delete(id)
     }
 
     suspend fun getData(view: View): Either<JsonParseError, List<RaiderIoData>> {

@@ -5,6 +5,8 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.credentials.CredentialsService
+import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.plugins.configureAuthentication
@@ -32,6 +34,9 @@ fun Application.module() {
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
 
+    val credentialsRepository = CredentialsDatabaseRepository()
+    val credentialsService = CredentialsService(credentialsRepository)
+
     val charactersRepository = CharactersDatabaseRepository()
     val charactersService = CharactersService(charactersRepository)
 
@@ -44,7 +49,7 @@ fun Application.module() {
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
 
 
-    configureAuthentication(authService)
+    configureAuthentication(authService, credentialsService)
     configureCors()
     configureRouting(authService, viewsService)
     configureSerialization()

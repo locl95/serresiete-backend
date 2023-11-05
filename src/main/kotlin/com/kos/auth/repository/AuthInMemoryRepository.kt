@@ -6,19 +6,13 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 class AuthInMemoryRepository(
-    initialState: Pair<List<User>, List<Authorization>> = Pair(
-        mutableListOf(),
-        mutableListOf()
-    )
-) : AuthRepository {
+    initialState: List<Authorization> = mutableListOf()) : AuthRepository {
 
     private val hoursBeforeExpiration: Long = 24
-    private val users = mutableListOf<User>()
     private val authorizations = mutableListOf<Authorization>()
 
     init {
-        users.addAll(initialState.first)
-        authorizations.addAll(initialState.second)
+        authorizations.addAll(initialState)
     }
 
     override suspend fun insertToken(userName: String): Authorization {
@@ -33,10 +27,6 @@ class AuthInMemoryRepository(
 
     override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
 
-    override suspend fun validateCredentials(userName: String, password: String): Boolean {
-        return users.contains(User(userName, password))
-    }
-
     override suspend fun validateToken(token: String): Either<TokenError, String> {
         return when (val authorization = authorizations.find { it.token == token }) {
             null -> Either.Left(TokenNotFound(token))
@@ -48,8 +38,8 @@ class AuthInMemoryRepository(
         }
     }
 
-    override suspend fun state(): Pair<List<User>, List<Authorization>> {
-        return Pair(users, authorizations)
+    override suspend fun state(): List<Authorization> {
+        return authorizations
     }
 
 }

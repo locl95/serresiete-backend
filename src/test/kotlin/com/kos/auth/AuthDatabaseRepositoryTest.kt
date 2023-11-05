@@ -12,7 +12,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AuthDatabaseRepositoryTest: AuthRepositoryTest {
+class AuthDatabaseRepositoryTest : AuthRepositoryTest {
 
     @Before
     fun beforeEach() {
@@ -20,23 +20,13 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
     }
 
     @Test
-    override fun ICanValidateCredentials() {
-        runBlocking {
-            val repository = AuthDatabaseRepository().withState(Pair(listOf(User("test", "test")), listOf()))
-            assertTrue(repository.validateCredentials("test", "test"))
-        }
-    }
-    @Test
     override fun ICanValidateToken() {
         runBlocking {
             val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-                )
+                listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
             )
             assertTrue(repository.validateToken("test").contains("test"))
-            assertEquals(1, repository.state().second.size)
+            assertEquals(1, repository.state().size)
         }
     }
 
@@ -45,14 +35,11 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
         runBlocking {
             val validUntil = OffsetDateTime.now().minusHours(1)
             val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
-                )
+                listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
             )
             val tokenOrError = repository.validateToken("test")
             assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
-            assertEquals(1, repository.state().second.size)
+            assertEquals(1, repository.state().size)
         }
     }
 
@@ -60,14 +47,11 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
     override fun ICanValidatePersistentToken() {
         runBlocking {
             val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), null))
-                )
+                listOf(Authorization("test", "test", OffsetDateTime.now(), null))
             )
             val tokenOrError = repository.validateToken("test")
             assertEquals(tokenOrError, Either.Right("test"))
-            assertEquals(1, repository.state().second.size)
+            assertEquals(1, repository.state().size)
         }
     }
 
@@ -77,7 +61,7 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
             val repository = AuthDatabaseRepository()
             val userName = repository.insertToken("test")?.userName
             assertEquals("test", userName)
-            val finalStateOfAuthorizations = repository.state().second
+            val finalStateOfAuthorizations = repository.state()
             assertContains(finalStateOfAuthorizations.map { it.userName }, "test")
         }
     }
@@ -86,13 +70,10 @@ class AuthDatabaseRepositoryTest: AuthRepositoryTest {
     override fun ICanLogout() {
         runBlocking {
             val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-                )
+                listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
             )
             assertTrue(repository.deleteToken("test"))
-            assertTrue(repository.state().second.isEmpty())
+            assertTrue(repository.state().isEmpty())
         }
     }
 }

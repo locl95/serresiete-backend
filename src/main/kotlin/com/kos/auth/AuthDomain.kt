@@ -21,8 +21,6 @@ object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     }
 }
 
-data class User(val userName: String, val password: String)
-
 @Serializable
 data class Authorization(
     val userName: String,

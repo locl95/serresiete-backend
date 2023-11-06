@@ -107,7 +107,7 @@ fun Route.viewsRouting(viewsService: ViewsService) {
                     else -> {
                         if (maybeView.owner == call.principal<UserIdPrincipal>()?.name) {
                             viewsService.delete(maybeView.id)
-                            call.respond(HttpStatusCode.NotFound)
+                            call.respond(HttpStatusCode.NoContent)
                         } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }

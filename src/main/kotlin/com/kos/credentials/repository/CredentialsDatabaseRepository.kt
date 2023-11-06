@@ -34,7 +34,18 @@ class CredentialsDatabaseRepository: CredentialsRepository {
         }
     }
 
+    override suspend fun insertCredentials(credentials: Credentials): Unit {
+        DatabaseFactory.dbQuery {
+            Users.insert {
+                it[userName] = credentials.userName
+                it[password] = credentials.password
+            }
+        }
+    }
+
     override suspend fun state(): List<Credentials> {
-        return Users.selectAll().map { resultRowToUser(it) }
+        return DatabaseFactory.dbQuery {
+             Users.selectAll().map { resultRowToUser(it) }
+        }
     }
 }

@@ -51,6 +51,6 @@ fun Application.module() {
 
     configureAuthentication(authService, credentialsService)
     configureCors()
-    configureRouting(authService, viewsService)
+    configureRouting(authService, viewsService, credentialsService)
     configureSerialization()
 }

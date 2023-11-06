@@ -10,7 +10,6 @@ import kotlin.test.assertEquals
 class CharactersDatabaseRepositoryTest: CharactersRepositoryTest {
     @Before
     fun beforeEach() {
-
         DatabaseFactory.init(mustClean = true)
     }
 

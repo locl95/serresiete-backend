@@ -13,6 +13,10 @@ class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableLis
         return users.find { it.userName == userName }
     }
 
+    override suspend fun insertCredentials(credentials: Credentials): Unit {
+        users.add(credentials)
+    }
+
     override suspend fun state(): List<Credentials> {
         return users
     }

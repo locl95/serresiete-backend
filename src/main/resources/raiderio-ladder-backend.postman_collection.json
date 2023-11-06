@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "b85b3034-c2f2-4e68-99e6-22d705d1a8be",
+		"_postman_id": "f1d6c4ec-961c-4f3c-a076-7184345bdec5",
 		"name": "raiderio-ladder-backend",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30887858"
 	},
 	"item": [
 		{
@@ -231,7 +232,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
+							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Apohunter\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kumico\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Sanxei\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }\n    ],\n    \"name\": \"nice-view\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -249,6 +250,14 @@
 								"{{viewId}}"
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete View",
+					"request": {
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				}
@@ -338,6 +347,19 @@
 								"auth"
 							]
 						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "credentials",
+			"item": [
+				{
+					"name": "Create Credentials",
+					"request": {
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				}

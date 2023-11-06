@@ -1,13 +1,12 @@
 package com.kos.auth
 
-import arrow.core.Either
-import arrow.core.contains
 import com.kos.auth.AuthTestHelper.basicAuthorization
+import com.kos.auth.AuthTestHelper.token
+import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -23,7 +22,7 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
     override fun ICanGetAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
-            assertEquals(repository.getAuthorization(basicAuthorization.token), basicAuthorization)
+            assertEquals(repository.getAuthorization(token), basicAuthorization)
         }
     }
 
@@ -31,10 +30,10 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
     override fun ICanInsertAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository()
-            val userName = repository.insertToken("test")?.userName
-            assertEquals("test", userName)
+            val userName = repository.insertToken(user)?.userName
+            assertEquals(user, userName)
             val finalStateOfAuthorizations = repository.state()
-            assertContains(finalStateOfAuthorizations.map { it.userName }, "test")
+            assertContains(finalStateOfAuthorizations.map { it.userName }, user)
         }
     }
 
@@ -42,7 +41,7 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
     override fun ICanDeleteAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
-            assertTrue(repository.deleteToken("test"))
+            assertTrue(repository.deleteToken(token))
             assertTrue(repository.state().isEmpty())
         }
     }

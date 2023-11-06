@@ -3,6 +3,8 @@ package com.kos.auth
 import arrow.core.Either
 import arrow.core.contains
 import com.kos.auth.AuthTestHelper.basicAuthorization
+import com.kos.auth.AuthTestHelper.token
+import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
@@ -16,7 +18,7 @@ class AuthServiceTest {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization))
             val authService = AuthService(authInMemoryRepository)
-            assertTrue(authService.validateToken("test").contains(basicAuthorization.token))
+            assertTrue(authService.validateTokenAndReturnUsername(token).contains(basicAuthorization.userName))
         }
     }
 
@@ -26,8 +28,8 @@ class AuthServiceTest {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization.copy(validUntil = validUntil)))
             val authService = AuthService(authInMemoryRepository)
-            val tokenOrError = authService.validateToken("test")
-            assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
+            val userNameOrError = authService.validateTokenAndReturnUsername(token)
+            assertEquals(userNameOrError, Either.Left(TokenExpired(token, validUntil)))
         }
     }
 
@@ -36,8 +38,8 @@ class AuthServiceTest {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization.copy(validUntil = null)))
             val authService = AuthService(authInMemoryRepository)
-            val tokenOrError = authService.validateToken("test")
-            assertEquals(tokenOrError, Either.Right("test"))
+            val userNameOrError = authService.validateTokenAndReturnUsername(token)
+            assertEquals(userNameOrError, Either.Right(user))
             assertEquals(1, authInMemoryRepository.state().size)
         }
     }

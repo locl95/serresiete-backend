@@ -1,6 +1,8 @@
 package com.kos.auth
 
 import com.kos.auth.AuthTestHelper.basicAuthorization
+import com.kos.auth.AuthTestHelper.token
+import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
@@ -15,7 +17,7 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
         val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization))
         runBlocking {
             assertEquals(
-                authInMemoryRepository.getAuthorization(basicAuthorization.token),
+                authInMemoryRepository.getAuthorization(token),
                 basicAuthorization
             )
         }
@@ -24,10 +26,10 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
     override fun ICanInsertAuthorizations() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository()
-            val userName = authInMemoryRepository.insertToken("test").userName
-            assertEquals("test", userName)
+            val userName = authInMemoryRepository.insertToken(user).userName
+            assertEquals(user, userName)
             val finalStateOfAuthorizations = authInMemoryRepository.state()
-            assertContains(finalStateOfAuthorizations.map { it.userName }, "test")
+            assertContains(finalStateOfAuthorizations.map { it.userName }, user)
         }
     }
 
@@ -36,7 +38,7 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
             val authInMemoryRepository = AuthInMemoryRepository(
                 listOf(basicAuthorization)
             )
-            assertTrue(authInMemoryRepository.deleteToken("test"))
+            assertTrue(authInMemoryRepository.deleteToken(token))
             assertTrue(authInMemoryRepository.state().isEmpty())
         }
     }

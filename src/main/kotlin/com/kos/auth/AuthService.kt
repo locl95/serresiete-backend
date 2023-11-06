@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 class AuthService(private val authRepository: AuthRepository) {
     suspend fun login(userName: String) = authRepository.insertToken(userName)
     suspend fun logout(user: String) = authRepository.deleteToken(user)
-    suspend fun validateToken(token: String): Either<TokenError, String> =
+    suspend fun validateTokenAndReturnUsername(token: String): Either<TokenError, String> =
         when (val maybeAuthorization = authRepository.getAuthorization(token)) {
             null -> Either.Left(TokenNotFound(token))
             else -> {

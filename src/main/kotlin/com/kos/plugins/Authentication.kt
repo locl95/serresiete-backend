@@ -17,7 +17,7 @@ fun Application.configureAuthentication(authService: AuthService, credentialsSer
         }
         bearer("auth-bearer") {
             authenticate {
-                when(val eitherOwnerOrError = authService.validateToken(it.token)) {
+                when(val eitherOwnerOrError = authService.validateTokenAndReturnUsername(it.token)) {
                     is Either.Right -> UserIdPrincipal(eitherOwnerOrError.value)
                     else -> null
                 }

@@ -1,9 +1,9 @@
 package com.kos.credentials.repository
 
 import com.kos.common.WithState
-import com.kos.credentials.User
+import com.kos.credentials.Credentials
 
-interface CredentialsRepository : WithState<List<User>> {
-    suspend fun validateCredentials(userName: String, password: String): Boolean
+interface CredentialsRepository : WithState<List<Credentials>> {
+    suspend fun getCredentials(userName: String): Credentials?
 
 }

@@ -8,5 +8,5 @@ import com.kos.common.WithState
 interface AuthRepository : WithState<List<Authorization>> {
     suspend fun insertToken(userName: String): Authorization?
     suspend fun deleteToken(token: String): Boolean
-    suspend fun validateToken(token: String): Either<TokenError, String>
+    suspend fun getAuthorization(token:String): Authorization?
 }

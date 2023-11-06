@@ -3,15 +3,15 @@ package com.kos.credentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
+class CredentialsServiceTest {
     @Test
-    override fun ICanGetCredentials() {
+    fun ICanValidateCredentials() {
         runBlocking {
             val credentialsInMemoryRepository = CredentialsInMemoryRepository(listOf(Credentials("test", "test")))
-            assertEquals(credentialsInMemoryRepository.getCredentials("test"), Credentials("test", "test"))
+            val credentialsService = CredentialsService(credentialsInMemoryRepository)
+            assertTrue(credentialsService.validateCredentials(Credentials("test", "test")))
         }
     }
-
 }

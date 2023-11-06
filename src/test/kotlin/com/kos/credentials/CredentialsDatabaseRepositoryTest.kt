@@ -1,16 +1,16 @@
 package com.kos.credentials
 
 import com.kos.credentials.repository.CredentialsDatabaseRepository
+import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
-class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest{
+class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest {
     @Test
-    override fun ICanValidateCredentials() {
+    override fun ICanGetCredentials() {
         runBlocking {
-            val repository = CredentialsDatabaseRepository().withState(listOf(User("test", "test")))
-            assertTrue(repository.validateCredentials("test", "test"))
+            val repository = CredentialsDatabaseRepository().withState(listOf(Credentials("test", "test")))
+            assertEquals(repository.getCredentials("test"), Credentials("test", "test"))
         }
     }
 }

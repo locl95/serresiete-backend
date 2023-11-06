@@ -1,12 +1,12 @@
 package com.kos.credentials.repository
 
 import com.kos.common.DatabaseFactory
-import com.kos.credentials.User
+import com.kos.credentials.Credentials
 import org.jetbrains.exposed.sql.*
 
 
 class CredentialsDatabaseRepository: CredentialsRepository {
-    suspend fun withState(initialState: List<User>): CredentialsDatabaseRepository {
+    suspend fun withState(initialState: List<Credentials>): CredentialsDatabaseRepository {
         DatabaseFactory.dbQuery {
             Users.batchInsert(initialState) {
                 this[Users.userName] = it.userName
@@ -23,20 +23,18 @@ class CredentialsDatabaseRepository: CredentialsRepository {
         override val primaryKey = PrimaryKey(userName)
     }
 
-    private fun resultRowToUser(row: ResultRow) = User(
+    private fun resultRowToUser(row: ResultRow) = Credentials(
         row[Users.userName],
         row[Users.password]
     )
-    override suspend fun validateCredentials(userName: String, password: String): Boolean {
-        return when (DatabaseFactory.dbQuery {
-            Users.select { Users.userName.eq(userName) and Users.password.eq(password) }.singleOrNull()
-        }) {
-            null -> false
-            else -> true
+
+    override suspend fun getCredentials(userName: String): Credentials? {
+        return DatabaseFactory.dbQuery {
+            Users.select { Users.userName.eq(userName) }.map {resultRowToUser(it)}.singleOrNull()
         }
     }
 
-    override suspend fun state(): List<User> {
+    override suspend fun state(): List<Credentials> {
         return Users.selectAll().map { resultRowToUser(it) }
     }
 }

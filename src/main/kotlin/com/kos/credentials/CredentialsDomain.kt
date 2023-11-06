@@ -1,3 +1,3 @@
 package com.kos.credentials
 
-data class User(val userName: String, val password: String)
+data class Credentials(val userName: String, val password: String)

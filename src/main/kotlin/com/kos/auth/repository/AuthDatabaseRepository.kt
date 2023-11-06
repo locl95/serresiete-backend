@@ -1,7 +1,6 @@
 package com.kos.auth.repository
 
-import arrow.core.Either
-import com.kos.auth.*
+import com.kos.auth.Authorization
 import com.kos.common.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -61,17 +60,11 @@ class AuthDatabaseRepository : AuthRepository {
         return true
     }
 
-    override suspend fun validateToken(token: String): Either<TokenError, String> =
-        when (val maybeAuthorization = dbQuery {
-            Authorizations.select { Authorizations.token eq token }.singleOrNull()
-        }?.let { resultRowToAuthorization(it) }) {
-            null -> Either.Left(TokenNotFound(token))
-            else -> {
-                maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                    Either.Left(TokenExpired(maybeAuthorization.token, it))
-                } ?: Either.Right(maybeAuthorization.userName)
-            }
+    override suspend fun getAuthorization(token: String): Authorization? {
+        return dbQuery {
+            Authorizations.select { Authorizations.token eq token }.map { resultRowToAuthorization(it) }.singleOrNull()
         }
+    }
 
     override suspend fun state(): List<Authorization> {
         return dbQuery {

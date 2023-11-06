@@ -5,13 +5,9 @@ import kotlin.test.Test
 
 interface AuthRepositoryTest {
     @Test
-    fun ICanValidateToken(): Unit
+    fun ICanGetAuthorizations()
     @Test
-    fun ICanValidateExpiredToken(): Unit
+    fun ICanInsertAuthorizations(): Unit
     @Test
-    fun ICanValidatePersistentToken(): Unit
-    @Test
-    fun ICanLogin(): Unit
-    @Test
-    fun ICanLogout(): Unit
+    fun ICanDeleteAuthorizations(): Unit
 }

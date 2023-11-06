@@ -2,6 +2,7 @@ package com.kos.auth
 
 import arrow.core.Either
 import arrow.core.contains
+import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
@@ -19,44 +20,15 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
         DatabaseFactory.init(mustClean = true)
     }
 
-    @Test
-    override fun ICanValidateToken() {
+    override fun ICanGetAuthorizations() {
         runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-            )
-            assertTrue(repository.validateToken("test").contains("test"))
-            assertEquals(1, repository.state().size)
+            val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
+            assertEquals(repository.getAuthorization(basicAuthorization.token), basicAuthorization)
         }
     }
 
     @Test
-    override fun ICanValidateExpiredToken() {
-        runBlocking {
-            val validUntil = OffsetDateTime.now().minusHours(1)
-            val repository = AuthDatabaseRepository().withState(
-                listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
-            )
-            val tokenOrError = repository.validateToken("test")
-            assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
-            assertEquals(1, repository.state().size)
-        }
-    }
-
-    @Test
-    override fun ICanValidatePersistentToken() {
-        runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                listOf(Authorization("test", "test", OffsetDateTime.now(), null))
-            )
-            val tokenOrError = repository.validateToken("test")
-            assertEquals(tokenOrError, Either.Right("test"))
-            assertEquals(1, repository.state().size)
-        }
-    }
-
-    @Test
-    override fun ICanLogin() {
+    override fun ICanInsertAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository()
             val userName = repository.insertToken("test")?.userName
@@ -67,11 +39,9 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
     }
 
     @Test
-    override fun ICanLogout() {
+    override fun ICanDeleteAuthorizations() {
         runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-            )
+            val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
             assertTrue(repository.deleteToken("test"))
             assertTrue(repository.state().isEmpty())
         }

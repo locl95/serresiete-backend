@@ -1,19 +1,19 @@
 package com.kos.credentials.repository
 
-import com.kos.auth.Authorization
-import com.kos.credentials.User
+import com.kos.credentials.Credentials
 
-class CredentialsInMemoryRepository(initialState: List<User> = mutableListOf()) : CredentialsRepository {
-    private val users = mutableListOf<User>()
+class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableListOf()) : CredentialsRepository {
+    private val users = mutableListOf<Credentials>()
 
     init {
         users.addAll(initialState)
     }
-    override suspend fun validateCredentials(userName: String, password: String): Boolean {
-        return users.contains(User(userName, password))
+
+    override suspend fun getCredentials(userName: String): Credentials? {
+        return users.find { it.userName == userName }
     }
 
-    override suspend fun state(): List<User> {
+    override suspend fun state(): List<Credentials> {
         return users
     }
 }

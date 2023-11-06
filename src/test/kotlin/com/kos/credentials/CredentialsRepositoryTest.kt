@@ -4,5 +4,5 @@ import kotlin.test.Test
 
 interface CredentialsRepositoryTest {
     @Test
-    fun ICanValidateCredentials(): Unit
+    fun ICanGetCredentials(): Unit
 }

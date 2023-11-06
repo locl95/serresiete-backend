@@ -1,12 +1,10 @@
 package com.kos.auth.repository
 
-import arrow.core.Either
-import com.kos.auth.*
+import com.kos.auth.Authorization
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
-class AuthInMemoryRepository(
-    initialState: List<Authorization> = mutableListOf()) : AuthRepository {
+class AuthInMemoryRepository(initialState: List<Authorization> = mutableListOf()) : AuthRepository {
 
     private val hoursBeforeExpiration: Long = 24
     private val authorizations = mutableListOf<Authorization>()
@@ -26,16 +24,8 @@ class AuthInMemoryRepository(
     }
 
     override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
-
-    override suspend fun validateToken(token: String): Either<TokenError, String> {
-        return when (val authorization = authorizations.find { it.token == token }) {
-            null -> Either.Left(TokenNotFound(token))
-            else -> {
-                authorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                    Either.Left(TokenExpired(authorization.token, it))
-                } ?: Either.Right(authorization.userName)
-            }
-        }
+    override suspend fun getAuthorization(token: String): Authorization? {
+        return  authorizations.find { it.token == token }
     }
 
     override suspend fun state(): List<Authorization> {

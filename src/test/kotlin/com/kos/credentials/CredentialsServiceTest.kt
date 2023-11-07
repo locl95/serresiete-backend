@@ -1,5 +1,6 @@
 package com.kos.credentials
 
+import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -9,9 +10,9 @@ class CredentialsServiceTest {
     @Test
     fun ICanValidateCredentials() {
         runBlocking {
-            val credentialsInMemoryRepository = CredentialsInMemoryRepository(listOf(Credentials("test", "test")))
+            val credentialsInMemoryRepository = CredentialsInMemoryRepository(listOf(basicCredentials))
             val credentialsService = CredentialsService(credentialsInMemoryRepository)
-            assertTrue(credentialsService.validateCredentials(Credentials("test", "test")))
+            assertTrue(credentialsService.validateCredentials(basicCredentials))
         }
     }
 }

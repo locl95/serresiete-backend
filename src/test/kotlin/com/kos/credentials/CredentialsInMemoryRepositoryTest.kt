@@ -1,5 +1,8 @@
 package com.kos.credentials
 
+import com.kos.credentials.CredentialsTestHelper.basicCredentials
+import com.kos.credentials.CredentialsTestHelper.password
+import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -20,19 +23,19 @@ class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
         runBlocking {
             val repository = CredentialsInMemoryRepository()
             assertTrue(repository.state().isEmpty())
-            repository.insertCredentials(Credentials("test", "test"))
+            repository.insertCredentials(basicCredentials)
             assertTrue(repository.state().size == 1)
-            assertTrue(repository.state().all { it.userName == "test" && it.password == "test" } )
+            assertTrue(repository.state().all { it.userName == user && it.password == password } )
         }
     }
 
     @Test
     override fun ICanEditCredentials() {
         runBlocking {
-            val repository = CredentialsInMemoryRepository(listOf(Credentials("test", "test")))
+            val repository = CredentialsInMemoryRepository(listOf(basicCredentials))
             assertTrue(repository.state().size == 1)
-            repository.editCredentials("test", "newPasswd")
-            assertTrue(repository.state().all { it.userName == "test" && it.password == "newPasswd" } )
+            repository.editCredentials(user, "newPassword")
+            assertTrue(repository.state().all { it.userName == user && it.password == "newPassword" } )
         }
     }
 

@@ -8,5 +8,6 @@ interface CredentialsRepository : WithState<List<Credentials>> {
     suspend fun getCredentials(userName: String): Credentials?
     suspend fun insertCredentials(credentials: Credentials): Unit
     suspend fun getActivities(user: String): List<Activity>
+    suspend fun editCredentials(userName: String, newPassword: String) : Unit
 
 }

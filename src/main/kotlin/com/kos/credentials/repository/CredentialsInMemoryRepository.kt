@@ -25,6 +25,11 @@ class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableLis
         return userRoles[user]?.flatMap { roleActivities[it].orEmpty() }.orEmpty()
     }
 
+    override suspend fun editCredentials(userName: String, newPassword: String): Unit {
+        val index = users.map { it.userName }.indexOf(userName)
+        users[index] = Credentials(userName, newPassword)
+    }
+
     override suspend fun state(): List<Credentials> {
         return users
     }

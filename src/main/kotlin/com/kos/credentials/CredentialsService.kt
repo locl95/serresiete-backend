@@ -13,4 +13,8 @@ class CredentialsService(private val credentialsRepository: CredentialsRepositor
     suspend fun hasPermissions(user: String, requiredActivity: String): Boolean =
         credentialsRepository.getActivities(user).contains(requiredActivity)
 
+
+    suspend fun editCredentials(credentials: Credentials) {
+        credentialsRepository.editCredentials(credentials.userName, credentials.password)
+    }
 }

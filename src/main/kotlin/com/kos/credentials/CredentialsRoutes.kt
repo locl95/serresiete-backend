@@ -23,5 +23,17 @@ fun Route.credentialsRouting(credentialsService: CredentialsService) {
                 }
             }
         }
+
+        authenticate("auth-bearer") {
+            put {
+                when (call.principal<UserIdPrincipal>()) {
+                    null -> call.respond(HttpStatusCode.Unauthorized)
+                    else -> {
+                        credentialsService.editCredentials(call.receive())
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+                }
+            }
+        }
     }
 }

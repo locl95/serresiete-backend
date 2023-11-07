@@ -65,6 +65,14 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         }
     }
 
+    override suspend fun editCredentials(userName: String, newPassword: String) {
+        DatabaseFactory.dbQuery {
+            Users.update({ Users.userName.eq(userName) }) {
+                it[password] = newPassword
+            }
+        }
+    }
+
     override suspend fun state(): List<Credentials> {
         return DatabaseFactory.dbQuery {
             Users.selectAll().map { resultRowToUser(it) }

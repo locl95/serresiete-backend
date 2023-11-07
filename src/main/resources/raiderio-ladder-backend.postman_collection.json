@@ -232,7 +232,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Apohunter\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kumico\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Sanxei\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }\n    ],\n    \"name\": \"nice-view\"\n}",
+							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
 							"options": {
 								"raw": {
 									"language": "json"

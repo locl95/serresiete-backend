@@ -12,11 +12,13 @@ fun Route.credentialsRouting(credentialsService: CredentialsService) {
     route("/credentials") {
         authenticate("auth-bearer") {
             post {
-                when (call.principal<UserIdPrincipal>()) {
+                when (val id = call.principal<UserIdPrincipal>()) {
                     null -> call.respond(HttpStatusCode.Unauthorized)
                     else -> {
-                        credentialsService.createCredentials(call.receive())
-                        call.respond(HttpStatusCode.Created)
+                        if (credentialsService.hasPermissions(id.name, Activities.createCredentials)) {
+                            credentialsService.createCredentials(call.receive())
+                            call.respond(HttpStatusCode.Created)
+                        } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }
             }

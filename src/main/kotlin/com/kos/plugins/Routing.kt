@@ -16,8 +16,8 @@ fun Application.configureRouting(authService: AuthService, viewsService: ViewsSe
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
         route("/api") {
-            viewsRouting(viewsService)
-            authRouting(authService)
+            viewsRouting(viewsService, credentialsService)
+            authRouting(authService, credentialsService)
             credentialsRouting(credentialsService)
         }
     }

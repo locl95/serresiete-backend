@@ -1,11 +1,11 @@
 package com.kos.credentials.repository
 
 import com.kos.common.DatabaseFactory
+import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
 import org.jetbrains.exposed.sql.*
 
-
-class CredentialsDatabaseRepository: CredentialsRepository {
+class CredentialsDatabaseRepository : CredentialsRepository {
     suspend fun withState(initialState: List<Credentials>): CredentialsDatabaseRepository {
         DatabaseFactory.dbQuery {
             Users.batchInsert(initialState) {
@@ -30,7 +30,7 @@ class CredentialsDatabaseRepository: CredentialsRepository {
 
     override suspend fun getCredentials(userName: String): Credentials? {
         return DatabaseFactory.dbQuery {
-            Users.select { Users.userName.eq(userName) }.map {resultRowToUser(it)}.singleOrNull()
+            Users.select { Users.userName.eq(userName) }.map { resultRowToUser(it) }.singleOrNull()
         }
     }
 
@@ -43,9 +43,31 @@ class CredentialsDatabaseRepository: CredentialsRepository {
         }
     }
 
+    object CredentialsRoles : Table("credentials_roles") {
+        val userName = varchar("user_name", 48)
+        val role = varchar("role", 48)
+
+        override val primaryKey = PrimaryKey(userName, role)
+    }
+
+    object RolesActivities : Table("roles_activities") {
+        val role = varchar("role", 48)
+        val activity = varchar("activity", 128)
+
+        override val primaryKey = PrimaryKey(role, activity)
+    }
+
+    override suspend fun getActivities(user: String): List<Activity> {
+        return DatabaseFactory.dbQuery {
+            CredentialsRoles.join(RolesActivities, JoinType.INNER, null, null) {
+                CredentialsRoles.role eq RolesActivities.role
+            }.select { CredentialsRoles.userName.eq(user) }.map { it[RolesActivities.activity] }
+        }
+    }
+
     override suspend fun state(): List<Credentials> {
         return DatabaseFactory.dbQuery {
-             Users.selectAll().map { resultRowToUser(it) }
+            Users.selectAll().map { resultRowToUser(it) }
         }
     }
 }

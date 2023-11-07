@@ -1,9 +1,13 @@
 package com.kos.credentials.repository
 
+import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
+import com.kos.credentials.Role
 
 class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableListOf()) : CredentialsRepository {
     private val users = mutableListOf<Credentials>()
+    private val userRoles = mutableMapOf<String, List<Role>>()
+    private val roleActivities = mutableMapOf<String, List<Activity>>()
 
     init {
         users.addAll(initialState)
@@ -15,6 +19,10 @@ class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableLis
 
     override suspend fun insertCredentials(credentials: Credentials): Unit {
         users.add(credentials)
+    }
+
+    override suspend fun getActivities(user: String): List<Activity> {
+        return userRoles[user]?.flatMap { roleActivities[it].orEmpty() }.orEmpty()
     }
 
     override suspend fun state(): List<Credentials> {

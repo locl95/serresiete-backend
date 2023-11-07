@@ -37,6 +37,10 @@ class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : Views
         return ViewSuccess(id)
     }
 
+    override suspend fun getViews(): List<SimpleView> {
+        return views
+    }
+
     override suspend fun state(): List<SimpleView> {
         return views
     }

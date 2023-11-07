@@ -1,6 +1,5 @@
 package com.kos.credentials
 
-import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -24,6 +23,16 @@ class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
             repository.insertCredentials(Credentials("test", "test"))
             assertTrue(repository.state().size == 1)
             assertTrue(repository.state().all { it.userName == "test" && it.password == "test" } )
+        }
+    }
+
+    @Test
+    override fun ICanEditCredentials() {
+        runBlocking {
+            val repository = CredentialsInMemoryRepository(listOf(Credentials("test", "test")))
+            assertTrue(repository.state().size == 1)
+            repository.editCredentials("test", "newPasswd")
+            assertTrue(repository.state().all { it.userName == "test" && it.password == "newPasswd" } )
         }
     }
 

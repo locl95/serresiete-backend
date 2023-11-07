@@ -34,4 +34,13 @@ class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest {
             assertTrue(repository.state().contains(Credentials("test" ,"test" )))
         }
     }
+
+    @Test
+    override fun ICanModifyMyPassword() {
+        runBlocking {
+            val repository = CredentialsDatabaseRepository().withState(listOf(Credentials("test", "test")))
+            repository.editCredentials("test", "newPasswd")
+            assertTrue(repository.state().contains(Credentials("test" ,"newPasswd" )))
+        }
+    }
 }

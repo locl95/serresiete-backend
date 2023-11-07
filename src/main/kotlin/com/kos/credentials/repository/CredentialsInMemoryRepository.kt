@@ -1,5 +1,6 @@
 package com.kos.credentials.repository
 
+import com.kos.common.isDefined
 import com.kos.credentials.Credentials
 
 class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableListOf()) : CredentialsRepository {
@@ -15,6 +16,11 @@ class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableLis
 
     override suspend fun insertCredentials(credentials: Credentials): Unit {
         users.add(credentials)
+    }
+
+    override suspend fun editCredentials(userName: String, newPassword: String): Unit {
+        val index = users.map { it.userName }.indexOf(userName)
+        users[index] = Credentials(userName, newPassword)
     }
 
     override suspend fun state(): List<Credentials> {

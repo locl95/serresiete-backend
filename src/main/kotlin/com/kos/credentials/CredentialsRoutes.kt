@@ -24,7 +24,7 @@ fun Route.credentialsRouting(credentialsService: CredentialsService) {
 
         authenticate("auth-bearer") {
             put {
-                when (val userName = call.principal<UserIdPrincipal>()) {
+                when (call.principal<UserIdPrincipal>()) {
                     null -> call.respond(HttpStatusCode.Unauthorized)
                     else -> {
                         credentialsService.editCredentials(call.receive())

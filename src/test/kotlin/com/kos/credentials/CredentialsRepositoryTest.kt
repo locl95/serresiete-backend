@@ -8,5 +8,5 @@ interface CredentialsRepositoryTest {
     @Test
     fun ICanInsertCredentials(): Unit
     @Test
-    fun ICanModifyMyPassword(): Unit
+    fun ICanEditCredentials(): Unit
 }

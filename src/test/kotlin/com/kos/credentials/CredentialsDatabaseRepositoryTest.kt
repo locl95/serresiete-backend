@@ -36,7 +36,7 @@ class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest {
     }
 
     @Test
-    override fun ICanModifyMyPassword() {
+    override fun ICanEditCredentials() {
         runBlocking {
             val repository = CredentialsDatabaseRepository().withState(listOf(Credentials("test", "test")))
             repository.editCredentials("test", "newPasswd")

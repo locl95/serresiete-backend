@@ -27,7 +27,7 @@ class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
     }
 
     @Test
-    override fun ICanModifyMyPassword() {
+    override fun ICanEditCredentials() {
         runBlocking {
             val repository = CredentialsInMemoryRepository(listOf(Credentials("test", "test")))
             assertTrue(repository.state().size == 1)

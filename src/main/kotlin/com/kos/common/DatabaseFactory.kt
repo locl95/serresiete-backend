@@ -18,9 +18,6 @@ object DatabaseFactory {
 
     fun init(mustClean: Boolean) {
 
-        println(user)
-        println(password)
-
         fun hikari(): DataSource {
             val config = HikariConfig()
             config.driverClassName = driver

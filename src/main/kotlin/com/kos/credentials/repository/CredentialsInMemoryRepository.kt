@@ -1,6 +1,5 @@
 package com.kos.credentials.repository
 
-import com.kos.common.isDefined
 import com.kos.credentials.Credentials
 
 class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableListOf()) : CredentialsRepository {

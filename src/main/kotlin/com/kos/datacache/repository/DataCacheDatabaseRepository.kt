@@ -8,7 +8,7 @@ import javax.xml.crypto.Data
 
 class DataCacheDatabaseRepository : DataCacheRepository {
 
-    suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
+    override suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
         dbQuery {
             DataCaches.batchInsert(initialState) {
                 this[DataCaches.characterId] = it.characterId

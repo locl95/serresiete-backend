@@ -3,14 +3,28 @@ package com.kos.credentials.repository
 import com.kos.common.DatabaseFactory
 import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
+import com.kos.credentials.CredentialsRole
+import com.kos.credentials.RoleActivity
 import org.jetbrains.exposed.sql.*
 
 class CredentialsDatabaseRepository : CredentialsRepository {
-    suspend fun withState(initialState: List<Credentials>): CredentialsDatabaseRepository {
+    override suspend fun withState(initialState: CredentialsRepositoryState): CredentialsDatabaseRepository {
         DatabaseFactory.dbQuery {
-            Users.batchInsert(initialState) {
+            Users.batchInsert(initialState.users) {
                 this[Users.userName] = it.userName
                 this[Users.password] = it.password
+            }
+            CredentialsRoles.batchInsert(initialState.credentialsRoles.flatMap { (userName, roles) ->
+                roles.map { Pair(userName, it) }
+            }) {
+                this[CredentialsRoles.userName] = it.first
+                this[CredentialsRoles.role] = it.second
+            }
+            RolesActivities.batchInsert(initialState.rolesActivities.flatMap { (role, activities) ->
+                activities.map { Pair(role, it) }
+            }) {
+                this[RolesActivities.role] = it.first
+                this[RolesActivities.activity] = it.second
             }
         }
         return this
@@ -50,12 +64,22 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         override val primaryKey = PrimaryKey(userName, role)
     }
 
+    private fun resultRowToCredentialsRoles(row: ResultRow) = CredentialsRole(
+        row[CredentialsRoles.userName],
+        row[CredentialsRoles.role]
+    )
+
     object RolesActivities : Table("roles_activities") {
         val role = varchar("role", 48)
         val activity = varchar("activity", 128)
 
         override val primaryKey = PrimaryKey(role, activity)
     }
+
+    private fun resultRowToRolesActivities(row: ResultRow) = RoleActivity(
+        row[RolesActivities.role],
+        row[RolesActivities.activity]
+    )
 
     override suspend fun getActivities(user: String): List<Activity> {
         return DatabaseFactory.dbQuery {
@@ -73,9 +97,15 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         }
     }
 
-    override suspend fun state(): List<Credentials> {
+    override suspend fun state(): CredentialsRepositoryState {
         return DatabaseFactory.dbQuery {
-            Users.selectAll().map { resultRowToUser(it) }
+            CredentialsRepositoryState(
+                Users.selectAll().map { resultRowToUser(it) },
+                CredentialsRoles.selectAll().map { resultRowToCredentialsRoles(it) }.groupBy { it.userName }
+                    .mapValues { it.value.map { cr -> cr.role } },
+                RolesActivities.selectAll().map { resultRowToRolesActivities(it) }.groupBy { it.role }
+                    .mapValues { it.value.map { cr -> cr.activity } }
+            )
         }
     }
 }

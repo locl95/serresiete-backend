@@ -16,7 +16,7 @@ class AuthServiceTest {
     @Test
     fun ICanValidateToken() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization))
+            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
             val authService = AuthService(authInMemoryRepository)
             assertTrue(authService.validateTokenAndReturnUsername(token).contains(basicAuthorization.userName))
         }
@@ -26,7 +26,7 @@ class AuthServiceTest {
     fun ICanValidateExpiredToken() {
         val validUntil = OffsetDateTime.now().minusHours(1)
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization.copy(validUntil = validUntil)))
+            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = validUntil)))
             val authService = AuthService(authInMemoryRepository)
             val userNameOrError = authService.validateTokenAndReturnUsername(token)
             assertEquals(userNameOrError, Either.Left(TokenExpired(token, validUntil)))
@@ -36,7 +36,7 @@ class AuthServiceTest {
     @Test
     fun ICanValidatePersistentToken() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization.copy(validUntil = null)))
+            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = null)))
             val authService = AuthService(authInMemoryRepository)
             val userNameOrError = authService.validateTokenAndReturnUsername(token)
             assertEquals(userNameOrError, Either.Right(user))

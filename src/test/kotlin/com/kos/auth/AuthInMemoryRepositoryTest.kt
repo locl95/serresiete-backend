@@ -14,8 +14,8 @@ import kotlin.test.assertTrue
 class AuthInMemoryRepositoryTest : AuthRepositoryTest {
     @Test
     override fun ICanGetAuthorizations() {
-        val authInMemoryRepository = AuthInMemoryRepository(listOf(basicAuthorization))
         runBlocking {
+            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
             assertEquals(
                 authInMemoryRepository.getAuthorization(token),
                 basicAuthorization
@@ -35,9 +35,7 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
 
     override fun ICanDeleteAuthorizations() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository(
-                listOf(basicAuthorization)
-            )
+            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
             assertTrue(authInMemoryRepository.deleteToken(token))
             assertTrue(authInMemoryRepository.state().isEmpty())
         }

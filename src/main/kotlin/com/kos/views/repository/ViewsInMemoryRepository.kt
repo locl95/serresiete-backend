@@ -1,17 +1,12 @@
 package com.kos.views.repository
 
-import arrow.core.Either
-import com.kos.characters.Character
-import com.kos.views.*
-import java.util.UUID
+import com.kos.views.SimpleView
+import com.kos.views.ViewSuccess
+import java.util.*
 
-class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : ViewsRepository {
+class ViewsInMemoryRepository : ViewsRepository {
 
     private val views: MutableList<SimpleView> = mutableListOf()
-
-    init {
-        this.views.addAll(initialState)
-    }
 
     override suspend fun getOwnViews(owner: String): List<SimpleView> = views.filter { it.owner == owner }
 
@@ -43,5 +38,10 @@ class ViewsInMemoryRepository(initialState: List<SimpleView> = listOf()) : Views
 
     override suspend fun state(): List<SimpleView> {
         return views
+    }
+
+    override suspend fun withState(initialState: List<SimpleView>): ViewsInMemoryRepository {
+        views.addAll(initialState)
+        return this
     }
 }

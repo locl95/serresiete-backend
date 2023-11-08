@@ -9,7 +9,7 @@ import java.util.*
 
 class ViewsDatabaseRepository : ViewsRepository {
 
-    suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
+    override suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
         dbQuery {
             Views.batchInsert(initialState) {
                 this[Views.id] = it.id

@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 class CharactersDatabaseRepository : CharactersRepository {
 
-    suspend fun withState(initialState: List<Character>): CharactersDatabaseRepository {
+    override suspend fun withState(initialState: List<Character>): CharactersDatabaseRepository {
         dbQuery {
             Characters.batchInsert(initialState) {
                 this[Characters.id] = it.id

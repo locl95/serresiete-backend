@@ -9,4 +9,6 @@ interface CredentialsRepositoryTest {
     fun ICanInsertCredentials(): Unit
     @Test
     fun ICanEditCredentials(): Unit
+    @Test
+    fun ICanGetActivities(): Unit
 }

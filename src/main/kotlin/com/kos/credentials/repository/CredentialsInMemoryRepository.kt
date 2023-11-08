@@ -4,14 +4,10 @@ import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
 import com.kos.credentials.Role
 
-class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableListOf()) : CredentialsRepository {
+class CredentialsInMemoryRepository : CredentialsRepository {
     private val users = mutableListOf<Credentials>()
     private val userRoles = mutableMapOf<String, List<Role>>()
     private val roleActivities = mutableMapOf<String, List<Activity>>()
-
-    init {
-        users.addAll(initialState)
-    }
 
     override suspend fun getCredentials(userName: String): Credentials? {
         return users.find { it.userName == userName }
@@ -30,7 +26,14 @@ class CredentialsInMemoryRepository(initialState: List<Credentials> = mutableLis
         users[index] = Credentials(userName, newPassword)
     }
 
-    override suspend fun state(): List<Credentials> {
-        return users
+    override suspend fun state(): CredentialsRepositoryState {
+        return CredentialsRepositoryState(users, userRoles, roleActivities)
+    }
+
+    override suspend fun withState(initialState: CredentialsRepositoryState): CredentialsInMemoryRepository {
+        users.addAll(initialState.users)
+        userRoles.putAll(initialState.credentialsRoles)
+        roleActivities.putAll(initialState.rolesActivities)
+        return this
     }
 }

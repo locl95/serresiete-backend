@@ -11,7 +11,7 @@ class AuthDatabaseRepository : AuthRepository {
 
     private val hoursBeforeExpiration = 24L
 
-    suspend fun withState(initialState: List<Authorization>): AuthDatabaseRepository {
+    override suspend fun withState(initialState: List<Authorization>): AuthDatabaseRepository {
         dbQuery {
             Authorizations.batchInsert(initialState) {
                 this[Authorizations.userName] = it.userName

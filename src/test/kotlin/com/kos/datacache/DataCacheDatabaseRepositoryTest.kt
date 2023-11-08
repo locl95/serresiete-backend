@@ -19,32 +19,40 @@ class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTest {
 
     @Test
     override fun ICanInsertData() {
-        val repo = DataCacheDatabaseRepository()
-        runBlocking { assertEquals(listOf(), repo.state()) }
-        runBlocking { assertEquals(true, repo.insert(dataCache)) }
-        runBlocking { assertEquals(listOf(dataCache), repo.state()) }
+        runBlocking {
+            val repo = DataCacheDatabaseRepository()
+            assertEquals(listOf(), repo.state())
+            assertEquals(true, repo.insert(dataCache))
+            assertEquals(listOf(dataCache), repo.state())
+        }
     }
 
     @Test
     override fun ICanUpdateData() {
-        val repo = runBlocking { DataCacheDatabaseRepository().withState(listOf(outdatedDataCache)) }
-        runBlocking { assertEquals(listOf(outdatedDataCache), repo.state()) }
-        runBlocking { assertEquals(true, repo.update(dataCache)) }
-        runBlocking { assertEquals(listOf(dataCache), repo.state()) }
+        runBlocking {
+            val repo = DataCacheDatabaseRepository().withState(listOf(outdatedDataCache))
+            assertEquals(listOf(outdatedDataCache), repo.state())
+            assertEquals(true, repo.update(dataCache))
+            assertEquals(listOf(dataCache), repo.state())
+        }
     }
 
     @Test
     override fun ICanUpdateDataWithMoreThan2Characters() {
-        val outdatedDataCache2 = outdatedDataCache.copy(characterId = 2)
-        val repo = runBlocking { DataCacheDatabaseRepository().withState(listOf(outdatedDataCache, outdatedDataCache2)) }
-        runBlocking { assertEquals(listOf(outdatedDataCache, outdatedDataCache2), repo.state()) }
-        runBlocking { assertEquals(true, repo.update(dataCache)) }
-        runBlocking { assertEquals(listOf(dataCache, outdatedDataCache2), repo.state()) }
+        runBlocking {
+            val outdatedDataCache2 = outdatedDataCache.copy(characterId = 2)
+            val repo = DataCacheDatabaseRepository().withState(listOf(outdatedDataCache, outdatedDataCache2))
+            assertEquals(listOf(outdatedDataCache, outdatedDataCache2), repo.state())
+            assertEquals(true, repo.update(dataCache))
+            assertEquals(listOf(dataCache, outdatedDataCache2), repo.state())
+        }
     }
 
     @Test
     override fun ICanGetData() {
-        val repo = runBlocking { DataCacheDatabaseRepository().withState(listOf(dataCache)) }
-        runBlocking { assertEquals(dataCache, repo.get(1)) }
+        runBlocking {
+            val repo = DataCacheDatabaseRepository().withState(listOf(dataCache))
+            assertEquals(dataCache, repo.get(1))
+        }
     }
 }

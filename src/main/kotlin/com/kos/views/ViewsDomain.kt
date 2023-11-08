@@ -3,7 +3,6 @@ package com.kos.views
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
 import kotlinx.serialization.Serializable
-import java.util.*
 
 @Serializable
 data class SimpleView(val id: String, val name: String, val owner: String, val characterIds: List<Long>)

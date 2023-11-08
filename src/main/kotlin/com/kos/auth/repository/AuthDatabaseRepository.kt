@@ -1,7 +1,6 @@
 package com.kos.auth.repository
 
-import arrow.core.Either
-import com.kos.auth.*
+import com.kos.auth.Authorization
 import com.kos.common.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -12,13 +11,9 @@ class AuthDatabaseRepository : AuthRepository {
 
     private val hoursBeforeExpiration = 24L
 
-    suspend fun withState(initialState: Pair<List<User>, List<Authorization>>): AuthDatabaseRepository {
+    override suspend fun withState(initialState: List<Authorization>): AuthDatabaseRepository {
         dbQuery {
-            Users.batchInsert(initialState.first) {
-                this[Users.userName] = it.userName
-                this[Users.password] = it.password
-            }
-            Authorizations.batchInsert(initialState.second) {
+            Authorizations.batchInsert(initialState) {
                 this[Authorizations.userName] = it.userName
                 this[Authorizations.token] = it.token
                 this[Authorizations.lastUsed] = it.lastUsed.toString()
@@ -27,18 +22,6 @@ class AuthDatabaseRepository : AuthRepository {
         }
         return this
     }
-
-    object Users : Table() {
-        val userName = varchar("user_name", 48)
-        val password = varchar("password", 48)
-
-        override val primaryKey = PrimaryKey(userName)
-    }
-
-    private fun resultRowToUser(row: ResultRow) = User(
-        row[Users.userName],
-        row[Users.password]
-    )
 
     object Authorizations : Table() {
         val userName = varchar("user_name", 48)
@@ -77,32 +60,15 @@ class AuthDatabaseRepository : AuthRepository {
         return true
     }
 
-    override suspend fun validateCredentials(userName: String, password: String): Boolean =
-        when (dbQuery {
-            Users.select { Users.userName.eq(userName) and Users.password.eq(password) }.singleOrNull()
-        }) {
-            null -> false
-            else -> true
-        }
-
-    override suspend fun validateToken(token: String): Either<TokenError, String> =
-        when (val maybeAuthorization = dbQuery {
-            Authorizations.select { Authorizations.token eq token }.singleOrNull()
-        }?.let { resultRowToAuthorization(it) }) {
-            null -> Either.Left(TokenNotFound(token))
-            else -> {
-                maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                    Either.Left(TokenExpired(maybeAuthorization.token, it))
-                } ?: Either.Right(maybeAuthorization.userName)
-            }
-        }
-
-    override suspend fun state(): Pair<List<User>, List<Authorization>> {
+    override suspend fun getAuthorization(token: String): Authorization? {
         return dbQuery {
-            Pair(
-                Users.selectAll().map { resultRowToUser(it) },
-                Authorizations.selectAll().map { resultRowToAuthorization(it) }
-            )
+            Authorizations.select { Authorizations.token eq token }.map { resultRowToAuthorization(it) }.singleOrNull()
+        }
+    }
+
+    override suspend fun state(): List<Authorization> {
+        return dbQuery {
+            Authorizations.selectAll().map { resultRowToAuthorization(it) }
         }
     }
 }

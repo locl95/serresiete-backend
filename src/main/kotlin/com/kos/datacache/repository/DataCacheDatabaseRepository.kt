@@ -4,11 +4,10 @@ import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import org.jetbrains.exposed.sql.*
 import java.time.OffsetDateTime
-import javax.xml.crypto.Data
 
 class DataCacheDatabaseRepository : DataCacheRepository {
 
-    suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
+    override suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
         dbQuery {
             DataCaches.batchInsert(initialState) {
                 this[DataCaches.characterId] = it.characterId

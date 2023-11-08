@@ -1,25 +1,13 @@
 package com.kos.auth.repository
 
-import arrow.core.Either
-import com.kos.auth.*
+import com.kos.auth.Authorization
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
-class AuthInMemoryRepository(
-    initialState: Pair<List<User>, List<Authorization>> = Pair(
-        mutableListOf(),
-        mutableListOf()
-    )
-) : AuthRepository {
+class AuthInMemoryRepository : AuthRepository {
 
     private val hoursBeforeExpiration: Long = 24
-    private val users = mutableListOf<User>()
     private val authorizations = mutableListOf<Authorization>()
-
-    init {
-        users.addAll(initialState.first)
-        authorizations.addAll(initialState.second)
-    }
 
     override suspend fun insertToken(userName: String): Authorization {
         val authorization = Authorization(
@@ -32,24 +20,17 @@ class AuthInMemoryRepository(
     }
 
     override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
-
-    override suspend fun validateCredentials(userName: String, password: String): Boolean {
-        return users.contains(User(userName, password))
+    override suspend fun getAuthorization(token: String): Authorization? {
+        return  authorizations.find { it.token == token }
     }
 
-    override suspend fun validateToken(token: String): Either<TokenError, String> {
-        return when (val authorization = authorizations.find { it.token == token }) {
-            null -> Either.Left(TokenNotFound(token))
-            else -> {
-                authorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                    Either.Left(TokenExpired(authorization.token, it))
-                } ?: Either.Right(authorization.userName)
-            }
-        }
+    override suspend fun state(): List<Authorization> {
+        return authorizations
     }
 
-    override suspend fun state(): Pair<List<User>, List<Authorization>> {
-        return Pair(users, authorizations)
+    override suspend fun withState(initialState: List<Authorization>): AuthInMemoryRepository {
+        authorizations.addAll(initialState)
+        return this
     }
 
 }

@@ -9,7 +9,7 @@ import java.util.*
 
 class ViewsDatabaseRepository : ViewsRepository {
 
-    suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
+    override suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
         dbQuery {
             Views.batchInsert(initialState) {
                 this[Views.id] = it.id
@@ -34,12 +34,15 @@ class ViewsDatabaseRepository : ViewsRepository {
         override val primaryKey = PrimaryKey(id)
     }
 
-    private fun resultRowToSimpleView(row: ResultRow, characters: List<Long>) = SimpleView(
-        row[Views.id],
-        row[Views.name],
-        row[Views.owner],
-        characters
-    )
+    private fun resultRowToSimpleView(row: ResultRow): SimpleView {
+        return SimpleView(
+            row[Views.id],
+            row[Views.name],
+            row[Views.owner],
+            CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
+                .map { resultRowToCharacterView(it).first }
+        )
+    }
 
     object CharactersView : Table() {
         val characterId = long("character_id")
@@ -55,25 +58,13 @@ class ViewsDatabaseRepository : ViewsRepository {
 
     override suspend fun getOwnViews(owner: String): List<SimpleView> {
         return dbQuery {
-            Views.select { Views.owner.eq(owner) }.map { viewsRes ->
-                resultRowToSimpleView(
-                    viewsRes,
-                    CharactersView.select { CharactersView.viewId.eq(viewsRes[Views.id]) }
-                        .map { resultRowToCharacterView(it).first }
-                )
-            }
+            Views.select { Views.owner.eq(owner) }.map { resultRowToSimpleView(it) }
         }
     }
 
     override suspend fun get(id: String): SimpleView? {
         return dbQuery {
-            Views.select { Views.id.eq(id) }.map { viewsRes ->
-                resultRowToSimpleView(
-                    viewsRes,
-                    CharactersView.select { CharactersView.viewId.eq(viewsRes[Views.id]) }
-                        .map { resultRowToCharacterView(it).first }
-                )
-            }
+            Views.select { Views.id.eq(id) }.map { resultRowToSimpleView(it) }
         }.singleOrNull()
     }
 
@@ -108,21 +99,15 @@ class ViewsDatabaseRepository : ViewsRepository {
     }
 
     override suspend fun delete(id: String): ViewSuccess {
-        dbQuery {
-            Views.deleteWhere { Views.id.eq(id) }
-        }
+        dbQuery { Views.deleteWhere { Views.id.eq(id) } }
         return ViewSuccess(id)
     }
 
+    override suspend fun getViews(): List<SimpleView> {
+        return dbQuery { Views.selectAll().map { resultRowToSimpleView(it) } }
+    }
+
     override suspend fun state(): List<SimpleView> {
-        return dbQuery {
-            Views.selectAll().map { viewsRes ->
-                resultRowToSimpleView(
-                    viewsRes,
-                    CharactersView.select { CharactersView.viewId.eq(viewsRes[Views.id]) }
-                        .map { resultRowToCharacterView(it).first }
-                )
-            }
-        }
+        return dbQuery { Views.selectAll().map { resultRowToSimpleView(it) } }
     }
 }

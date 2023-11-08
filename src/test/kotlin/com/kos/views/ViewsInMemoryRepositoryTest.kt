@@ -1,6 +1,9 @@
 package com.kos.views
 
-import com.kos.views.repository.ViewsDatabaseRepository
+import com.kos.views.ViewsTestHelper.basicSimpleView
+import com.kos.views.ViewsTestHelper.id
+import com.kos.views.ViewsTestHelper.name
+import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.repository.ViewsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -9,61 +12,70 @@ import kotlin.test.assertEquals
 class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
     @Test
     override fun ICanRetrieveViews() {
-        val inMemoryRepository = ViewsInMemoryRepository(listOf(SimpleView("1", "name", "a", listOf())))
+
         runBlocking {
+            val inMemoryRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
             assertEquals(
-                listOf(SimpleView("1", "name", "a", listOf())),
-                inMemoryRepository.getOwnViews("a")
+                listOf(basicSimpleView),
+                inMemoryRepository.getOwnViews(owner)
             )
         }
     }
 
     @Test
     override fun ICanRetriveACertainView() {
-        val inMemoryRepository = ViewsInMemoryRepository(listOf(SimpleView("1", "name", "a", listOf())))
-        runBlocking { assertEquals((SimpleView("1", "name", "a", listOf())), inMemoryRepository.get("1")) }
+        runBlocking {
+            val inMemoryRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
+            assertEquals(basicSimpleView, inMemoryRepository.get(id))
+        }
     }
 
     @Test
     override fun IfNoViewsRetrievingReturnsNotFound() {
         val inMemoryRepository = ViewsInMemoryRepository()
-        runBlocking { assertEquals(null, inMemoryRepository.get("1")) }
+        runBlocking { assertEquals(null, inMemoryRepository.get(id)) }
     }
 
     @Test
     override fun ICanCreateAView() {
         val inMemoryRepository = ViewsInMemoryRepository()
         runBlocking {
-            assert(inMemoryRepository.create("name", "a", listOf()).isSuccess)
+            assert(inMemoryRepository.create(name, owner, listOf()).isSuccess)
             assert(inMemoryRepository.state().size == 1)
-            assert(inMemoryRepository.state().all { it.owner == "a" })
+            assert(inMemoryRepository.state().all { it.owner == owner })
         }
     }
 
     @Test
     override fun ICanEditAView() {
-        val inMemoryRepository = ViewsInMemoryRepository(listOf(SimpleView("1", "name", "a", listOf())))
-        val edit = runBlocking { inMemoryRepository.edit("1", "name2", listOf(1)) }
-        val finalState = runBlocking { inMemoryRepository.state() }
-        assertEquals(ViewSuccess("1"), edit)
-        assertEquals(finalState, listOf(SimpleView("1", "name2", "a", listOf(1))))
+        runBlocking {
+            val inMemoryRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
+            val edit = inMemoryRepository.edit(id, "name2", listOf(1))
+            val finalState =  inMemoryRepository.state()
+            assertEquals(ViewSuccess(id), edit)
+            assertEquals(finalState, listOf(basicSimpleView.copy(name = "name2", characterIds = listOf(1))))
+        }
     }
 
     @Test
     override fun ICanEditAViewModifyingMoreThanOneCharacter() {
-        val repository = runBlocking { ViewsInMemoryRepository((listOf(SimpleView("1", "name", "a", listOf(1))))) }
-        val edit = runBlocking { repository.edit("1", "name", listOf(1, 2, 3, 4)) }
-        val finalState = runBlocking { repository.state() }
-        assertEquals(ViewSuccess("1"), edit)
-        assertEquals(finalState, listOf(SimpleView("1", "name", "a", listOf(1, 2, 3, 4))))
+        runBlocking {
+            val repository =  ViewsInMemoryRepository().withState((listOf(basicSimpleView.copy(characterIds = listOf(1)))))
+            val edit = repository.edit(id, name, listOf(1, 2, 3, 4))
+            val finalState = repository.state()
+            assertEquals(ViewSuccess(id), edit)
+            assertEquals(finalState, listOf(basicSimpleView.copy(characterIds = listOf(1,2,3,4))))
+        }
     }
 
     @Test
     override fun ICanDeleteAView() {
-        val repository = runBlocking { ViewsInMemoryRepository((listOf(SimpleView("1", "name", "a", listOf(1))))) }
-        val delete = runBlocking { repository.delete("1") }
-        val finalState = runBlocking { repository.state() }
-        assertEquals(ViewSuccess("1"), delete)
-        assertEquals(finalState, listOf())
+        runBlocking {
+            val repository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
+            val delete = repository.delete(id)
+            val finalState =  repository.state()
+            assertEquals(ViewSuccess(id), delete)
+            assertEquals(finalState, listOf())
+        }
     }
 }

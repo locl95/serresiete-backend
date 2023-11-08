@@ -2,12 +2,8 @@ package com.kos.datacache.repository
 
 import com.kos.datacache.DataCache
 
-class DataCacheInMemoryRepository(initialState: List<DataCache> = listOf()): DataCacheRepository {
+class DataCacheInMemoryRepository : DataCacheRepository {
     private val cachedData: MutableList<DataCache> = mutableListOf()
-
-    init {
-        cachedData.addAll(initialState)
-    }
 
     override suspend fun insert(dataCache: DataCache) = cachedData.add(dataCache)
     override suspend fun update(dataCache: DataCache): Boolean {
@@ -17,4 +13,8 @@ class DataCacheInMemoryRepository(initialState: List<DataCache> = listOf()): Dat
 
     override suspend fun get(characterId: Long): DataCache? = cachedData.find { it.characterId == characterId }
     override suspend fun state(): List<DataCache> = cachedData
+    override suspend fun withState(initialState: List<DataCache>): DataCacheInMemoryRepository {
+        cachedData.addAll(initialState)
+        return this
+    }
 }

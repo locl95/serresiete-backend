@@ -29,6 +29,7 @@ class ViewsService(
     private val maxNumberOfViews: Int = 2
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
+    suspend fun getViews(): List<SimpleView> = viewsRepository.getViews()
     suspend fun get(id: String): View? {
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null

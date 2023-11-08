@@ -1,98 +1,48 @@
 package com.kos.auth
 
-import arrow.core.Either
-import arrow.core.contains
+import com.kos.auth.AuthTestHelper.basicAuthorization
+import com.kos.auth.AuthTestHelper.token
+import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AuthDatabaseRepositoryTest: AuthRepositoryTest {
+class AuthDatabaseRepositoryTest : AuthRepositoryTest {
 
     @Before
     fun beforeEach() {
         DatabaseFactory.init(mustClean = true)
     }
 
-    @Test
-    override fun ICanValidateCredentials() {
+    override fun ICanGetAuthorizations() {
         runBlocking {
-            val repository = AuthDatabaseRepository().withState(Pair(listOf(User("test", "test")), listOf()))
-            assertTrue(repository.validateCredentials("test", "test"))
-        }
-    }
-    @Test
-    override fun ICanValidateToken() {
-        runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-                )
-            )
-            assertTrue(repository.validateToken("test").contains("test"))
-            assertEquals(1, repository.state().second.size)
+            val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
+            assertEquals(repository.getAuthorization(token), basicAuthorization)
         }
     }
 
     @Test
-    override fun ICanValidateExpiredToken() {
-        runBlocking {
-            val validUntil = OffsetDateTime.now().minusHours(1)
-            val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), validUntil))
-                )
-            )
-            val tokenOrError = repository.validateToken("test")
-            assertEquals(tokenOrError, Either.Left(TokenExpired("test", validUntil)))
-            assertEquals(1, repository.state().second.size)
-        }
-    }
-
-    @Test
-    override fun ICanValidatePersistentToken() {
-        runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), null))
-                )
-            )
-            val tokenOrError = repository.validateToken("test")
-            assertEquals(tokenOrError, Either.Right("test"))
-            assertEquals(1, repository.state().second.size)
-        }
-    }
-
-    @Test
-    override fun ICanLogin() {
+    override fun ICanInsertAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository()
-            val userName = repository.insertToken("test")?.userName
-            assertEquals("test", userName)
-            val finalStateOfAuthorizations = repository.state().second
-            assertContains(finalStateOfAuthorizations.map { it.userName }, "test")
+            val userName = repository.insertToken(user)?.userName
+            assertEquals(user, userName)
+            val finalStateOfAuthorizations = repository.state()
+            assertContains(finalStateOfAuthorizations.map { it.userName }, user)
         }
     }
 
     @Test
-    override fun ICanLogout() {
+    override fun ICanDeleteAuthorizations() {
         runBlocking {
-            val repository = AuthDatabaseRepository().withState(
-                Pair(
-                    listOf(),
-                    listOf(Authorization("test", "test", OffsetDateTime.now(), OffsetDateTime.now().plusHours(24)))
-                )
-            )
-            assertTrue(repository.deleteToken("test"))
-            assertTrue(repository.state().second.isEmpty())
+            val repository = AuthDatabaseRepository().withState(listOf(basicAuthorization))
+            assertTrue(repository.deleteToken(token))
+            assertTrue(repository.state().isEmpty())
         }
     }
 }

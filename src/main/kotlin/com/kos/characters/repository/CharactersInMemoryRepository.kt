@@ -3,12 +3,8 @@ package com.kos.characters.repository
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
 
-class CharactersInMemoryRepository(initialState: List<Character> = listOf()): CharactersRepository {
+class CharactersInMemoryRepository : CharactersRepository {
     val characters: MutableList<Character> = mutableListOf()
-
-    init {
-        characters.addAll(initialState)
-    }
 
     private fun nextId(): Long {
         return if (characters.isEmpty()) 1
@@ -26,6 +22,11 @@ class CharactersInMemoryRepository(initialState: List<Character> = listOf()): Ch
 
     override suspend fun state(): List<Character> {
         return characters
+    }
+
+    override suspend fun withState(initialState: List<Character>): CharactersInMemoryRepository {
+        characters.addAll(initialState)
+        return this
     }
 
 }

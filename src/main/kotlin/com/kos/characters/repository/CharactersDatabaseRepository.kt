@@ -3,8 +3,6 @@ package com.kos.characters.repository
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
 import com.kos.common.DatabaseFactory.dbQuery
-import com.kos.views.SimpleView
-import com.kos.views.repository.ViewsDatabaseRepository
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 

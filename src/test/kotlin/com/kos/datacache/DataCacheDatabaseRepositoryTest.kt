@@ -4,7 +4,6 @@ import com.kos.common.DatabaseFactory
 import com.kos.datacache.TestHelper.dataCache
 import com.kos.datacache.TestHelper.outdatedDataCache
 import com.kos.datacache.repository.DataCacheDatabaseRepository
-import com.kos.datacache.repository.DataCacheInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import kotlin.test.Test

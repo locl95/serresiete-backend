@@ -4,7 +4,6 @@ import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import org.jetbrains.exposed.sql.*
 import java.time.OffsetDateTime
-import javax.xml.crypto.Data
 
 class DataCacheDatabaseRepository : DataCacheRepository {
 

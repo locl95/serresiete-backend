@@ -5,7 +5,6 @@ import com.kos.auth.AuthTestHelper.token
 import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthInMemoryRepository
 import kotlinx.coroutines.runBlocking
-import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals

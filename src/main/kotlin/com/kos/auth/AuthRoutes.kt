@@ -1,7 +1,6 @@
 package com.kos.auth
 
 import com.kos.credentials.Activities
-import com.kos.credentials.Activity
 import com.kos.credentials.CredentialsService
 import io.ktor.http.*
 import io.ktor.server.application.*

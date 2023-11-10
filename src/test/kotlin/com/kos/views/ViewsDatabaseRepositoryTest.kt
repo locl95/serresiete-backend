@@ -55,7 +55,7 @@ class ViewsDatabaseRepositoryTest : ViewsRepositoryTest {
                 ViewsDatabaseRepository().withState(listOf(SimpleView("1", "name", "a", listOf())))
             val edit = repository.edit("1", "name2", listOf(1))
             val finalState = repository.state()
-            assertEquals(ViewSuccess("1"), edit)
+            assertEquals(ViewModified("1", listOf(1)), edit)
             assertEquals(finalState, listOf(SimpleView("1", "name2", "a", listOf(1))))
         }
     }
@@ -66,7 +66,7 @@ class ViewsDatabaseRepositoryTest : ViewsRepositoryTest {
             val repository = ViewsDatabaseRepository().withState(listOf(SimpleView("1", "name", "a", listOf(1))))
             val edit = repository.edit("1", "name", listOf(1, 2, 3, 4))
             val finalState = repository.state()
-            assertEquals(ViewSuccess("1"), edit)
+            assertEquals(ViewModified("1", listOf(1,2,3,4)), edit)
             assertEquals(finalState, listOf(SimpleView("1", "name", "a", listOf(1, 2, 3, 4))))
         }
     }
@@ -77,7 +77,7 @@ class ViewsDatabaseRepositoryTest : ViewsRepositoryTest {
             val repository = ViewsDatabaseRepository().withState(listOf(SimpleView("1", "name", "a", listOf(1))))
             val delete = repository.delete("1")
             val finalState = repository.state()
-            assertEquals(ViewSuccess("1"), delete)
+            assertEquals(ViewDeleted("1"), delete)
             assertEquals(finalState, listOf())
         }
     }

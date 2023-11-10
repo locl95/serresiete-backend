@@ -43,18 +43,18 @@ class ViewsService(
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, request: ViewRequest): Either<TooMuchViews, ViewSuccess> {
+    suspend fun create(owner: String, request: ViewRequest): Either<TooMuchViews, ViewModified> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
         val characterIds = charactersService.createAndReturnIds(request.characters)
         return Either.Right(viewsRepository.create(request.name, owner, characterIds))
     }
 
-    suspend fun edit(id: String, request: ViewRequest): ViewSuccess {
+    suspend fun edit(id: String, request: ViewRequest): ViewModified {
         val characters = charactersService.createAndReturnIds(request.characters)
         return viewsRepository.edit(id, request.name, characters)
     }
 
-    suspend fun delete(id: String): ViewSuccess {
+    suspend fun delete(id: String): ViewDeleted {
         return viewsRepository.delete(id)
     }
 

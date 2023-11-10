@@ -99,7 +99,7 @@ class ViewsServiceTest {
                             CharacterRequest("d", "r", "r")
                         )
                     )
-                ), ViewSuccess(id)
+                ), ViewModified(id, listOf(1,2,3,4))
             )
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }
@@ -115,7 +115,7 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().size == 1)
-            assertEquals(service.delete("1"), ViewSuccess("1"))
+            assertEquals(service.delete("1"), ViewDeleted("1"))
             assertTrue(viewsRepository.state().isEmpty())
         }
     }

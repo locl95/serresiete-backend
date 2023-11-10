@@ -19,7 +19,12 @@ sealed interface ViewResult {
 }
 
 @Serializable
-data class ViewSuccess(val viewId: String) : ViewResult {
+data class ViewDeleted(val viewId: String) : ViewResult {
+    override val isSuccess: Boolean = true
+}
+
+@Serializable
+data class ViewModified(val viewId: String, val characters: List<Long>) : ViewResult {
     override val isSuccess: Boolean = true
 }
 

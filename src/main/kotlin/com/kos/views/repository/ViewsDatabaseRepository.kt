@@ -2,7 +2,8 @@ package com.kos.views.repository
 
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.views.SimpleView
-import com.kos.views.ViewSuccess
+import com.kos.views.ViewDeleted
+import com.kos.views.ViewModified
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.util.*
@@ -68,7 +69,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewSuccess {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewModified {
         val id = UUID.randomUUID().toString()
         dbQuery {
             Views.insert {
@@ -81,10 +82,10 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewSuccess(id)
+        return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewSuccess {
+    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewModified {
         dbQuery {
             Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
@@ -95,12 +96,12 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewSuccess(id)
+        return ViewModified(id, characters)
     }
 
-    override suspend fun delete(id: String): ViewSuccess {
+    override suspend fun delete(id: String): ViewDeleted {
         dbQuery { Views.deleteWhere { Views.id.eq(id) } }
-        return ViewSuccess(id)
+        return ViewDeleted(id)
     }
 
     override suspend fun getViews(): List<SimpleView> {

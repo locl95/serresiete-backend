@@ -52,7 +52,7 @@ class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
             val inMemoryRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
             val edit = inMemoryRepository.edit(id, "name2", listOf(1))
             val finalState =  inMemoryRepository.state()
-            assertEquals(ViewSuccess(id), edit)
+            assertEquals(ViewModified(id, listOf(1)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(name = "name2", characterIds = listOf(1))))
         }
     }
@@ -63,7 +63,7 @@ class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
             val repository =  ViewsInMemoryRepository().withState((listOf(basicSimpleView.copy(characterIds = listOf(1)))))
             val edit = repository.edit(id, name, listOf(1, 2, 3, 4))
             val finalState = repository.state()
-            assertEquals(ViewSuccess(id), edit)
+            assertEquals(ViewModified(id, listOf(1,2,3,4)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(characterIds = listOf(1,2,3,4))))
         }
     }
@@ -74,7 +74,7 @@ class ViewsInMemoryRepositoryTest : ViewsRepositoryTest {
             val repository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
             val delete = repository.delete(id)
             val finalState =  repository.state()
-            assertEquals(ViewSuccess(id), delete)
+            assertEquals(ViewDeleted(id), delete)
             assertEquals(finalState, listOf())
         }
     }

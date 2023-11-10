@@ -127,8 +127,8 @@ fun Route.viewsRouting(viewsService: ViewsService, credentialsService: Credentia
                                         Activities.editOwnView
                                     )) || credentialsService.hasPermissions(userId.name, Activities.editAnyView)
                                 ) {
-                                    viewsService.edit(maybeView.id, call.receive())
-                                    call.respond(HttpStatusCode.OK)
+                                    val res = viewsService.edit(maybeView.id, call.receive())
+                                    call.respond(HttpStatusCode.OK, res)
                                 } else call.respond(HttpStatusCode.Forbidden)
                             }
                         }
@@ -150,8 +150,8 @@ fun Route.viewsRouting(viewsService: ViewsService, credentialsService: Credentia
                                         Activities.deleteOwnView
                                     )) || credentialsService.hasPermissions(userId.name, Activities.deleteAnyView)
                                 ) {
-                                    viewsService.delete(maybeView.id)
-                                    call.respond(HttpStatusCode.NoContent)
+                                    val res = viewsService.delete(maybeView.id)
+                                    call.respond(HttpStatusCode.OK, res)
                                 } else call.respond(HttpStatusCode.Forbidden)
                             }
                         }

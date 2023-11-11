@@ -30,7 +30,7 @@ class AuthDatabaseRepositoryTest : AuthRepositoryTest {
     override fun ICanInsertAuthorizations() {
         runBlocking {
             val repository = AuthDatabaseRepository()
-            val userName = repository.insertToken(user)?.userName
+            val userName = repository.insertToken(user, isAccess = true)?.userName
             assertEquals(user, userName)
             val finalStateOfAuthorizations = repository.state()
             assertContains(finalStateOfAuthorizations.map { it.userName }, user)

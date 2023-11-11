@@ -9,7 +9,8 @@ import java.util.*
 
 class AuthDatabaseRepository : AuthRepository {
 
-    private val hoursBeforeExpiration = 24L
+    private val daysBeforeAccessTokenExpires: Long = 1
+    private val daysBeforeRefreshTokenExpires: Long = 30
 
     override suspend fun withState(initialState: List<Authorization>): AuthDatabaseRepository {
         dbQuery {
@@ -18,6 +19,7 @@ class AuthDatabaseRepository : AuthRepository {
                 this[Authorizations.token] = it.token
                 this[Authorizations.lastUsed] = it.lastUsed.toString()
                 this[Authorizations.validUntil] = it.validUntil?.toString()
+                this[Authorizations.isAccess] = it.isAccess
             }
         }
         return this
@@ -28,6 +30,7 @@ class AuthDatabaseRepository : AuthRepository {
         val token = varchar("token", 128)
         val lastUsed = text("last_used")
         val validUntil = text("valid_until").nullable()
+        val isAccess = bool("is_access")
 
         override val primaryKey = PrimaryKey(token)
     }
@@ -39,15 +42,18 @@ class AuthDatabaseRepository : AuthRepository {
         row[Authorizations.validUntil]?.let {
             OffsetDateTime.parse(it)
         },
+        row[Authorizations.isAccess]
     )
 
-    override suspend fun insertToken(userName: String): Authorization? =
+    override suspend fun insertToken(userName: String, isAccess: Boolean): Authorization? =
         dbQuery {
             val insertStatement = Authorizations.insert {
                 it[Authorizations.userName] = userName
                 it[token] = UUID.randomUUID().toString()
                 it[lastUsed] = OffsetDateTime.now().toString()
-                it[validUntil] = OffsetDateTime.now().plusHours(hoursBeforeExpiration).toString()
+                it[validUntil] = OffsetDateTime.now()
+                    .plusDays(if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires).toString()
+                it[Authorizations.isAccess] = isAccess
             }
 
             insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) }

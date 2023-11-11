@@ -1,6 +1,6 @@
 package com.kos.credentials
 
-import com.kos.credentials.CredentialsTestHelper.basicCredentials
+import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
 import com.kos.credentials.CredentialsTestHelper.password
 import com.kos.credentials.CredentialsTestHelper.user
@@ -15,7 +15,7 @@ class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
     override fun ICanGetCredentials() {
         runBlocking {
             val credentialsInMemoryRepository = CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
-            assertEquals(credentialsInMemoryRepository.getCredentials(user), Credentials(user, password))
+            assertEquals(credentialsInMemoryRepository.getCredentials(user), encryptedCredentials)
         }
     }
 
@@ -24,9 +24,9 @@ class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest {
         runBlocking {
             val repository = CredentialsInMemoryRepository()
             assertTrue(repository.state().users.isEmpty())
-            repository.insertCredentials(basicCredentials)
+            repository.insertCredentials(encryptedCredentials)
             assertTrue(repository.state().users.size == 1)
-            assertTrue(repository.state().users.all { it.userName == user && it.password == password } )
+            assertTrue(repository.state().users.all { it.userName == user && it.password == encryptedCredentials.password } )
         }
     }
 

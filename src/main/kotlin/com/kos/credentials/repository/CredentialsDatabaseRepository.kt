@@ -32,7 +32,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
 
     object Users : Table() {
         val userName = varchar("user_name", 48)
-        val password = varchar("password", 48)
+        val password = varchar("password", 128)
 
         override val primaryKey = PrimaryKey(userName)
     }

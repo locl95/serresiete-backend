@@ -25,7 +25,7 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTest {
     override fun ICanInsertAuthorizations() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository()
-            val userName = authInMemoryRepository.insertToken(user).userName
+            val userName = authInMemoryRepository.insertToken(user, isAccess = true).userName
             assertEquals(user, userName)
             val finalStateOfAuthorizations = authInMemoryRepository.state()
             assertContains(finalStateOfAuthorizations.map { it.userName }, user)

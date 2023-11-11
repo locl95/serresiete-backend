@@ -6,14 +6,15 @@ import java.util.*
 
 class AuthInMemoryRepository : AuthRepository {
 
-    private val hoursBeforeExpiration: Long = 24
+    private val daysBeforeAccessTokenExpires: Long = 1
+    private val daysBeforeRefreshTokenExpires: Long = 30
     private val authorizations = mutableListOf<Authorization>()
 
-    override suspend fun insertToken(userName: String): Authorization {
+    override suspend fun insertToken(userName: String, isAccess: Boolean): Authorization {
         val authorization = Authorization(
-            userName, UUID.randomUUID().toString(), OffsetDateTime.now(), OffsetDateTime.now().plusHours(
-                hoursBeforeExpiration
-            )
+            userName, UUID.randomUUID().toString(), OffsetDateTime.now(), OffsetDateTime.now().plusDays(
+                if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires
+            ), isAccess
         )
         authorizations.add(authorization)
         return authorization
@@ -21,7 +22,7 @@ class AuthInMemoryRepository : AuthRepository {
 
     override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
     override suspend fun getAuthorization(token: String): Authorization? {
-        return  authorizations.find { it.token == token }
+        return authorizations.find { it.token == token }
     }
 
     override suspend fun state(): List<Authorization> {

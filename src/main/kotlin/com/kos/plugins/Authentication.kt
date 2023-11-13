@@ -7,6 +7,8 @@ import com.kos.credentials.CredentialsService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 
+data class UserWithToken(val name: String, val token: String) : Principal
+
 fun Application.configureAuthentication(authService: AuthService, credentialsService: CredentialsService) {
     install(Authentication) {
         basic("auth-basic") {
@@ -17,8 +19,16 @@ fun Application.configureAuthentication(authService: AuthService, credentialsSer
         }
         bearer("auth-bearer") {
             authenticate {
-                when(val eitherOwnerOrError = authService.validateTokenAndReturnUsername(it.token)) {
+                when(val eitherOwnerOrError = authService.validateTokenAndReturnUsername(it.token, isAccessRequest = true)) {
                     is Either.Right -> UserIdPrincipal(eitherOwnerOrError.value)
+                    else -> null
+                }
+            }
+        }
+        bearer("auth-bearer-refresh") {
+            authenticate {
+                when(val eitherOwnerOrError = authService.validateTokenAndReturnUsername(it.token, isAccessRequest = false)) {
+                    is Either.Right -> UserWithToken(eitherOwnerOrError.value, it.token)
                     else -> null
                 }
             }

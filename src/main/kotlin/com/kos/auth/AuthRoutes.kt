@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import com.kos.credentials.Activities
 import com.kos.credentials.CredentialsService
+import com.kos.plugins.UserWithToken
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -41,21 +42,15 @@ fun Route.authRouting(authService: AuthService, credentialsService: CredentialsS
             }
         }
         route("/refresh") {
-            authenticate("auth-bearer") {
+            authenticate("auth-bearer-refresh") {
                 post {
-                    when (call.principal<UserIdPrincipal>()) {
+                    when (val userWithToken = call.principal<UserWithToken>()) {
                         null -> call.respond(HttpStatusCode.Unauthorized)
-                        else -> {
-                            val token: String? = call.request.authorization()?.removePrefix("Bearer ")
-                            token?.let {
-                                when (val tokenOrError = authService.refresh(it)) {
-                                    is Either.Left -> call.respond(HttpStatusCode.BadRequest, tokenOrError.left())
-                                    is Either.Right -> tokenOrError.value?.let { auth ->
-                                        call.respond(HttpStatusCode.OK, auth)
-                                    } ?: call.respond(HttpStatusCode.NotFound)
-                                }
-                                call.respond(HttpStatusCode.OK, authService.refresh(it))
-                            } ?: call.respond(HttpStatusCode.Unauthorized)
+                        else -> when (val tokenOrError = authService.refresh(userWithToken.token)) {
+                            is Either.Left -> call.respond(HttpStatusCode.BadRequest, tokenOrError.left())
+                            is Either.Right -> tokenOrError.value?.let { auth ->
+                                call.respond(HttpStatusCode.OK, auth)
+                            } ?: call.respond(HttpStatusCode.NotFound)
                         }
                     }
                 }

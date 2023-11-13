@@ -1,7 +1,6 @@
 package com.kos.auth
 
 import arrow.core.Either
-import arrow.core.contains
 import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.AuthTestHelper.basicRefreshAuthorization
 import com.kos.auth.AuthTestHelper.token
@@ -16,44 +15,47 @@ import kotlin.test.assertTrue
 
 class AuthServiceTest {
     @Test
-    fun ICanValidateToken() {
+    fun ICanValidateAccessToken() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
             val authService = AuthService(authInMemoryRepository)
-            assertTrue(authService.validateTokenAndReturnUsername(token).contains(basicAuthorization.userName))
+            assertTrue(authService.validateTokenAndReturnUsername(token,isAccessRequest = true)
+                .fold({ false }) { it == basicAuthorization.userName })
         }
     }
 
     @Test
-    fun ICantValidateARefreshToken() {
+    fun ICantValidateARefreshTokenWhenExpectingAccess() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicRefreshAuthorization))
             val authService = AuthService(authInMemoryRepository)
             val validateTokenAndReturnUsername =
-                authService.validateTokenAndReturnUsername(basicRefreshAuthorization.token)
+                authService.validateTokenAndReturnUsername(basicRefreshAuthorization.token, isAccessRequest = true)
             assertTrue(validateTokenAndReturnUsername.isLeft())
         }
     }
 
     @Test
-    fun ICanValidateExpiredToken() {
+    fun ICantValidateExpiredTokenRegardlessOfRequestType() {
         val validUntil = OffsetDateTime.now().minusHours(1)
         runBlocking {
             val authInMemoryRepository =
                 AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = validUntil)))
             val authService = AuthService(authInMemoryRepository)
-            val userNameOrError = authService.validateTokenAndReturnUsername(token)
-            assertEquals(userNameOrError, Either.Left(TokenExpired(token, validUntil)))
+            val userNameOrErrorAccess = authService.validateTokenAndReturnUsername(token, isAccessRequest=true)
+            val userNameOrErrorRefresh = authService.validateTokenAndReturnUsername(token, isAccessRequest=false)
+            assertEquals(userNameOrErrorAccess, Either.Left(TokenExpired(token, validUntil)))
+            assertEquals(userNameOrErrorRefresh, Either.Left(TokenWrongMode(token, isAccess = true)))
         }
     }
 
     @Test
-    fun ICanValidatePersistentToken() {
+    fun ICanValidatePersistentAccessToken() {
         runBlocking {
             val authInMemoryRepository =
                 AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = null)))
             val authService = AuthService(authInMemoryRepository)
-            val userNameOrError = authService.validateTokenAndReturnUsername(token)
+            val userNameOrError = authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
             assertEquals(userNameOrError, Either.Right(user))
             assertEquals(1, authInMemoryRepository.state().size)
         }

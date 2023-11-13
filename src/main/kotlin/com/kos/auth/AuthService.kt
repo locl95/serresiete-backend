@@ -12,11 +12,12 @@ class AuthService(private val authRepository: AuthRepository) {
     }
 
     suspend fun logout(user: String) = authRepository.deleteToken(user)
-    suspend fun validateTokenAndReturnUsername(token: String): Either<TokenError, String> =
+    suspend fun validateTokenAndReturnUsername(token: String, isAccessRequest: Boolean): Either<TokenError, String> =
         when (val maybeAuthorization = authRepository.getAuthorization(token)) {
             null -> Either.Left(TokenNotFound(token))
             else -> {
-                if (maybeAuthorization.isRefresh()) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = false))
+                if (isAccessRequest && maybeAuthorization.isRefresh()) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = false))
+                else if (!isAccessRequest && maybeAuthorization.isAccess) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = true))
                 else {
                     maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
                         Either.Left(TokenExpired(maybeAuthorization.token, it))
@@ -24,6 +25,8 @@ class AuthService(private val authRepository: AuthRepository) {
                 }
             }
         }
+
+
 
     suspend fun refresh(refreshToken: String): Either<TokenError, Authorization?> {
         return when (val maybeAuthorization = authRepository.getAuthorization(refreshToken)) {

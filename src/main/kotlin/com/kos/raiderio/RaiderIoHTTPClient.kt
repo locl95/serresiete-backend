@@ -48,7 +48,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient {
             }
             url {
                 parameters.append("region", "eu")
-                parameters.append("season", "season-df-2")
+                parameters.append("season", "season-df-3")
             }
         }
         val jsonString = response.body<String>()

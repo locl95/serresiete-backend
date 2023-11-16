@@ -8,4 +8,5 @@ interface AuthRepository : Repository, WithState<List<Authorization>> {
     suspend fun insertToken(userName: String, isAccess: Boolean): Authorization?
     suspend fun deleteToken(token: String): Boolean
     suspend fun getAuthorization(token:String): Authorization?
+    suspend fun deleteExpiredTokens(): Int
 }

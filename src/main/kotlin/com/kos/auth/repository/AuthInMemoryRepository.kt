@@ -1,6 +1,7 @@
 package com.kos.auth.repository
 
 import com.kos.auth.Authorization
+import com.kos.common.isDefined
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -23,6 +24,15 @@ class AuthInMemoryRepository : AuthRepository {
     override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
     override suspend fun getAuthorization(token: String): Authorization? {
         return authorizations.find { it.token == token }
+    }
+
+    override suspend fun deleteExpiredTokens(): Int {
+        val currentTime = OffsetDateTime.now()
+        val deletedTokens = authorizations.count { it.validUntil != null && it.validUntil < currentTime }
+
+        authorizations.removeAll { it.validUntil != null && it.validUntil < currentTime }
+
+        return deletedTokens
     }
 
     override suspend fun state(): List<Authorization> {

@@ -23,4 +23,5 @@ data class CharactersService(private val charactersRepository: CharactersReposit
     }
 
     suspend fun get(id: Long): Character? = charactersRepository.get(id)
+    suspend fun get(): List<Character> = charactersRepository.get()
 }

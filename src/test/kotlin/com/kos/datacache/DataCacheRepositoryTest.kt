@@ -11,4 +11,8 @@ interface DataCacheRepositoryTest {
     fun ICanUpdateDataWithMoreThan2Characters()
     @Test
     fun ICanGetData()
+    @Test
+    fun ICanGetDataReturnsDataOnlyFromTheCharacter()
+    @Test
+    fun ICanClearData()
 }

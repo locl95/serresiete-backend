@@ -21,6 +21,11 @@ import io.ktor.client.engine.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -28,6 +33,7 @@ fun main() {
 }
 
 fun Application.module() {
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     DatabaseFactory.init(mustClean = false)
 
@@ -40,13 +46,29 @@ fun Application.module() {
     val charactersRepository = CharactersDatabaseRepository()
     val charactersService = CharactersService(charactersRepository)
 
-    val dataCacheRepository = DataCacheDatabaseRepository()
-    val dataCacheService = DataCacheService(dataCacheRepository)
 
     val viewsRepository = ViewsDatabaseRepository()
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
+    val dataCacheRepository = DataCacheDatabaseRepository()
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
+
+    val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+
+    executorService.scheduleAtFixedRate(
+        TokenCleanupTask(authService, coroutineScope),
+        0, 30, TimeUnit.SECONDS
+    )
+
+    executorService.scheduleAtFixedRate(
+        CacheDataTask(dataCacheService, charactersService, coroutineScope),
+        0, 60, TimeUnit.MINUTES
+    )
+
+    Runtime.getRuntime().addShutdownHook(Thread {
+        executorService.shutdown()
+    })
 
 
     configureAuthentication(authService, credentialsService)

@@ -1,8 +1,10 @@
 package com.kos.datacache.repository
 
+import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import java.time.OffsetDateTime
 
 class DataCacheDatabaseRepository : DataCacheRepository {
@@ -55,10 +57,16 @@ class DataCacheDatabaseRepository : DataCacheRepository {
         return true
     }
 
-    override suspend fun get(characterId: Long): DataCache? =
+    override suspend fun get(characterId: Long): List<DataCache> =
         dbQuery {
-            DataCaches.select { DataCaches.characterId.eq(characterId) }.map { resultRowToDataCache(it) }.singleOrNull()
+            DataCaches.select { DataCaches.characterId.eq(characterId) }.map { resultRowToDataCache(it) }
         }
+
+    override suspend fun deleteExpiredRecord(ttl: Long): Int {
+        return dbQuery {
+            DataCaches.deleteWhere { inserted.less(OffsetDateTime.now().minusHours(ttl).toString()) }
+        }
+    }
 
     override suspend fun state(): List<DataCache> = dbQuery { DataCaches.selectAll().map { resultRowToDataCache(it) } }
 }

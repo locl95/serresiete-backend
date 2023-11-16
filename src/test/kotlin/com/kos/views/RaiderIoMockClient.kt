@@ -13,7 +13,7 @@ class RaiderIoMockClient : RaiderIoClient {
                     character.name,
                     "class",
                     "spec",
-                    listOf(),
+                    listOf(MythicPlusSeasonScore("df-3", SeasonScores(0.0, 0.0, 0.0, 0.0, 0.0))),
                     MythicPlusRanks(
                         MythicPlusRank(1, 1, 1),
                         MythicPlusRank(1, 1, 1)

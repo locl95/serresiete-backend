@@ -1,5 +1,6 @@
 package com.kos.characters
 
+import com.kos.characters.CharactersTestHelper.basicCharacter
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
@@ -16,8 +17,8 @@ class CharactersDatabaseRepositoryTest: CharactersRepositoryTest {
     @Test
     override fun ICanInsertCharacters() {
         val repository = CharactersDatabaseRepository()
-        val request = CharacterRequest("kakarona", "eu", "zuljin")
-        val expected = listOf(Character(1, "kakarona", "eu", "zuljin"))
+        val request = CharacterRequest(basicCharacter.name, basicCharacter.region, basicCharacter.realm)
+        val expected = listOf(basicCharacter)
 
         runBlocking { assertEquals(expected, repository.insert(listOf(request))) }
     }

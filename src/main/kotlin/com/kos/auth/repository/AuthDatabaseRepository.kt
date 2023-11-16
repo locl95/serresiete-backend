@@ -4,6 +4,7 @@ import com.kos.auth.Authorization
 import com.kos.common.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -69,6 +70,12 @@ class AuthDatabaseRepository : AuthRepository {
     override suspend fun getAuthorization(token: String): Authorization? {
         return dbQuery {
             Authorizations.select { Authorizations.token eq token }.map { resultRowToAuthorization(it) }.singleOrNull()
+        }
+    }
+
+    override suspend fun deleteExpiredTokens(): Int {
+        return dbQuery {
+            Authorizations.deleteWhere { validUntil.less(OffsetDateTime.now().toString()) }
         }
     }
 

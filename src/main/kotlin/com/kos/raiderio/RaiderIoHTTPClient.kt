@@ -31,6 +31,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient {
             }
         }
         val jsonString = response.body<String>()
+        println(jsonString)
         val profile = json.decodeFromString<RaiderIoProfile>(jsonString)
         return when (val specRanksOrError = RaiderIoProtocol.parseMythicPlusRanks(jsonString, character.specsWithName(profile.`class`), profile.seasonScores[0].scores)) {
             is Either.Left -> specRanksOrError
@@ -48,7 +49,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient {
             }
             url {
                 parameters.append("region", "eu")
-                parameters.append("season", "season-df-3")
+                parameters.append("season", "season-df-2")
             }
         }
         val jsonString = response.body<String>()

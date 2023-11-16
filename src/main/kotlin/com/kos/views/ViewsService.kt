@@ -22,10 +22,6 @@ class ViewsService(
     private val raiderIoClient: RaiderIoClient
 ) {
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
-
     private val maxNumberOfViews: Int = 2
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
@@ -87,6 +83,10 @@ class ViewsService(
                 }
             }
         }
+        /*
+        TODO: This will be used in the future again. We will make usage of every call to raiderio to avoid
+        TODO: needing to retrieve data for every character again if it was called in a 1h period. This will lighten
+        TODO: the scheduled task.
         eitherJsonErrorOrData.onRight {
             it.forEach { data ->
                 dataCacheService.insert(
@@ -98,6 +98,7 @@ class ViewsService(
                 )
             }
         }
+        */
         return eitherJsonErrorOrData
     }
 

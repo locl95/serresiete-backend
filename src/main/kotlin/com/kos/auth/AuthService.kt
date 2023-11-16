@@ -41,4 +41,8 @@ class AuthService(private val authRepository: AuthRepository) {
             }
         }
     }
+
+    suspend fun deleteExpiredTokens(): Int {
+        return authRepository.deleteExpiredTokens()
+    }
 }

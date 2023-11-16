@@ -9,8 +9,8 @@ class CharactersInMemoryRepositoryTest: CharactersRepositoryTest {
     @Test
     override fun ICanInsertCharacters() {
         val repository = CharactersInMemoryRepository()
-        val request = CharacterRequest("kakarona", "eu", "zuljin")
-        val expected = listOf(Character(1, "kakarona", "eu", "zuljin"))
+        val request = CharacterRequest(CharactersTestHelper.basicCharacter.name, CharactersTestHelper.basicCharacter.region, CharactersTestHelper.basicCharacter.realm)
+        val expected = listOf(CharactersTestHelper.basicCharacter)
 
         runBlocking { assertEquals(expected, repository.insert(listOf(request))) }
     }

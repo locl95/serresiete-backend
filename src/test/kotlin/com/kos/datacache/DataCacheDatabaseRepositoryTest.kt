@@ -51,7 +51,24 @@ class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTest {
     override fun ICanGetData() {
         runBlocking {
             val repo = DataCacheDatabaseRepository().withState(listOf(dataCache))
-            assertEquals(dataCache, repo.get(1))
+            assertEquals(listOf(dataCache), repo.get(1))
+        }
+    }
+
+    @Test
+    override fun ICanGetDataReturnsDataOnlyFromTheCharacter() {
+        runBlocking {
+            val repo = DataCacheDatabaseRepository().withState(listOf(dataCache, dataCache.copy(characterId = 2)))
+            assertEquals(listOf(dataCache), repo.get(1))
+        }
+    }
+
+    @Test
+    override fun ICanClearData() {
+        runBlocking {
+            val repo = DataCacheDatabaseRepository().withState(listOf(dataCache, outdatedDataCache))
+            assertEquals(1, repo.deleteExpiredRecord(24))
+            assertEquals(listOf(dataCache), repo.state())
         }
     }
 }

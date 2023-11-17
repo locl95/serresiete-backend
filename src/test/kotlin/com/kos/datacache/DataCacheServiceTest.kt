@@ -55,6 +55,22 @@ class DataCacheServiceTest {
     }
 
     @Test
+    fun ICanGetDataReturnsOlderRecord() {
+        runBlocking {
+            val repo = DataCacheInMemoryRepository().withState(
+                listOf(
+                    dataCache.copy(inserted = dataCache.inserted.minusHours(10)),
+                    dataCache.copy(data = dataCache.data.replace(""""score": 0.0""", """"score": 1.0""")),
+                )
+            )
+            val service = DataCacheService(repo, raiderIoClient)
+            val data = service.getData(basicSimpleView.copy(characterIds = listOf(1)))
+            assertTrue(data.isRight { it.size == 1 })
+            assertEquals(listOf(0.0), data.map { it.map { d -> d.score } }.getOrNull())
+        }
+    }
+
+    @Test
     fun ICanCacheData() {
         runBlocking {
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))

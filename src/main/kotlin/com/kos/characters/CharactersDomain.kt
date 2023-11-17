@@ -86,7 +86,7 @@ val classes: List<Class> = listOf(
             Spec(
                 "Outlaw",
                 260,
-                2
+                1
             ),
             Spec(
                 "Assassination",
@@ -122,7 +122,7 @@ val classes: List<Class> = listOf(
     Class(
         "Monk", listOf(
             Spec(
-                "Brew Master?",
+                "Brew Master",
                 268,
                 0
             ),
@@ -132,7 +132,7 @@ val classes: List<Class> = listOf(
                 2
             ),
             Spec(
-                "Mist Weaver?",
+                "Mist Weaver",
                 270,
                 1
             )
@@ -214,4 +214,76 @@ val classes: List<Class> = listOf(
             )
         )
     ),
+    Class(
+        "Demon Hunter", listOf(
+            Spec(
+                "Havoc",
+                577,
+                0
+            ),
+            Spec(
+                "Vengeance",
+                581,
+                1
+            )
+        )
+    ),
+    Class(
+        "Mage", listOf(
+            Spec(
+                "Arcane",
+                62,
+                0
+            ),
+            Spec(
+                "Fire",
+                63,
+                1
+            ),
+            Spec(
+                "Frost",
+                64,
+                2
+            )
+        )
+    ),
+    Class(
+        "Death Knight",
+        listOf(
+            Spec(
+                "Blood",
+                250,
+                0
+            ),
+            Spec(
+                "Frost",
+                251,
+                1
+            ),
+            Spec(
+                "Unholy",
+                252,
+                2
+            )
+        ),
+    ),
+    Class(
+        "Warlock", listOf(
+            Spec(
+                "Affliction",
+                265,
+                0
+            ),
+            Spec(
+                "Demonology",
+                266,
+                1
+            ),
+            Spec(
+                "Destruction",
+                267,
+                2
+            )
+        )
+    )
 )

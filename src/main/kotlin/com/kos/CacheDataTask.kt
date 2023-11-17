@@ -17,7 +17,7 @@ data class CacheDataTask(
 
     override fun run() {
         coroutineScope.launch {
-            logger.info("Running token cleanup task with services: $dataCacheService and $charactersService")
+            logger.info("Running filling cache data task")
             val characters = charactersService.get()
             dataCacheService.cache(characters)
             val deletedRecords = dataCacheService.clear()

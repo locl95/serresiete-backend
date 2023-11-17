@@ -9,10 +9,7 @@ import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
-import com.kos.plugins.configureAuthentication
-import com.kos.plugins.configureCors
-import com.kos.plugins.configureRouting
-import com.kos.plugins.configureSerialization
+import com.kos.plugins.*
 import com.kos.raiderio.RaiderIoHTTPClient
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
@@ -75,4 +72,5 @@ fun Application.module() {
     configureCors()
     configureRouting(authService, viewsService, credentialsService)
     configureSerialization()
+    configureLogging()
 }

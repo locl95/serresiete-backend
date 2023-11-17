@@ -55,7 +55,7 @@ fun Application.module() {
 
     executorService.scheduleAtFixedRate(
         TokenCleanupTask(authService, coroutineScope),
-        0, 30, TimeUnit.SECONDS
+        0, 60, TimeUnit.MINUTES
     )
 
     executorService.scheduleAtFixedRate(

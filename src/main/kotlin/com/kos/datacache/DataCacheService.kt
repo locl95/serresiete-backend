@@ -30,7 +30,7 @@ data class DataCacheService(
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
     suspend fun getData(simpleView: SimpleView): Either<JsonParseError, List<RaiderIoData>> {
         return simpleView.characterIds.mapNotNull {
-            when (val data = get(it).sortedBy { dc -> dc.inserted }.singleOrNull()) {
+            when (val data = get(it).minByOrNull { dc -> dc.inserted }) {
                 null -> null
                 else -> {
                     try {

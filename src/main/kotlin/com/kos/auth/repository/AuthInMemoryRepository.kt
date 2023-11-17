@@ -44,4 +44,8 @@ class AuthInMemoryRepository : AuthRepository {
         return this
     }
 
+    fun clear(): Unit {
+        authorizations.clear()
+    }
+
 }

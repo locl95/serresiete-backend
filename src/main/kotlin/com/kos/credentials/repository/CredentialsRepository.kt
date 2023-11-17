@@ -6,7 +6,7 @@ import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
 import com.kos.credentials.Role
 
-interface CredentialsRepository : Repository, WithState<CredentialsRepositoryState> {
+interface CredentialsRepository : Repository, WithState<CredentialsRepositoryState, CredentialsRepository> {
     suspend fun getCredentials(userName: String): Credentials?
     suspend fun insertCredentials(credentials: Credentials): Unit
     suspend fun getActivities(user: String): List<Activity>

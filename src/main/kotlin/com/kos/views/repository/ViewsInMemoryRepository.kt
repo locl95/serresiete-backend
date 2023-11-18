@@ -1,11 +1,12 @@
 package com.kos.views.repository
 
+import com.kos.common.InMemoryRepository
 import com.kos.views.SimpleView
 import com.kos.views.ViewDeleted
 import com.kos.views.ViewModified
 import java.util.*
 
-class ViewsInMemoryRepository : ViewsRepository {
+class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     private val views: MutableList<SimpleView> = mutableListOf()
 
@@ -44,5 +45,9 @@ class ViewsInMemoryRepository : ViewsRepository {
     override suspend fun withState(initialState: List<SimpleView>): ViewsInMemoryRepository {
         views.addAll(initialState)
         return this
+    }
+
+    override fun clear() {
+        views.clear()
     }
 }

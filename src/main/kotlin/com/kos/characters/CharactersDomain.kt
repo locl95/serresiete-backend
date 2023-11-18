@@ -241,7 +241,7 @@ val classes: List<Class> = listOf(
                 1
             ),
             Spec(
-                "Frost",
+                "Frost Mage",
                 64,
                 2
             )
@@ -256,7 +256,7 @@ val classes: List<Class> = listOf(
                 0
             ),
             Spec(
-                "Frost",
+                "Frost Death Knight",
                 251,
                 1
             ),

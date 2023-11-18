@@ -21,7 +21,7 @@ data class CacheDataTask(
             val characters = charactersService.get()
             dataCacheService.cache(characters)
             val deletedRecords = dataCacheService.clear()
-            logger.info("Deleted $deletedRecords")
+            logger.info("Deleted $deletedRecords cached records")
         }
 
     }

@@ -1,15 +1,17 @@
 package com.kos.datacache.repository
 
+import com.kos.common.InMemoryRepository
 import com.kos.datacache.DataCache
 import java.time.OffsetDateTime
 
-class DataCacheInMemoryRepository : DataCacheRepository {
+class DataCacheInMemoryRepository : DataCacheRepository, InMemoryRepository {
     private val cachedData: MutableList<DataCache> = mutableListOf()
 
     override suspend fun insert(dataCache: DataCache) = cachedData.add(dataCache)
     override suspend fun update(dataCache: DataCache): Boolean {
         cachedData.removeAt(cachedData.indexOfFirst { it.characterId == dataCache.characterId })
-        return cachedData.add(dataCache)
+        cachedData.add(0, dataCache)
+        return true
     }
 
     override suspend fun get(characterId: Long): List<DataCache> = cachedData.filter { it.characterId == characterId }
@@ -26,5 +28,9 @@ class DataCacheInMemoryRepository : DataCacheRepository {
     override suspend fun withState(initialState: List<DataCache>): DataCacheInMemoryRepository {
         cachedData.addAll(initialState)
         return this
+    }
+
+    override fun clear() {
+        cachedData.clear()
     }
 }

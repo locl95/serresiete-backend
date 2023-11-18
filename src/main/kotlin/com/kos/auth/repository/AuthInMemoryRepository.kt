@@ -1,11 +1,12 @@
 package com.kos.auth.repository
 
 import com.kos.auth.Authorization
+import com.kos.common.InMemoryRepository
 import com.kos.common.isDefined
 import java.time.OffsetDateTime
 import java.util.*
 
-class AuthInMemoryRepository : AuthRepository {
+class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
 
     private val daysBeforeAccessTokenExpires: Long = 1
     private val daysBeforeRefreshTokenExpires: Long = 30
@@ -44,7 +45,7 @@ class AuthInMemoryRepository : AuthRepository {
         return this
     }
 
-    fun clear(): Unit {
+    override fun clear(): Unit {
         authorizations.clear()
     }
 

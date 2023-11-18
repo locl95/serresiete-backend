@@ -1,10 +1,11 @@
 package com.kos.credentials.repository
 
+import com.kos.common.InMemoryRepository
 import com.kos.credentials.Activity
 import com.kos.credentials.Credentials
 import com.kos.credentials.Role
 
-class CredentialsInMemoryRepository : CredentialsRepository {
+class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository {
     private val users = mutableListOf<Credentials>()
     private val userRoles = mutableMapOf<String, List<Role>>()
     private val roleActivities = mutableMapOf<String, List<Activity>>()
@@ -35,5 +36,11 @@ class CredentialsInMemoryRepository : CredentialsRepository {
         userRoles.putAll(initialState.credentialsRoles)
         roleActivities.putAll(initialState.rolesActivities)
         return this
+    }
+
+    override fun clear() {
+        users.clear()
+        userRoles.clear()
+        roleActivities.clear()
     }
 }

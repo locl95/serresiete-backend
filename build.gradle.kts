@@ -3,7 +3,6 @@ val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
 val h2_version: String by project
-val junit_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.0"
@@ -92,7 +91,4 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junit_version")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit_version")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
 }

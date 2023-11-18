@@ -2,8 +2,9 @@ package com.kos.characters.repository
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
+import com.kos.common.InMemoryRepository
 
-class CharactersInMemoryRepository : CharactersRepository {
+class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     val characters: MutableList<Character> = mutableListOf()
 
     private fun nextId(): Long {
@@ -27,6 +28,10 @@ class CharactersInMemoryRepository : CharactersRepository {
     override suspend fun withState(initialState: List<Character>): CharactersInMemoryRepository {
         characters.addAll(initialState)
         return this
+    }
+
+    override fun clear() {
+        characters.clear()
     }
 
 }

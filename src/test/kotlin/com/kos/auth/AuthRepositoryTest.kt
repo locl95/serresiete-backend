@@ -8,7 +8,7 @@ import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.auth.repository.AuthRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -17,22 +17,23 @@ import kotlin.test.assertTrue
 abstract class AuthRepositoryTestCommon {
 
     abstract val repository: AuthRepository
+    @BeforeTest
+    abstract fun beforeEach()
 
     @Test
     fun ICanGetAuthorizations() {
         runBlocking {
-            val repoWithState = repository.withState(listOf(basicAuthorization))
-            assertEquals(repoWithState.getAuthorization(token), basicAuthorization)
+            val repositoryWithState = repository.withState(listOf(basicAuthorization))
+            assertEquals(repositoryWithState.getAuthorization(token), basicAuthorization)
         }
     }
 
     @Test
     fun ICanInsertAuthorizations() {
         runBlocking {
-            val repoWithState = repository.withState(emptyList())
-            val userName = repoWithState.insertToken(user, isAccess = true)?.userName
+            val userName = repository.insertToken(user, isAccess = true)?.userName
             assertEquals(user, userName)
-            val finalStateOfAuthorizations = repoWithState.state()
+            val finalStateOfAuthorizations = repository.state()
             assertContains(finalStateOfAuthorizations.map { it.userName }, user)
         }
     }
@@ -40,27 +41,23 @@ abstract class AuthRepositoryTestCommon {
     @Test
     fun ICanDeleteAuthorizations() {
         runBlocking {
-            val repoWithState = repository.withState(listOf(basicAuthorization))
-            assertTrue(repoWithState.deleteToken(token))
-            assertTrue(repoWithState.state().isEmpty())
+            val repositoryWithState = repository.withState(listOf(basicAuthorization))
+            assertTrue(repositoryWithState.deleteToken(token))
+            assertTrue(repositoryWithState.state().isEmpty())
         }
     }
 }
 
 class AuthInMemoryRepositoryTest : AuthRepositoryTestCommon() {
     override val repository = AuthInMemoryRepository()
-    @Before
-    fun beforeEach() {
+    override fun beforeEach() {
         repository.clear()
     }
-
-
 }
 
 class AuthDatabaseRepositoryTest : AuthRepositoryTestCommon() {
     override val repository: AuthRepository = AuthDatabaseRepository()
-    @Before
-    fun beforeEach() {
+    override fun beforeEach() {
         DatabaseFactory.init(mustClean = true)
     }
 }

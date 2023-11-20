@@ -89,6 +89,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core:9.21.0")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }

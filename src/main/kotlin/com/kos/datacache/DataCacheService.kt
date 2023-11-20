@@ -9,6 +9,9 @@ import com.kos.datacache.repository.DataCacheRepository
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
 import com.kos.views.SimpleView
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -45,10 +48,11 @@ data class DataCacheService(
         }.sequence()
     }
 
-    suspend fun cache(characters: List<Character>) {
+    suspend fun cache(characters: List<Character>) = coroutineScope {
         when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> logger.error(cutoffOrError.value.error())
-            is Either.Right -> characters.map { raiderIoClient.get(it).map { r -> Pair(it.id, r) } }
+            is Either.Right -> characters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
+                .awaitAll()
                 .forEach { eitherErrorOrData ->
                     when (eitherErrorOrData) {
                         is Either.Right -> {

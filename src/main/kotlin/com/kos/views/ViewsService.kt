@@ -1,6 +1,7 @@
 package com.kos.views
 
 import arrow.core.Either
+import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
 import com.kos.common.JsonParseError
@@ -8,12 +9,17 @@ import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
+import com.kos.raiderio.RaiderIoResponse
 import com.kos.views.repository.ViewsRepository
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.OffsetDateTime
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransactionAsync
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
@@ -54,15 +60,18 @@ class ViewsService(
         return viewsRepository.delete(id)
     }
 
-    suspend fun getData(view: View): Either<JsonParseError, List<RaiderIoData>> {
+    suspend fun getData(view: View): Either<JsonParseError, List<RaiderIoData>> = coroutineScope {
         val eitherJsonErrorOrData = when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> Either.Left(cutoffOrError.value)
             is Either.Right -> {
-                when (val eitherErrorOrResponse = view.characters.traverse { char ->
-                    raiderIoClient.get(char).map {
-                        Pair(char.id, it)
+                val eitherErrorOrResponse = view.characters.map { char ->
+                    async {
+                        raiderIoClient.get(char).map {
+                            Pair(char.id, it)
+                        }
                     }
-                }) {
+                }.awaitAll().sequence()
+                when (eitherErrorOrResponse) {
                     is Either.Left -> eitherErrorOrResponse
                     is Either.Right -> {
                         eitherErrorOrResponse.value.traverse {
@@ -99,7 +108,7 @@ class ViewsService(
             }
         }
         */
-        return eitherJsonErrorOrData
+        eitherJsonErrorOrData
     }
 
     suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)

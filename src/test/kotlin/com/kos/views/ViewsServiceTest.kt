@@ -19,7 +19,7 @@ class ViewsServiceTest {
     private val raiderIoClient = RaiderIoMockClient()
 
     @Test
-    fun ICanGetOwnViews() {
+    fun `i can get own views`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
             val charactersRepository = CharactersInMemoryRepository().withState(listOf())
@@ -32,7 +32,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun ICanGetASimpleView() {
+    fun `i can get a simple view`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
             val charactersRepository = CharactersInMemoryRepository().withState(listOf())
@@ -45,7 +45,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun ICanCreateViews() {
+    fun `i can create views`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf())
             val charactersRepository = CharactersInMemoryRepository().withState(listOf())
@@ -61,7 +61,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun ICantCreateMoreThanMaximumViews() {
+    fun `i cant create more than maximum views`() {
         runBlocking {
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView, basicSimpleView.copy(id = "2")))
@@ -79,7 +79,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun ICanEditAViewModifyingMoreThanOneCharacter(): Unit {
+    fun `i can edit a view modifying more than one character`(): Unit {
         runBlocking {
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
@@ -106,7 +106,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun ICanDeleteAView(): Unit {
+    fun `i can delete a view`(): Unit {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
             val charactersRepository = CharactersInMemoryRepository().withState(listOf())

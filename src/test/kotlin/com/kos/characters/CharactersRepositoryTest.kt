@@ -17,7 +17,7 @@ abstract class CharactersRepositoryTestCommon {
     abstract fun beforeEach()
 
     @Test
-    fun ICanInsertCharacters() {
+    fun `given an empty repository i can insert characters`() {
         runBlocking {
             val request = CharacterRequest(
                 CharactersTestHelper.basicCharacter.name,

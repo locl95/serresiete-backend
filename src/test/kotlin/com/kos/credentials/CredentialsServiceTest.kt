@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class CredentialsServiceTest {
     @Test
-    fun ICanValidateCredentials() {
+    fun `i can validate credentials`() {
         runBlocking {
             val credentialsInMemoryRepository = CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
             val credentialsService = CredentialsService(credentialsInMemoryRepository)

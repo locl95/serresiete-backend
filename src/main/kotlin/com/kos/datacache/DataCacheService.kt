@@ -5,6 +5,7 @@ import arrow.core.sequence
 import com.kos.characters.Character
 import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
+import com.kos.common.split
 import com.kos.datacache.repository.DataCacheRepository
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
@@ -29,7 +30,6 @@ data class DataCacheService(
         ignoreUnknownKeys = true
     }
 
-    suspend fun insert(dataCache: DataCache): Boolean = dataCacheRepository.insert(dataCache)
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
     suspend fun getData(simpleView: SimpleView): Either<JsonParseError, List<RaiderIoData>> {
         return simpleView.characterIds.mapNotNull {
@@ -51,35 +51,28 @@ data class DataCacheService(
     suspend fun cache(characters: List<Character>) = coroutineScope {
         when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> logger.error(cutoffOrError.value.error())
-            is Either.Right -> characters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
-                .awaitAll()
-                .forEach { eitherErrorOrData ->
-                    when (eitherErrorOrData) {
-                        is Either.Right -> {
-                            val quantile =
-                                BigDecimal(eitherErrorOrData.value.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoffOrError.value.totalPopulation * 100).setScale(
+            is Either.Right -> {
+                val errorsAndData = characters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
+                    .awaitAll()
+                    .split()
+                errorsAndData.first.forEach { logger.error(it.error()) }
+                val data = errorsAndData.second.map {
+                    DataCache(
+                        it.first, json.encodeToString(
+                            it.second.profile.toRaiderIoData(
+                                it.first,
+                                BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoffOrError.value.totalPopulation * 100).setScale(
                                     2,
                                     RoundingMode.HALF_EVEN
-                                )
-                            dataCacheRepository.insert(
-                                DataCache(
-                                    eitherErrorOrData.value.first,
-                                    json.encodeToString(
-                                        eitherErrorOrData.value.second.profile.toRaiderIoData(
-                                            eitherErrorOrData.value.first,
-                                            quantile.toDouble(),
-                                            eitherErrorOrData.value.second.specs
-                                        )
-                                    ),
-                                    OffsetDateTime.now()
-                                )
+                                ).toDouble(),
+                                it.second.specs
                             )
-                            logger.info("Cached character ${eitherErrorOrData.value.first} - ${eitherErrorOrData.value.second.profile.name}")
-                        }
-
-                        is Either.Left -> logger.error(eitherErrorOrData.value.error())
-                    }
+                        ), OffsetDateTime.now()
+                    )
                 }
+                dataCacheRepository.insert(data)
+                data.forEach { logger.info("Cached character ${it.characterId}") }
+            }
         }
     }
 

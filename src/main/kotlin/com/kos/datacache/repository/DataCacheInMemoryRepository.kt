@@ -9,12 +9,6 @@ class DataCacheInMemoryRepository : DataCacheRepository, InMemoryRepository {
 
     override suspend fun insert(data: List<DataCache>): Boolean = cachedData.addAll(data)
 
-    override suspend fun update(dataCache: DataCache): Boolean {
-        cachedData.removeAt(cachedData.indexOfFirst { it.characterId == dataCache.characterId })
-        cachedData.add(0, dataCache)
-        return true
-    }
-
     override suspend fun get(characterId: Long): List<DataCache> = cachedData.filter { it.characterId == characterId }
     override suspend fun deleteExpiredRecord(ttl: Long): Int {
         val currentTime = OffsetDateTime.now()

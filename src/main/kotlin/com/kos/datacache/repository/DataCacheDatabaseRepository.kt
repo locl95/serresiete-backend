@@ -45,17 +45,6 @@ class DataCacheDatabaseRepository : DataCacheRepository {
         return true
     }
 
-    override suspend fun update(dataCache: DataCache): Boolean {
-        dbQuery {
-            DataCaches.update({ DataCaches.characterId.eq(dataCache.characterId) }) {
-                it[characterId] = dataCache.characterId
-                it[data] = dataCache.data
-                it[inserted] = dataCache.inserted.toString()
-            }
-        }
-        return true
-    }
-
     override suspend fun get(characterId: Long): List<DataCache> =
         dbQuery {
             DataCaches.select { DataCaches.characterId.eq(characterId) }.map { resultRowToDataCache(it) }

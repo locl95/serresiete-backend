@@ -16,7 +16,7 @@ class DataCacheServiceTest {
     private val raiderIoClient = RaiderIoMockClient()
 
     @Test
-    fun ICanGetData() {
+    fun `i can get data`() {
         runBlocking {
             val repo = DataCacheInMemoryRepository().withState(
                 listOf(
@@ -33,7 +33,7 @@ class DataCacheServiceTest {
     }
 
     @Test
-    fun ICanGetDataReturnsOlderRecord() {
+    fun `i can verify that getting data returns the oldest cached data record stored`() {
         runBlocking {
             val repo = DataCacheInMemoryRepository().withState(
                 listOf(
@@ -49,7 +49,7 @@ class DataCacheServiceTest {
     }
 
     @Test
-    fun ICanCacheData() {
+    fun `i can cache data`() {
         runBlocking {
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
             val service = DataCacheService(repo, raiderIoClient)

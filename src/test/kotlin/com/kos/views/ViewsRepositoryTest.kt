@@ -20,7 +20,7 @@ abstract class ViewsRepositoryTest {
     abstract fun beforeEach()
 
     @Test
-    fun ICanRetrieveViews() {
+    fun `given a repository with views i can retrieve them`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
             assertEquals(listOf(basicSimpleView), repositoryWithState.getOwnViews(owner))
@@ -28,7 +28,7 @@ abstract class ViewsRepositoryTest {
     }
 
     @Test
-    fun ICanRetriveACertainView() {
+    fun `given a repository with views i can retrieve a certain view`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
             assertEquals((SimpleView(id, name, owner, listOf())), repositoryWithState.get(id))
@@ -36,14 +36,14 @@ abstract class ViewsRepositoryTest {
     }
 
     @Test
-    fun IfNoViewsRetrievingReturnsNotFound() {
+    fun `given an empty repository, trying to retrieve a certain guild returns null`() {
         runBlocking {
             assertEquals(null, repository.get(id))
         }
     }
 
     @Test
-    fun ICanCreateAView() {
+    fun `given an empty repository i can insert views`() {
         runBlocking {
             assert(repository.create(name, owner, listOf()).isSuccess)
             assert(repository.state().size == 1)
@@ -52,7 +52,7 @@ abstract class ViewsRepositoryTest {
     }
 
     @Test
-    fun ICanEditAView() {
+    fun `given a repository with a view i can edit it`() {
         runBlocking {
             val repo =
                 repository.withState(listOf(basicSimpleView))
@@ -64,7 +64,7 @@ abstract class ViewsRepositoryTest {
     }
 
     @Test
-    fun ICanEditAViewModifyingMoreThanOneCharacter() {
+    fun `given a repository with a view i can edit more than one character`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
             val edit = repositoryWithState.edit(id, "name", listOf(1, 2, 3, 4))
@@ -75,7 +75,7 @@ abstract class ViewsRepositoryTest {
     }
 
     @Test
-    fun ICanDeleteAView() {
+    fun `given a repository with a view i can delete it`() {
         runBlocking {
             val repo = repository.withState(listOf(basicSimpleView))
             val delete = repo.delete(id)

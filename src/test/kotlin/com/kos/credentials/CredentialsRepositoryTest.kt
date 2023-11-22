@@ -21,7 +21,7 @@ abstract class CredentialsRepositoryTest {
     abstract fun beforeEach()
 
     @Test
-    open fun ICanGetCredentials() {
+    open fun `given a repository with credentials i can retrieve them`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsInitialState)
             assertEquals(repositoryWithState.getCredentials(user), encryptedCredentials)
@@ -29,7 +29,7 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
-    open fun ICanInsertCredentials() {
+    open fun `given an empty repository i can insert credentials`() {
         runBlocking {
             assertTrue(repository.state().users.isEmpty())
             repository.insertCredentials(encryptedCredentials)
@@ -39,7 +39,7 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
-    open fun ICanEditCredentials() {
+    open fun `given a repository with credentials i can edit them`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsInitialState)
             repositoryWithState.editCredentials(user, "newPassword")
@@ -48,7 +48,7 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
-    open fun ICanGetActivities() {
+    open fun `given a repository with credentials, roles and activities i can retrieve the activities that an user is allowed to perform`() {
         runBlocking {
             val repositoryWithState = repository.withState(
                 basicCredentialsInitialState.copy(

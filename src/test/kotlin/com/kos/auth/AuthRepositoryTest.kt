@@ -21,7 +21,7 @@ abstract class AuthRepositoryTestCommon {
     abstract fun beforeEach()
 
     @Test
-    fun ICanGetAuthorizations() {
+    fun `given a repository with one authorization i can retrieve it`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
             assertEquals(repositoryWithState.getAuthorization(token), basicAuthorization)
@@ -29,7 +29,7 @@ abstract class AuthRepositoryTestCommon {
     }
 
     @Test
-    fun ICanInsertAuthorizations() {
+    fun `given an empty repository i can insert an authorization`() {
         runBlocking {
             val userName = repository.insertToken(user, isAccess = true)?.userName
             assertEquals(user, userName)
@@ -39,7 +39,7 @@ abstract class AuthRepositoryTestCommon {
     }
 
     @Test
-    fun ICanDeleteAuthorizations() {
+    fun `given a repository with one authorization i can delete it`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
             assertTrue(repositoryWithState.deleteToken(token))

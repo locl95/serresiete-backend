@@ -1,13 +1,15 @@
 package com.kos.characters
 
 import com.kos.characters.CharactersTestHelper.basicCharacter
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class CharactersDomainTest {
 
     @Test
-    fun ICanFindEveryClassSpecs() {
+    fun `i can find every wow spec`() {
         val warriorSpecs = basicCharacter.specsWithName("Warrior").map { it.name }.toSet()
         val paladinSpecs = basicCharacter.specsWithName("Paladin").map { it.name }.toSet()
         val hunterSpecs = basicCharacter.specsWithName("Hunter").map { it.name }.toSet()
@@ -72,5 +74,31 @@ class CharactersDomainTest {
             assertEquals(it.first, it.second)
         }
 
+    }
+
+    @Test
+    fun `toCharacter should create a Character with the correct properties`() {
+        val characterRequest = CharacterRequest("Gandalf", "Middle Earth", "Rivendell")
+        val character = characterRequest.toCharacter(1L)
+        assertEquals(1L, character.id)
+        assertEquals("Gandalf", character.name)
+        assertEquals("Middle Earth", character.region)
+        assertEquals("Rivendell", character.realm)
+    }
+
+    @Test
+    fun `same should return true for identical characters`() {
+        val characterRequest = CharacterRequest("Aragorn", "Middle Earth", "Gondor")
+        val character = characterRequest.toCharacter(2L)
+        val result = characterRequest.same(character)
+        assertTrue(result)
+    }
+
+    @Test
+    fun `same should return false for characters with different properties`() {
+        val characterRequest = CharacterRequest("Legolas", "Middle Earth", "Lothlorien")
+        val character = characterRequest.toCharacter(3L)
+        val result = characterRequest.same(character.copy(name = "DifferentName"))
+        assertFalse(result)
     }
 }

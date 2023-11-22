@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 
 class AuthServiceTest {
     @Test
-    fun ICanValidateAccessToken() {
+    fun `i can validate tokens and return the username of the owner`() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
             val authService = AuthService(authInMemoryRepository)
@@ -25,7 +25,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun ICantValidateARefreshTokenWhenExpectingAccess() {
+    fun `i can validate that a refresh token can't be used when requesting an access`() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicRefreshAuthorization))
             val authService = AuthService(authInMemoryRepository)
@@ -36,7 +36,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun ICantValidateExpiredTokenRegardlessOfRequestType() {
+    fun `i can validate that any token will not work regardless of type if they expired`() {
         val validUntil = OffsetDateTime.now().minusHours(1)
         runBlocking {
             val authInMemoryRepository =
@@ -50,7 +50,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun ICanValidatePersistentAccessToken() {
+    fun `i can validate that a persistent token works`() {
         runBlocking {
             val authInMemoryRepository =
                 AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = null)))
@@ -62,7 +62,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun ICanLogin() {
+    fun `i can validate that login creates and returns both access and refresh tokens`() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository()
             val authService = AuthService(authInMemoryRepository)
@@ -76,7 +76,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun ICanRefreshTokens() {
+    fun `i can get an access token with a refresh token without needing to login`() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(
                 listOf(basicAuthorization, basicRefreshAuthorization)
@@ -89,7 +89,7 @@ class AuthServiceTest {
     }
 
     @Test
-    fun RefreshTokenFailsIfUsingAnAccessToken() {
+    fun `i cant create an access token with another access token`() {
         runBlocking {
             val authInMemoryRepository = AuthInMemoryRepository().withState(
                 listOf(basicAuthorization, basicRefreshAuthorization)

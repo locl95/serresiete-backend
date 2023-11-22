@@ -1,6 +1,5 @@
 package com.kos.datacache.repository
 
-import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import org.jetbrains.exposed.sql.*
@@ -35,12 +34,12 @@ class DataCacheDatabaseRepository : DataCacheRepository {
         OffsetDateTime.parse(row[DataCaches.inserted]),
     )
 
-    override suspend fun insert(dataCache: DataCache): Boolean {
+    override suspend fun insert(data: List<DataCache>): Boolean {
         dbQuery {
-            DataCaches.insert {
-                it[characterId] = dataCache.characterId
-                it[data] = dataCache.data
-                it[inserted] = dataCache.inserted.toString()
+            DataCaches.batchInsert(data) {
+                this[DataCaches.characterId] = it.characterId
+                this[DataCaches.data] = it.data
+                this[DataCaches.inserted] = it.inserted.toString()
             }
         }
         return true

@@ -16,28 +16,6 @@ class DataCacheServiceTest {
     private val raiderIoClient = RaiderIoMockClient()
 
     @Test
-    fun ICanInsertDataWhenEmpty() {
-        runBlocking {
-            val repo = DataCacheInMemoryRepository()
-            val service = DataCacheService(repo, raiderIoClient)
-            assertEquals(listOf(), repo.state())
-            assertEquals(true, service.insert(dataCache))
-            assertEquals(listOf(dataCache), repo.state())
-        }
-    }
-
-    @Test
-    fun ICanInsertDataWhenNonEmpty() {
-        runBlocking {
-            val repo = DataCacheInMemoryRepository().withState(listOf(outdatedDataCache))
-            val service = DataCacheService(repo, raiderIoClient)
-            assertEquals(listOf(outdatedDataCache), repo.state())
-            assertEquals(true, service.insert(dataCache))
-            assertEquals(listOf(outdatedDataCache, dataCache), repo.state())
-        }
-    }
-
-    @Test
     fun ICanGetData() {
         runBlocking {
             val repo = DataCacheInMemoryRepository().withState(

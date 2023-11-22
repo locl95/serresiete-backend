@@ -22,7 +22,7 @@ abstract class DataCacheRepositoryTestCommon {
     open fun ICanInsertData() {
         runBlocking {
             assertEquals(listOf(), repository.state())
-            assertEquals(true, repository.insert(dataCache))
+            assertEquals(true, repository.insert(listOf(dataCache)))
             assertEquals(listOf(dataCache), repository.state())
         }
     }

@@ -9,6 +9,7 @@ import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
+import com.kos.eventsourcing.repository.InMemoryEventStore
 import com.kos.plugins.*
 import com.kos.raiderio.RaiderIoHTTPClient
 import com.kos.views.ViewsService
@@ -34,6 +35,8 @@ fun Application.module() {
 
     DatabaseFactory.init(mustClean = false)
 
+    val eventStore = InMemoryEventStore()
+
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
 
@@ -49,7 +52,8 @@ fun Application.module() {
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val dataCacheRepository = DataCacheDatabaseRepository()
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
-    val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
+    val viewsService =
+        ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoHTTPClient)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 

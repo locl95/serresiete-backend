@@ -1,19 +1,20 @@
 package com.kos.datacache
 
-import arrow.core.Either
 import com.kos.characters.CharactersTestHelper.basicCharacter
 import com.kos.datacache.TestHelper.dataCache
-import com.kos.datacache.TestHelper.outdatedDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.views.RaiderIoMockClient
+import com.kos.raiderio.RaiderIoClient
+import com.kos.views.RaiderIoMockHelper
 import com.kos.views.ViewsTestHelper.basicSimpleView
 import kotlinx.coroutines.runBlocking
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DataCacheServiceTest {
-    private val raiderIoClient = RaiderIoMockClient()
+    private val raiderIoClient = mock(RaiderIoClient::class.java)
 
     @Test
     fun `i can get data`() {
@@ -51,6 +52,11 @@ class DataCacheServiceTest {
     @Test
     fun `i can cache data`() {
         runBlocking {
+            `when`(raiderIoClient.get(basicCharacter)).thenReturn(RaiderIoMockHelper.get(basicCharacter))
+            `when`(raiderIoClient.get(basicCharacter.copy(id = 2))).thenReturn(
+                RaiderIoMockHelper.get(basicCharacter.copy(id = 2))
+            )
+            `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
             val service = DataCacheService(repo, raiderIoClient)
             assertEquals(listOf(dataCache), repo.state())

@@ -9,7 +9,8 @@ import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
-import com.kos.eventsourcing.repository.InMemoryEventStore
+import com.kos.eventsourcing.events.repository.EventStoreInMemory
+import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
 import com.kos.plugins.*
 import com.kos.raiderio.RaiderIoHTTPClient
 import com.kos.views.ViewsService
@@ -35,7 +36,8 @@ fun Application.module() {
 
     DatabaseFactory.init(mustClean = false)
 
-    val eventStore = InMemoryEventStore()
+    val eventStore = EventStoreInMemory()
+    val subscriptionsRepository = SubscriptionsDatabaseRepository()
 
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
@@ -63,7 +65,7 @@ fun Application.module() {
     )
 
     executorService.scheduleAtFixedRate(
-        CacheDataTask(dataCacheService, charactersService, coroutineScope),
+        CacheDataTask(dataCacheService, charactersService, eventStore, subscriptionsRepository, coroutineScope),
         0, 60, TimeUnit.MINUTES
     )
 

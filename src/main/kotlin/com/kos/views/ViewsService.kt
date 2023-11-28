@@ -5,23 +5,17 @@ import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
 import com.kos.common.JsonParseError
-import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
-import com.kos.eventsourcing.repository.EventStore
+import com.kos.eventsourcing.events.Event
+import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
-import com.kos.raiderio.RaiderIoDataReceived
-import com.kos.raiderio.RaiderIoResponse
 import com.kos.views.repository.ViewsRepository
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.OffsetDateTime
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransactionAsync
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
@@ -88,7 +82,7 @@ class ViewsService(
                                 quantile.toDouble(),
                                 it.second.specs
                             )
-                            eventStore.save(RaiderIoDataReceived(it.first, raiderIoData))
+                            eventStore.save(Event("character/${it.first}", "RaiderioDataReceived", raiderIoData))
                             Either.Right(raiderIoData)
                         }
                     }

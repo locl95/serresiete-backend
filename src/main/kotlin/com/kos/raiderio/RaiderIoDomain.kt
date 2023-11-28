@@ -4,7 +4,8 @@ import arrow.core.Either
 import arrow.core.traverse
 import com.kos.common.JsonParseError
 import com.kos.characters.Spec
-import com.kos.eventsourcing.Event
+import com.kos.eventsourcing.events.Event
+import com.kos.eventsourcing.events.EventData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -189,13 +190,6 @@ data class RaiderIoData(
     val mythicPlusRanks: MythicPlusRanksWithSpecs,
     val mythicPlusBestRuns: List<MythicPlusRun>,
     val mythicPlusAlternateRuns: List<MythicPlusRun>
-)
+): EventData
 
-data class RaiderIoDataReceived(
-    val characterId: Long,
-    override val eventData: RaiderIoData
-) : Event<RaiderIoData> {
-    override val aggregateRoot: String = "character/$characterId"
-    override val eventType: String = "RaiderIoDataReceived"
-}
 

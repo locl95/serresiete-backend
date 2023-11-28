@@ -6,8 +6,8 @@ import com.kos.characters.CharactersTestHelper.basicCharacter
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.eventsourcing.repository.InMemoryEventStore
-import com.kos.raiderio.RaiderIoDataReceived
+import com.kos.eventsourcing.events.Event
+import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.views.ViewsTestHelper.basicSimpleView
 import com.kos.views.ViewsTestHelper.basicView
 import com.kos.views.ViewsTestHelper.id
@@ -31,7 +31,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
             assertEquals(listOf(basicSimpleView), service.getOwnViews(owner))
         }
@@ -45,7 +45,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
             assertEquals(basicSimpleView, service.getSimple("1"))
         }
@@ -59,7 +59,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().isEmpty())
             assertTrue(service.create(owner, ViewRequest(name, listOf())).isRight())
@@ -77,7 +77,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
 
             assertTrue(viewsRepository.state().size == 2)
@@ -96,7 +96,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
             assertEquals(
@@ -124,7 +124,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().size == 1)
             assertEquals(service.delete("1"), ViewDeleted("1"))
@@ -140,7 +140,7 @@ class ViewsServiceTest {
             val charactersService = CharactersService(charactersRepository)
             val dataCacheRepository = DataCacheInMemoryRepository()
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
-            val eventStore = InMemoryEventStore()
+            val eventStore = EventStoreInMemory()
             val service = ViewsService(viewsRepository, eventStore, charactersService, dataCacheService, raiderIoClient)
 
             val result = service.getData(basicView.copy(characters = listOf(basicCharacter)))
@@ -155,7 +155,7 @@ class ViewsServiceTest {
                 assertEquals(basicCharacter.id, it.first().id)
                 assertEquals(basicCharacter.name, it.first().name)
                 assertEquals(1, event.version)
-                val expectedEvent = RaiderIoDataReceived(1, it.first())
+                val expectedEvent = Event("character/1", "RaiderioDataReceived", it.first())
                 assertEquals(expectedEvent, event.event)
             }
         }

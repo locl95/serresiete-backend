@@ -2,11 +2,11 @@ package com.kos.views
 
 import arrow.core.Either
 import com.kos.characters.Character
-import com.kos.common.JsonParseError
+import com.kos.common.HttpError
 import com.kos.raiderio.*
 
-class RaiderIoMockClient : RaiderIoClient {
-    override suspend fun get(character: Character): Either<JsonParseError, RaiderIoResponse> {
+object RaiderIoMockHelper {
+    fun get(character: Character): Either<HttpError, RaiderIoResponse> {
         return Either.Right(
             RaiderIoResponse(
                 RaiderIoProfile(
@@ -26,7 +26,7 @@ class RaiderIoMockClient : RaiderIoClient {
         )
     }
 
-    override suspend fun cutoff(): Either<JsonParseError, RaiderIoCutoff> {
+    fun cutoff(): Either<HttpError, RaiderIoCutoff> {
         return Either.Right(RaiderIoCutoff(100))
     }
 }

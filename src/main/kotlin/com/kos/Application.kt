@@ -34,6 +34,9 @@ fun Application.module() {
 
     DatabaseFactory.init(mustClean = false)
 
+    val client = HttpClient(CIO)
+    val raiderIoHTTPClient = RaiderIoHTTPClient(client)
+
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
 
@@ -41,12 +44,9 @@ fun Application.module() {
     val credentialsService = CredentialsService(credentialsRepository)
 
     val charactersRepository = CharactersDatabaseRepository()
-    val charactersService = CharactersService(charactersRepository)
-
+    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient)
 
     val viewsRepository = ViewsDatabaseRepository()
-    val client = HttpClient(CIO)
-    val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val dataCacheRepository = DataCacheDatabaseRepository()
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)

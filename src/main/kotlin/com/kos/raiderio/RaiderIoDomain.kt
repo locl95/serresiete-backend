@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.traverse
 import com.kos.common.JsonParseError
 import com.kos.characters.Spec
+import com.kos.common.HttpError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -177,4 +178,13 @@ data class RaiderIoData(
     val mythicPlusBestRuns: List<MythicPlusRun>,
     val mythicPlusAlternateRuns: List<MythicPlusRun>
 )
+
+@Serializable
+data class RaiderIoError(
+    val statusCode: Int,
+    val error: String,
+    val message: String
+): HttpError {
+    override fun error(): String = "$message. $error: $statusCode"
+}
 

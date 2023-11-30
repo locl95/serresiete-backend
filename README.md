@@ -1,6 +1,6 @@
 # RAIDERIO-LADDER BACKEND
 
-Backend of https://alcaland-ranks.netlify.app/
+Backend of https://alcaland-ranks.netlify.app/c1b618e0-7540-467c-b96b-34d16ee15cb8
 
 * Main language: https://kotlinlang.org/
 * HTTP framework: https://ktor.io/docs/welcome.html

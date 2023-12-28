@@ -24,6 +24,8 @@ object Activities {
     val deleteOwnView = "delete own view"
     val deleteAnyView = "delete any view"
     val createCredentials = "create credentials"
+    val editCredentials = "edit credentials"
+    val getAnyCredentialsRoles = "get any credentials roles"
     val login = "login"
-    val logout = "login"
+    val logout = "logout"
 }

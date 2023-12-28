@@ -1,10 +1,7 @@
 package com.kos.credentials.repository
 
 import com.kos.common.DatabaseFactory
-import com.kos.credentials.Activity
-import com.kos.credentials.Credentials
-import com.kos.credentials.CredentialsRole
-import com.kos.credentials.RoleActivity
+import com.kos.credentials.*
 import org.jetbrains.exposed.sql.*
 
 class CredentialsDatabaseRepository : CredentialsRepository {
@@ -94,6 +91,13 @@ class CredentialsDatabaseRepository : CredentialsRepository {
             Users.update({ Users.userName.eq(userName) }) {
                 it[password] = newPassword
             }
+        }
+    }
+
+    override suspend fun getRoles(userName: String): List<Role> {
+        return DatabaseFactory.dbQuery {
+            CredentialsRoles.select { CredentialsRoles.userName.eq(userName) }
+                .map { resultRowToCredentialsRoles(it).role }
         }
     }
 

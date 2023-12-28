@@ -66,6 +66,21 @@ abstract class CredentialsRepositoryTest {
             assertEquals(setOf("get view data", "get view cached data"), serviceActivities.toSet())
         }
     }
+
+
+    @Test
+    open fun `given a repository with roles i can retrieve them`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(
+                basicCredentialsInitialState.copy(
+                    credentialsRoles = mapOf(user to listOf("role1", "role2"))
+                )
+            )
+
+            val roles = repositoryWithState.getRoles(user)
+            assertEquals(listOf("role1", "role2"), roles)
+        }
+    }
 }
 
 class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest() {

@@ -26,11 +26,26 @@ fun Route.credentialsRouting(credentialsService: CredentialsService) {
 
         authenticate("auth-bearer") {
             put {
-                when (call.principal<UserIdPrincipal>()) {
+                when (val id = call.principal<UserIdPrincipal>()) {
                     null -> call.respond(HttpStatusCode.Unauthorized)
                     else -> {
-                        credentialsService.editCredentials(call.receive())
-                        call.respond(HttpStatusCode.NoContent)
+                        if (credentialsService.hasPermissions(id.name, Activities.editCredentials)) {
+                            credentialsService.editCredentials(call.receive())
+                            call.respond(HttpStatusCode.NoContent)
+                        } else call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
+            }
+        }
+
+        authenticate("auth-bearer") {
+            put {
+                when (val id = call.principal<UserIdPrincipal>()) {
+                    null -> call.respond(HttpStatusCode.Unauthorized)
+                    else -> {
+                        if (credentialsService.hasPermissions(id.name, Activities.getAnyCredentialsRoles)) {
+                            call.respond(HttpStatusCode.OK, credentialsService.getRoles(id.name))
+                        } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }
             }

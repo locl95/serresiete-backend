@@ -27,6 +27,9 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         users[index] = Credentials(userName, newPassword)
     }
 
+    override suspend fun getRoles(userName: String): List<Role> =
+        userRoles[userName].orEmpty()
+
     override suspend fun state(): CredentialsRepositoryState {
         return CredentialsRepositoryState(users, userRoles, roleActivities)
     }

@@ -2,6 +2,7 @@ package com.kos.credentials
 
 import com.kos.common.isDefined
 import com.kos.credentials.repository.CredentialsRepository
+import io.ktor.server.auth.*
 import org.mindrot.jbcrypt.BCrypt
 
 class CredentialsService(private val credentialsRepository: CredentialsRepository) {
@@ -17,4 +18,6 @@ class CredentialsService(private val credentialsRepository: CredentialsRepositor
     suspend fun editCredentials(credentials: Credentials) {
         credentialsRepository.editCredentials(credentials.userName, BCrypt.hashpw(credentials.password, BCrypt.gensalt(12)))
     }
+
+    suspend fun getRoles(userName: String): List<Role> = credentialsRepository.getRoles(userName)
 }

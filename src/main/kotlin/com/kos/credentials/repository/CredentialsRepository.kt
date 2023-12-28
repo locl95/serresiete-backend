@@ -10,6 +10,7 @@ interface CredentialsRepository : WithState<CredentialsRepositoryState, Credenti
     suspend fun insertCredentials(credentials: Credentials): Unit
     suspend fun getActivities(user: String): List<Activity>
     suspend fun editCredentials(userName: String, newPassword: String): Unit
+    suspend fun getRoles(userName: String): List<Role>
 }
 
 data class CredentialsRepositoryState(

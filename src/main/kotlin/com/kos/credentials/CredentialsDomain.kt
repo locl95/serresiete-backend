@@ -27,5 +27,5 @@ object Activities {
     val editCredentials = "edit credentials"
     val getAnyCredentialsRoles = "get any credentials roles"
     val login = "login"
-    val logout = "login"
+    val logout = "logout"
 }

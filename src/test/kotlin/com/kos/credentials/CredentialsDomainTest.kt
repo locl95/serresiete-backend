@@ -22,6 +22,6 @@ class CredentialsDomainTest {
         assertEquals("edit credentials", Activities.editCredentials)
         assertEquals("get any credentials roles", Activities.getAnyCredentialsRoles)
         assertEquals("login", Activities.login)
-        assertEquals("login", Activities.logout)
+        assertEquals("logout", Activities.logout)
     }
 }

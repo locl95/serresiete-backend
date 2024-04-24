@@ -1,6 +1,5 @@
-package com.kos.credentials
+package com.kos.activities
 
-import com.kos.activities.Activities
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -8,6 +7,10 @@ class CredentialsDomainTest {
 
     @Test
     fun `assert activity values`() {
+        assertEquals("delete activity from role", Activities.deleteActivityFromRole)
+        assertEquals("add activity to role", Activities.addActivityToRole)
+        assertEquals("delete credentials", Activities.deleteCredentials)
+        assertEquals("get any credentials", Activities.getAnyCredentials)
         assertEquals("get any view", Activities.getAnyView)
         assertEquals("create a view", Activities.createViews)
         assertEquals("get any views", Activities.getAnyViews)
@@ -25,6 +28,11 @@ class CredentialsDomainTest {
         assertEquals("get own credentials roles", Activities.getOwnCredentialsRoles)
         assertEquals("add role to user", Activities.addRoleToUser)
         assertEquals("get any activities", Activities.getAnyActivities)
+        assertEquals("get any roles", Activities.getAnyRoles)
+        assertEquals("create activities", Activities.createActivities)
+        assertEquals("create roles", Activities.createRoles)
+        assertEquals("delete activities", Activities.deleteActivities)
+        assertEquals("delete roles", Activities.deleteRoles)
         assertEquals("login", Activities.login)
         assertEquals("logout", Activities.logout)
     }

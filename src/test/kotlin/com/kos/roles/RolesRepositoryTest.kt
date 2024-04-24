@@ -1,7 +1,7 @@
 package com.kos.roles
 
 import RolesRepository
-import com.kos.activities.RolesTestHelper.role
+import com.kos.roles.RolesTestHelper.role
 import com.kos.common.DatabaseFactory
 import com.kos.roles.repository.RolesDatabaseRepository
 import com.kos.roles.repository.RolesInMemoryRepository

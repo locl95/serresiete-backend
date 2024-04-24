@@ -1,8 +1,9 @@
 package com.kos.credentials.repository
 
-import com.kos.activities.Activity
 import com.kos.common.DatabaseFactory
-import com.kos.credentials.*
+import com.kos.credentials.Credentials
+import com.kos.credentials.CredentialsRole
+import com.kos.credentials.Role
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
@@ -66,18 +67,6 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         row[CredentialsRoles.role]
     )
 
-    object RolesActivities : Table("roles_activities") {
-        val role = varchar("role", 48)
-        val activity = varchar("activity", 128)
-
-        override val primaryKey = PrimaryKey(role, activity)
-    }
-
-    private fun resultRowToRolesActivities(row: ResultRow) = RoleActivity(
-        row[RolesActivities.role],
-        row[RolesActivities.activity]
-    )
-
     override suspend fun editCredentials(userName: String, newPassword: String) {
         DatabaseFactory.dbQuery {
             Users.update({ Users.userName.eq(userName) }) {
@@ -90,13 +79,6 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         return DatabaseFactory.dbQuery {
             CredentialsRoles.select { CredentialsRoles.userName.eq(userName) }
                 .map { resultRowToCredentialsRoles(it).role }
-        }
-    }
-
-    override suspend fun getRoles(): Set<Role> {
-        return DatabaseFactory.dbQuery {
-            CredentialsRoles.selectAll()
-                .map { resultRowToCredentialsRoles(it).role }.toSet()
         }
     }
 

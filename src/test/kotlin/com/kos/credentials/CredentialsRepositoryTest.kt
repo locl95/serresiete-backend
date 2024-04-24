@@ -82,16 +82,12 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
-    open fun `given a repository and roles i can retrieve them`() {
+    open fun `given a repository with credentials i can delete them`() {
         runBlocking {
-            val repositoryWithState = repository.withState(
-                basicCredentialsInitialState.copy(
-                    credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
-                )
-            )
+            val repositoryWithState = repository.withState(basicCredentialsInitialState)
+            repositoryWithState.deleteCredentials(user)
 
-            val roles = repositoryWithState.getRoles()
-            assertEquals(setOf("role1", "role2", "role3"), roles)
+            assertEquals(listOf(), repositoryWithState.state().users)
         }
     }
 

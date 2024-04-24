@@ -51,4 +51,24 @@ class CharactersServiceTest {
             assertEquals(expected, charactersService.createAndReturnIds(request))
         }
     }
+
+    @Test
+    fun `i can get a character`() {
+        runBlocking {
+            val charactersRepository = CharactersInMemoryRepository().withState(listOf(basicCharacter))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+
+            assertEquals(basicCharacter, charactersService.get(basicCharacter.id))
+        }
+    }
+
+    @Test
+    fun `i can get all characters`() {
+        runBlocking {
+            val charactersRepository = CharactersInMemoryRepository().withState(listOf(basicCharacter))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+
+            assertEquals(listOf(basicCharacter), charactersService.get())
+        }
+    }
 }

@@ -28,7 +28,6 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
     override suspend fun getUserRoles(userName: String): List<Role> =
         userRoles[userName].orEmpty()
 
-    override suspend fun getRoles(): Set<Role> = userRoles.flatMap { it.value }.toSet()
     override suspend fun insertRole(userName: String, role: Role) {
         userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + role }
     }

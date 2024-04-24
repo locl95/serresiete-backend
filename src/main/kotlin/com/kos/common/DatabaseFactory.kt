@@ -30,11 +30,19 @@ object DatabaseFactory {
             return HikariDataSource(config)
         }
 
+        //TODO: Just make a testInit at this point. Having cleanEnabled and the locations changed feels bad
+        //TODO: Maybe test migrations can be moved to test package
+        //TODO: Maybe just extend the FlywayConfiguration to add a new function to skip certain migrations
         val flyway = Flyway
             .configure()
+            .locations(
+                if(mustClean) "db/migration/test"
+                else "db/migration/prod"
+            )
             .dataSource(url, user, password)
             .cleanDisabled(false)
             .load()
+
 
         Database.connect(hikari())
         if (mustClean) flyway.clean()

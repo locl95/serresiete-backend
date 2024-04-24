@@ -1,7 +1,7 @@
 package com.kos.views
 
 import arrow.core.Either
-import com.kos.credentials.Activities
+import com.kos.activities.Activities
 import com.kos.credentials.CredentialsService
 import io.ktor.http.*
 import io.ktor.server.application.*

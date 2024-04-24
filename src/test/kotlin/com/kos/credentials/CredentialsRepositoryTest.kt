@@ -47,7 +47,7 @@ abstract class CredentialsRepositoryTest {
         }
     }
 
-    @Test
+    /*@Test
     open fun `given a repository with credentials, roles and activities i can retrieve the activities that an user is allowed to perform`() {
         runBlocking {
             val repositoryWithState = repository.withState(
@@ -65,11 +65,10 @@ abstract class CredentialsRepositoryTest {
             assertEquals(setOf("login", "logout", "create a view"), userActivities.toSet())
             assertEquals(setOf("get view data", "get view cached data"), serviceActivities.toSet())
         }
-    }
-
+    } */
 
     @Test
-    open fun `given a repository with roles i can retrieve them`() {
+    open fun `given a repository and a user with roles i can retrieve it's roles`() {
         runBlocking {
             val repositoryWithState = repository.withState(
                 basicCredentialsInitialState.copy(
@@ -77,8 +76,52 @@ abstract class CredentialsRepositoryTest {
                 )
             )
 
-            val roles = repositoryWithState.getRoles(user)
+            val roles = repositoryWithState.getUserRoles(user)
             assertEquals(listOf("role1", "role2"), roles)
+        }
+    }
+
+    @Test
+    open fun `given a repository and roles i can retrieve them`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(
+                basicCredentialsInitialState.copy(
+                    credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
+                )
+            )
+
+            val roles = repositoryWithState.getRoles()
+            assertEquals(setOf("role1", "role2", "role3"), roles)
+        }
+    }
+
+    @Test
+    open fun `given a repository with users i can add a role`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsInitialState)
+            val initialRoles = repositoryWithState.state().credentialsRoles[user]
+            repositoryWithState.insertRole(user, "role2")
+            val finalState = repositoryWithState.state().credentialsRoles[user]
+            assertEquals(emptyList(), initialRoles.orEmpty())
+            assertEquals(listOf("role2"), finalState.orEmpty())
+        }
+    }
+
+    @Test
+    open fun `given a repository with users and roles i can delete a role`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsInitialState.copy(
+                credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
+            ))
+            val initialRolesUser = repositoryWithState.state().credentialsRoles[user]
+            val initialRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
+            repositoryWithState.deleteRole(user, "role2")
+            val finalRolesUser = repositoryWithState.state().credentialsRoles[user]
+            val finalRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
+            assertEquals(listOf("role1", "role2"), initialRolesUser.orEmpty())
+            assertEquals(listOf("role1", "role3"), initialRolesUser2.orEmpty())
+            assertEquals(listOf("role1"), finalRolesUser)
+            assertEquals(initialRolesUser2, finalRolesUser2)
         }
     }
 }

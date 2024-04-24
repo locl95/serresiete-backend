@@ -8,5 +8,5 @@ object CredentialsTestHelper {
     val password = "password"
     val basicCredentials = Credentials(user, password)
     val encryptedCredentials = Credentials(user, BCrypt.hashpw(password, BCrypt.gensalt(12)))
-    val basicCredentialsInitialState = CredentialsRepositoryState(listOf(encryptedCredentials), mapOf(), mapOf())
+    val basicCredentialsInitialState = CredentialsRepositoryState(listOf(encryptedCredentials), mapOf())
 }

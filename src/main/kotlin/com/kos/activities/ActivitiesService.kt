@@ -6,6 +6,6 @@ class ActivitiesService(private val activitiesRepository: ActivitiesRepository) 
     suspend fun getActivities(): List<Activity> = activitiesRepository.getActivities()
     suspend fun createActivity(activityRequest: ActivityRequest) =
         activitiesRepository.insertActivity(activityRequest.activity)
-    suspend fun deleteActivity(activityRequest: ActivityRequest) =
-        activitiesRepository.deleteActivity(activityRequest.activity)
+    suspend fun deleteActivity(activity: Activity) =
+        activitiesRepository.deleteActivity(activity)
 }

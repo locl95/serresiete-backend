@@ -30,20 +30,24 @@ fun Route.activitiesRouting(activitiesService: ActivitiesService, credentialsSer
                     else -> {
                         if (credentialsService.hasPermissions(id.name, Activities.createActivities)) {
                             activitiesService.createActivity(call.receive())
+                            call.respond(HttpStatusCode.Created)
                         } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }
             }
         }
-
-        authenticate("auth-bearer") {
-            delete {
-                when (val id = call.principal<UserIdPrincipal>()) {
-                    null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> {
-                        if (credentialsService.hasPermissions(id.name, Activities.deleteActivities)) {
-                            activitiesService.deleteActivity(call.receive())
-                        } else call.respond(HttpStatusCode.Forbidden)
+        route("/{activity}") {
+            authenticate("auth-bearer") {
+                delete {
+                    when (val id = call.principal<UserIdPrincipal>()) {
+                        null -> call.respond(HttpStatusCode.Unauthorized)
+                        else -> {
+                            val activity = call.parameters["activity"].orEmpty()
+                            if (credentialsService.hasPermissions(id.name, Activities.deleteActivities)) {
+                                activitiesService.deleteActivity(activity)
+                                call.respond(HttpStatusCode.NoContent)
+                            } else call.respond(HttpStatusCode.Forbidden)
+                        }
                     }
                 }
             }
@@ -56,7 +60,7 @@ fun Route.activitiesRouting(activitiesService: ActivitiesService, credentialsSer
                     else -> {
                         val role = call.parameters["role"].orEmpty()
                         if (credentialsService.hasPermissions(id.name, Activities.getAnyActivities)) {
-                            credentialsService.getRoleActivities(role)
+                            call.respond(HttpStatusCode.OK, credentialsService.getRoleActivities(role))
                         } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }

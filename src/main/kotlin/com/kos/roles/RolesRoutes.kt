@@ -31,51 +31,57 @@ fun Route.rolesRouting(rolesService: RolesService, credentialsService: Credentia
                     else -> {
                         if (credentialsService.hasPermissions(id.name, Activities.createRoles)) {
                             rolesService.createRole(call.receive())
+                            call.respond(HttpStatusCode.Created)
                         } else call.respond(HttpStatusCode.Forbidden)
                     }
                 }
             }
         }
 
-        authenticate("auth-bearer") {
-            delete {
-                when (val id = call.principal<UserIdPrincipal>()) {
-                    null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> {
-                        if (credentialsService.hasPermissions(id.name, Activities.deleteRoles)) {
-                            rolesService.deleteRole(call.receive())
-                        } else call.respond(HttpStatusCode.Forbidden)
-                    }
-                }
-            }
-        }
-        route("/{role}/activities") {
-            authenticate("auth-bearer") {
-                post {
-                    when (val id = call.principal<UserIdPrincipal>()) {
-                        null -> call.respond(HttpStatusCode.Unauthorized)
-                        else -> {
-                            val role = call.parameters["role"].orEmpty()
-                            if (credentialsService.hasPermissions(id.name, Activities.addActivityToRole)) {
-                                rolesService.addActivityToRole(call.receive(), role)
-                                call.respond(HttpStatusCode.Created)
-                            } else call.respond(HttpStatusCode.Forbidden)
-                        }
-                    }
-                }
-            }
-        }
-        route("/{role}/activities/{activity}") {
+        route("/{role}") {
             authenticate("auth-bearer") {
                 delete {
                     when (val id = call.principal<UserIdPrincipal>()) {
                         null -> call.respond(HttpStatusCode.Unauthorized)
                         else -> {
                             val role = call.parameters["role"].orEmpty()
-                            val activity = call.parameters["activity"].orEmpty()
-                            if (credentialsService.hasPermissions(id.name, Activities.deleteActivityFromRole)) {
-                                rolesService.removeActivityFromRole(activity, role)
+                            if (credentialsService.hasPermissions(id.name, Activities.deleteRoles)) {
+                                rolesService.deleteRole(role)
+                                call.respond(HttpStatusCode.NoContent)
                             } else call.respond(HttpStatusCode.Forbidden)
+                        }
+                    }
+                }
+            }
+            route("/activities") {
+                authenticate("auth-bearer") {
+                    post {
+                        when (val id = call.principal<UserIdPrincipal>()) {
+                            null -> call.respond(HttpStatusCode.Unauthorized)
+                            else -> {
+                                val role = call.parameters["role"].orEmpty()
+                                if (credentialsService.hasPermissions(id.name, Activities.addActivityToRole)) {
+                                    rolesService.addActivityToRole(call.receive(), role)
+                                    call.respond(HttpStatusCode.Created)
+                                } else call.respond(HttpStatusCode.Forbidden)
+                            }
+                        }
+                    }
+                }
+            }
+            route("/activities/{activity}") {
+                authenticate("auth-bearer") {
+                    delete {
+                        when (val id = call.principal<UserIdPrincipal>()) {
+                            null -> call.respond(HttpStatusCode.Unauthorized)
+                            else -> {
+                                val role = call.parameters["role"].orEmpty()
+                                val activity = call.parameters["activity"].orEmpty()
+                                if (credentialsService.hasPermissions(id.name, Activities.deleteActivityFromRole)) {
+                                    rolesService.removeActivityFromRole(activity, role)
+                                    call.respond(HttpStatusCode.NoContent)
+                                } else call.respond(HttpStatusCode.Forbidden)
+                            }
                         }
                     }
                 }

@@ -12,10 +12,10 @@ class RolesService(
     suspend fun getRoles(): List<Role> = rolesRepository.getRoles()
     suspend fun createRole(roleRequest: RoleRequest) =
         rolesRepository.insertRole(roleRequest.role)
-    suspend fun deleteRole(roleRequest: RoleRequest) =
-        rolesRepository.deleteRole(roleRequest.role)
+    suspend fun deleteRole(role: Role) =
+        rolesRepository.deleteRole(role)
     suspend fun addActivityToRole(activityRequest: ActivityRequest, role: Role) =
         rolesActivitiesRepository.insertActivityToRole(activityRequest.activity, role)
     suspend fun removeActivityFromRole(activity: Activity, role: Role) =
-        rolesActivitiesRepository.insertActivityToRole(activity, role)
+        rolesActivitiesRepository.deleteActivityFromRole(activity, role)
 }

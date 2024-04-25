@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "ce2e9159-2ff1-4a53-b715-20ef7fbed1d2",
+		"_postman_id": "f1d6c4ec-961c-4f3c-a076-7184345bdec5",
 		"name": "raiderio-ladder-backend",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "20384788"
+		"_exporter_id": "30887858"
 	},
 	"item": [
 		{
@@ -232,7 +232,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
+							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Apohunter\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kumico\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Sanxei\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }\n    ],\n    \"name\": \"nice-view\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -256,10 +256,28 @@
 				{
 					"name": "Delete View",
 					"request": {
-						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": ""
+							"raw": "{{baseUri}}/api/views/{{viewId}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"views",
+								"{{viewId}}"
+							]
 						}
 					},
 					"response": []
@@ -271,6 +289,51 @@
 			"item": [
 				{
 					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody)",
+									"pm.collectionVariables.set(\"token\", jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{user}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/auth",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"auth"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh",
 					"event": [
 						{
 							"listen": "test",
@@ -361,37 +424,8 @@
 				{
 					"name": "Create Credentials",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"userName\": \"oscar\",\r\n    \"password\": \"tarea\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/credentials",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"credentials"
-							]
-						}
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				},
@@ -412,7 +446,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userName\": \"oscar\",\r\n    \"password\": \"tareaMod\"\r\n}",
+							"raw": "{\n    \"userName\": \"oscar\",\n    \"password\": \"latarea\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -427,6 +461,326 @@
 							"path": [
 								"api",
 								"credentials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Roles From User",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "roles",
+			"item": [
+				{
+					"name": "Get Roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create a Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role2}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add activity to role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"activity\": \"play ping pong\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role}}/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role}}",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete activity from role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "activities",
+			"item": [
+				{
+					"name": "Get Activities From Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities/{{role}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities",
+								"{{role}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activities",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Activity",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"activity\": \"play ping pong\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete activity",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities/{{activity}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities",
+								"{{activity}}"
 							]
 						}
 					},
@@ -543,12 +897,32 @@
 		},
 		{
 			"key": "password",
-			"value": "1234",
+			"value": "tareaMod",
 			"type": "default"
 		},
 		{
 			"key": "baseUri",
 			"value": "http://localhost:8080"
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "activity",
+			"value": ""
+		},
+		{
+			"key": "role",
+			"value": "admin"
+		},
+		{
+			"key": "role2",
+			"value": "nefertiti"
+		},
+		{
+			"key": "activity2",
+			"value": "play ping pong"
 		}
 	]
 }

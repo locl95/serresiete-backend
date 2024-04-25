@@ -1,8 +1,11 @@
 package com.kos.credentials.repository
 
 import com.kos.common.DatabaseFactory
-import com.kos.credentials.*
+import com.kos.credentials.Credentials
+import com.kos.credentials.CredentialsRole
+import com.kos.credentials.Role
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class CredentialsDatabaseRepository : CredentialsRepository {
     override suspend fun withState(initialState: CredentialsRepositoryState): CredentialsDatabaseRepository {
@@ -16,12 +19,6 @@ class CredentialsDatabaseRepository : CredentialsRepository {
             }) {
                 this[CredentialsRoles.userName] = it.first
                 this[CredentialsRoles.role] = it.second
-            }
-            RolesActivities.batchInsert(initialState.rolesActivities.flatMap { (role, activities) ->
-                activities.map { Pair(role, it) }
-            }) {
-                this[RolesActivities.role] = it.first
-                this[RolesActivities.activity] = it.second
             }
         }
         return this
@@ -38,6 +35,10 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         row[Users.userName],
         row[Users.password]
     )
+
+    override suspend fun getCredentials(): List<Credentials> {
+        return Users.selectAll().map { resultRowToUser(it) }
+    }
 
     override suspend fun getCredentials(userName: String): Credentials? {
         return DatabaseFactory.dbQuery {
@@ -66,26 +67,6 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         row[CredentialsRoles.role]
     )
 
-    object RolesActivities : Table("roles_activities") {
-        val role = varchar("role", 48)
-        val activity = varchar("activity", 128)
-
-        override val primaryKey = PrimaryKey(role, activity)
-    }
-
-    private fun resultRowToRolesActivities(row: ResultRow) = RoleActivity(
-        row[RolesActivities.role],
-        row[RolesActivities.activity]
-    )
-
-    override suspend fun getActivities(user: String): List<Activity> {
-        return DatabaseFactory.dbQuery {
-            CredentialsRoles.join(RolesActivities, JoinType.INNER, null, null) {
-                CredentialsRoles.role eq RolesActivities.role
-            }.select { CredentialsRoles.userName.eq(user) }.map { it[RolesActivities.activity] }
-        }
-    }
-
     override suspend fun editCredentials(userName: String, newPassword: String) {
         DatabaseFactory.dbQuery {
             Users.update({ Users.userName.eq(userName) }) {
@@ -94,10 +75,31 @@ class CredentialsDatabaseRepository : CredentialsRepository {
         }
     }
 
-    override suspend fun getRoles(userName: String): List<Role> {
+    override suspend fun getUserRoles(userName: String): List<Role> {
         return DatabaseFactory.dbQuery {
             CredentialsRoles.select { CredentialsRoles.userName.eq(userName) }
                 .map { resultRowToCredentialsRoles(it).role }
+        }
+    }
+
+    override suspend fun insertRole(userName: String, role: Role) {
+        DatabaseFactory.dbQuery {
+            CredentialsRoles.insert {
+                it[CredentialsRoles.userName] = userName
+                it[CredentialsRoles.role] = role
+            }
+        }
+    }
+
+    override suspend fun deleteRole(userName: String, role: String) {
+        DatabaseFactory.dbQuery {
+            CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role) and CredentialsRoles.userName.eq(userName) }
+        }
+    }
+
+    override suspend fun deleteCredentials(user: String) {
+        DatabaseFactory.dbQuery {
+            Users.deleteWhere { userName.eq(user) }
         }
     }
 
@@ -106,9 +108,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
             CredentialsRepositoryState(
                 Users.selectAll().map { resultRowToUser(it) },
                 CredentialsRoles.selectAll().map { resultRowToCredentialsRoles(it) }.groupBy { it.userName }
-                    .mapValues { it.value.map { cr -> cr.role } },
-                RolesActivities.selectAll().map { resultRowToRolesActivities(it) }.groupBy { it.role }
-                    .mapValues { it.value.map { cr -> cr.activity } }
+                    .mapValues { it.value.map { cr -> cr.role } }
             )
         }
     }

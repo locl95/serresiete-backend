@@ -2,13 +2,12 @@ package com.kos.auth
 
 import arrow.core.Either
 import arrow.core.left
-import com.kos.credentials.Activities
+import com.kos.activities.Activities
 import com.kos.credentials.CredentialsService
 import com.kos.plugins.UserWithToken
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 

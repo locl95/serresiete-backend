@@ -1,5 +1,8 @@
 package com.kos
 
+import com.kos.activities.ActivitiesService
+import com.kos.activities.repository.ActivitiesDatabaseRepository
+import com.kos.activities.repository.ActivitiesInMemoryRepository
 import com.kos.auth.AuthService
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
@@ -11,6 +14,11 @@ import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.plugins.*
 import com.kos.raiderio.RaiderIoHTTPClient
+import com.kos.roles.RolesService
+import com.kos.roles.repository.RolesActivitiesDatabaseRepository
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
+import com.kos.roles.repository.RolesDatabaseRepository
+import com.kos.roles.repository.RolesInMemoryRepository
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
 import io.ktor.client.*
@@ -40,8 +48,16 @@ fun Application.module() {
     val authRepository = AuthDatabaseRepository()
     val authService = AuthService(authRepository)
 
+    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository()
+
     val credentialsRepository = CredentialsDatabaseRepository()
-    val credentialsService = CredentialsService(credentialsRepository)
+    val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+
+    val activitiesRepository = ActivitiesDatabaseRepository()
+    val activitiesService = ActivitiesService(activitiesRepository)
+
+    val rolesRepository = RolesDatabaseRepository()
+    val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
 
     val charactersRepository = CharactersDatabaseRepository()
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient)
@@ -70,7 +86,7 @@ fun Application.module() {
 
     configureAuthentication(authService, credentialsService)
     configureCors()
-    configureRouting(authService, viewsService, credentialsService)
+    configureRouting(authService, viewsService, credentialsService, activitiesService, rolesService)
     configureSerialization()
     configureLogging()
 }

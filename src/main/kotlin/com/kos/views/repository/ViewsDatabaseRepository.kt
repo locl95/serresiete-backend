@@ -76,6 +76,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 it[Views.id] = id
                 it[Views.name] = name
                 it[Views.owner] = owner
+                it[Views.isVisible] = true
             }
             CharactersView.batchInsert(characterIds) {
                 this[CharactersView.viewId] = id
@@ -85,10 +86,11 @@ class ViewsDatabaseRepository : ViewsRepository {
         return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewModified {
+    override suspend fun edit(id: String, name: String, characters: List<Long>, isVisible: Boolean): ViewModified {
         dbQuery {
             Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
+                it[Views.isVisible] = isVisible
             }
             CharactersView.deleteWhere { viewId.eq(id) }
             CharactersView.batchInsert(characters) {

@@ -48,7 +48,7 @@ class ViewsService(
 
     suspend fun edit(id: String, request: ViewRequest): ViewModified {
         val characters = charactersService.createAndReturnIds(request.characters)
-        return viewsRepository.edit(id, request.name, characters)
+        return viewsRepository.edit(id, request.name, characters, request.isVisible)
     }
 
     suspend fun delete(id: String): ViewDeleted {

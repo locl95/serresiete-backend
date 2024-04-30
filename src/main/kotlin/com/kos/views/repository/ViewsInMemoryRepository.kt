@@ -16,15 +16,15 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewModified {
         val id = UUID.randomUUID().toString()
-        views.add(SimpleView(id, name, owner, characterIds))
+        views.add(SimpleView(id, name, owner, characterIds, true)) // All views are visible by default
         return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, characters: List<Long>): ViewModified {
+    override suspend fun edit(id: String, name: String, characters: List<Long>, isVisible: Boolean): ViewModified {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
         views.removeAt(index)
-        views.add(index, SimpleView(id, name, oldView.owner, characters))
+        views.add(index, SimpleView(id, name, oldView.owner, characters, isVisible))
         return ViewModified(id, characters)
     }
 

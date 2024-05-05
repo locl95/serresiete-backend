@@ -16,6 +16,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[Views.id] = it.id
                 this[Views.name] = it.name
                 this[Views.owner] = it.owner
+                this[Views.isPublished] = it.isPublished
             }
             initialState.forEach { sv ->
                 CharactersView.batchInsert(sv.characterIds) {
@@ -31,7 +32,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         val id = varchar("id", 48)
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
-        val isPublished = bool("isPublished")
+        val isPublished = bool("is_published")
 
         override val primaryKey = PrimaryKey(id)
     }

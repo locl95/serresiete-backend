@@ -5,6 +5,7 @@ import com.kos.views.ViewsTestHelper.basicSimpleView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
 import com.kos.views.ViewsTestHelper.owner
+import com.kos.views.ViewsTestHelper.isPublished
 import com.kos.views.repository.ViewsDatabaseRepository
 import com.kos.views.repository.ViewsInMemoryRepository
 import com.kos.views.repository.ViewsRepository
@@ -31,7 +32,7 @@ abstract class ViewsRepositoryTest {
     fun `given a repository with views i can retrieve a certain view`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            assertEquals((SimpleView(id, name, owner, true, listOf())), repositoryWithState.get(id))
+            assertEquals((SimpleView(id, name, owner, isPublished, listOf())), repositoryWithState.get(id))
         }
     }
 
@@ -56,7 +57,7 @@ abstract class ViewsRepositoryTest {
         runBlocking {
             val repo =
                 repository.withState(listOf(basicSimpleView))
-            val edit = repo.edit(id, "name2", false, listOf(1))
+            val edit = repo.edit(id, "name2", isPublished, listOf(1))
             val finalState = repo.state()
             assertEquals(ViewModified(id, listOf(1)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(name = "name2", characterIds = listOf(1))))
@@ -67,7 +68,7 @@ abstract class ViewsRepositoryTest {
     fun `given a repository with a view i can edit more than one character`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            val edit = repositoryWithState.edit(id, "name", true ,listOf(1, 2, 3, 4))
+            val edit = repositoryWithState.edit(id, "name", isPublished, listOf(1, 2, 3, 4))
             val finalState = repositoryWithState.state()
             assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(characterIds = listOf(1, 2, 3, 4))))

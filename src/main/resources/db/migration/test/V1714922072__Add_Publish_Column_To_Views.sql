@@ -1,0 +1,1 @@
+alter table views add column published boolean not null default true

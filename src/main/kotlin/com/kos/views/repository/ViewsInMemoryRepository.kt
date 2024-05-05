@@ -20,11 +20,11 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, isPublished: Boolean, characters: List<Long>): ViewModified {
+    override suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>): ViewModified {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
         views.removeAt(index)
-        views.add(index, SimpleView(id, name, oldView.owner, isPublished, characters))
+        views.add(index, SimpleView(id, name, oldView.owner, published, characters))
         return ViewModified(id, characters)
     }
 

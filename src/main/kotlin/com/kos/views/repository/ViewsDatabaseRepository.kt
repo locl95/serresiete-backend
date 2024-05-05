@@ -16,7 +16,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[Views.id] = it.id
                 this[Views.name] = it.name
                 this[Views.owner] = it.owner
-                this[Views.isPublished] = it.isPublished
+                this[Views.published] = it.published
             }
             initialState.forEach { sv ->
                 CharactersView.batchInsert(sv.characterIds) {
@@ -32,7 +32,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         val id = varchar("id", 48)
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
-        val isPublished = bool("is_published")
+        val published = bool("published")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -42,7 +42,7 @@ class ViewsDatabaseRepository : ViewsRepository {
             row[Views.id],
             row[Views.name],
             row[Views.owner],
-            row[Views.isPublished],
+            row[Views.published],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
                 .map { resultRowToCharacterView(it).first }
         )
@@ -79,7 +79,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 it[Views.id] = id
                 it[Views.name] = name
                 it[Views.owner] = owner
-                it[Views.isPublished] = true
+                it[Views.published] = true
             }
             CharactersView.batchInsert(characterIds) {
                 this[CharactersView.viewId] = id
@@ -89,11 +89,11 @@ class ViewsDatabaseRepository : ViewsRepository {
         return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, isPublished: Boolean, characters: List<Long>): ViewModified {
+    override suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>): ViewModified {
         dbQuery {
             Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
-                it[Views.isPublished] = isPublished
+                it[Views.published] = published
             }
             CharactersView.deleteWhere { viewId.eq(id) }
             CharactersView.batchInsert(characters) {

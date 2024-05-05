@@ -5,13 +5,13 @@ import com.kos.characters.CharacterRequest
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SimpleView(val id: String, val name: String, val owner: String, val isPublished: Boolean, val characterIds: List<Long>)
+data class SimpleView(val id: String, val name: String, val owner: String, val published: Boolean, val characterIds: List<Long>)
 
 @Serializable
-data class View(val id: String, val name: String, val owner: String, val isPublished: Boolean, val characters: List<Character>)
+data class View(val id: String, val name: String, val owner: String, val published: Boolean, val characters: List<Character>)
 
 @Serializable
-data class ViewRequest(val name: String, val isPublished: Boolean, val characters: List<CharacterRequest>)
+data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>)
 
 @Serializable
 sealed interface ViewResult {

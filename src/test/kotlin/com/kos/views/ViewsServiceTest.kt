@@ -58,7 +58,7 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create(owner, ViewRequest(name, listOf())).isRight())
+            assertTrue(service.create(owner, ViewRequest(name, true, listOf())).isRight())
             assertTrue(viewsRepository.state().size == 1)
             assertTrue(viewsRepository.state().all { it.owner == owner })
         }
@@ -77,7 +77,7 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().size == 2)
             assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(service.create(owner, ViewRequest(name, listOf())).isLeft())
+            assertTrue(service.create(owner, ViewRequest(name, true, listOf())).isLeft())
             assertTrue(viewsRepository.state().size == 2)
         }
     }
@@ -106,7 +106,7 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
             assertEquals(
                 service.edit(
-                    id, ViewRequest(name, listOf(request1, request2, request3, request4))
+                    id, ViewRequest(name, true, listOf(request1, request2, request3, request4))
                 ), ViewModified(id, listOf(1, 2, 3, 4))
             )
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })

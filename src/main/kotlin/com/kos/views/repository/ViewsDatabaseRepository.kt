@@ -31,6 +31,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         val id = varchar("id", 48)
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
+        val isPublished = bool("isPublished")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -40,6 +41,7 @@ class ViewsDatabaseRepository : ViewsRepository {
             row[Views.id],
             row[Views.name],
             row[Views.owner],
+            row[Views.isPublished],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
                 .map { resultRowToCharacterView(it).first }
         )
@@ -76,7 +78,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 it[Views.id] = id
                 it[Views.name] = name
                 it[Views.owner] = owner
-                it[Views.isVisible] = true
+                it[Views.isPublished] = true
             }
             CharactersView.batchInsert(characterIds) {
                 this[CharactersView.viewId] = id
@@ -86,11 +88,11 @@ class ViewsDatabaseRepository : ViewsRepository {
         return ViewModified(id, characterIds)
     }
 
-    override suspend fun edit(id: String, name: String, characters: List<Long>, isVisible: Boolean): ViewModified {
+    override suspend fun edit(id: String, name: String, isPublished: Boolean, characters: List<Long>): ViewModified {
         dbQuery {
             Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
-                it[Views.isVisible] = isVisible
+                it[Views.isPublished] = isPublished
             }
             CharactersView.deleteWhere { viewId.eq(id) }
             CharactersView.batchInsert(characters) {

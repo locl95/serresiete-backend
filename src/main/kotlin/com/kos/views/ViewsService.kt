@@ -31,7 +31,7 @@ class ViewsService(
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
             else -> {
-                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.characterIds.mapNotNull {
+                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.isPublished, simpleView.characterIds.mapNotNull {
                     charactersService.get(it)
                 })
             }
@@ -48,7 +48,7 @@ class ViewsService(
 
     suspend fun edit(id: String, request: ViewRequest): ViewModified {
         val characters = charactersService.createAndReturnIds(request.characters)
-        return viewsRepository.edit(id, request.name, characters, request.isVisible)
+        return viewsRepository.edit(id, request.name, request.isPublished, characters)
     }
 
     suspend fun delete(id: String): ViewDeleted {

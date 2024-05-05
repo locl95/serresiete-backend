@@ -31,7 +31,7 @@ abstract class ViewsRepositoryTest {
     fun `given a repository with views i can retrieve a certain view`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            assertEquals((SimpleView(id, name, owner, listOf(), true)), repositoryWithState.get(id))
+            assertEquals((SimpleView(id, name, owner, true, listOf())), repositoryWithState.get(id))
         }
     }
 
@@ -45,7 +45,7 @@ abstract class ViewsRepositoryTest {
     @Test
     fun `given an empty repository i can insert views`() {
         runBlocking {
-            assert(repository.create(name, owner, listOf(), true).isSuccess)
+            assert(repository.create(name, owner, listOf()).isSuccess)
             assert(repository.state().size == 1)
             assert(repository.state().all { it.owner == owner })
         }
@@ -56,7 +56,7 @@ abstract class ViewsRepositoryTest {
         runBlocking {
             val repo =
                 repository.withState(listOf(basicSimpleView))
-            val edit = repo.edit(id, "name2", listOf(1))
+            val edit = repo.edit(id, "name2", false, listOf(1))
             val finalState = repo.state()
             assertEquals(ViewModified(id, listOf(1)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(name = "name2", characterIds = listOf(1))))
@@ -67,7 +67,7 @@ abstract class ViewsRepositoryTest {
     fun `given a repository with a view i can edit more than one character`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            val edit = repositoryWithState.edit(id, "name", listOf(1, 2, 3, 4))
+            val edit = repositoryWithState.edit(id, "name", true ,listOf(1, 2, 3, 4))
             val finalState = repositoryWithState.state()
             assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), edit)
             assertEquals(finalState, listOf(basicSimpleView.copy(characterIds = listOf(1, 2, 3, 4))))

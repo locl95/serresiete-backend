@@ -8,6 +8,7 @@ import com.kos.credentials.CredentialsService
 import com.kos.credentials.credentialsRouting
 import com.kos.roles.RolesService
 import com.kos.roles.rolesRouting
+import com.kos.views.ViewsController
 import com.kos.views.ViewsService
 import com.kos.views.viewsRouting
 import io.ktor.server.application.*
@@ -20,13 +21,14 @@ fun Application.configureRouting(
     viewsService: ViewsService,
     credentialsService: CredentialsService,
     activitiesService: ActivitiesService,
-    rolesService: RolesService
+    rolesService: RolesService,
+    viewsController: ViewsController
 ) {
 
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
         route("/api") {
-            viewsRouting(viewsService, credentialsService)
+            viewsRouting(viewsController, viewsService, credentialsService)
             authRouting(authService, credentialsService)
             rolesRouting(rolesService, credentialsService)
             activitiesRouting(activitiesService, credentialsService)

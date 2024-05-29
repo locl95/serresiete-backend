@@ -1,6 +1,8 @@
 package com.kos.common
 
-interface HttpError {
+import com.kos.views.ControllerError
+
+interface HttpError : ControllerError {
     fun error(): String
 }
 

@@ -19,6 +19,7 @@ import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesDatabaseRepository
 import com.kos.roles.repository.RolesInMemoryRepository
+import com.kos.views.ViewsController
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
 import io.ktor.client.*
@@ -66,6 +67,7 @@ fun Application.module() {
     val dataCacheRepository = DataCacheDatabaseRepository()
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
+    val viewsController = ViewsController(viewsService, credentialsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
@@ -86,7 +88,7 @@ fun Application.module() {
 
     configureAuthentication(authService, credentialsService)
     configureCors()
-    configureRouting(authService, viewsService, credentialsService, activitiesService, rolesService)
+    configureRouting(authService, viewsService, credentialsService, activitiesService, rolesService, viewsController)
     configureSerialization()
     configureLogging()
 }

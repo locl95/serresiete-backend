@@ -34,6 +34,4 @@ data class ViewNotFound(val viewId: String) : ViewResult {
 }
 
 @Serializable
-class TooMuchViews : ViewResult {
-    override val isSuccess: Boolean = false
-}
+class TooMuchViews : ViewsError

@@ -17,5 +17,5 @@ interface CredentialsRepository : WithState<CredentialsRepositoryState, Credenti
 
 data class CredentialsRepositoryState(
     val users: List<Credentials>,
-    val credentialsRoles: Map<String, List<Role>>,
+    val credentialsRoles: Map<String, List<Role>>
 )

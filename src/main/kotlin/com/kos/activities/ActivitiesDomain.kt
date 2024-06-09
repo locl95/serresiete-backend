@@ -23,6 +23,7 @@ object Activities {
     const val getAnyCredentialsRoles = "get any credentials roles"
     const val getOwnCredentialsRoles = "get own credentials roles"
     const val addRoleToUser = "add role to user"
+    const val deleteRoleFromUser = "delete role from user"
     const val getAnyActivities = "get any activities"
     const val getAnyRoles = "get any roles"
     const val createActivities = "create activities"

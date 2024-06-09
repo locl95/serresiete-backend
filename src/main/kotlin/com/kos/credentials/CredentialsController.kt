@@ -23,7 +23,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
-                if (credentialsService.hasPermissions(client, Activities.createCredentials)) {
+                if (credentialsService.hasPermissions(client, Activities.editCredentials)) {
                     Either.Right(credentialsService.editCredentials(credentials))
                 } else Either.Left(NotEnoughPermissions(client))
             }
@@ -83,7 +83,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
-                if (credentialsService.hasPermissions(client, Activities.addRoleToUser)) {
+                if (credentialsService.hasPermissions(client, Activities.deleteRoleFromUser)) {
                     Either.Right(credentialsService.deleteRoleFromUser(user, role))
                 } else Either.Left(NotEnoughPermissions(client))
             }

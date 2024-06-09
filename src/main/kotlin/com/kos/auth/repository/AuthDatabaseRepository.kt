@@ -60,9 +60,9 @@ class AuthDatabaseRepository : AuthRepository {
             insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) }
         }
 
-    override suspend fun deleteToken(token: String): Boolean {
+    override suspend fun deleteTokensFromUser(userName: String): Boolean {
         dbQuery {
-            Authorizations.deleteWhere { Authorizations.token.eq(token) }
+            Authorizations.deleteWhere { this.userName.eq(userName) }
         }
         return true
     }

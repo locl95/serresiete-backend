@@ -42,7 +42,7 @@ abstract class AuthRepositoryTestCommon {
     fun `given a repository with one authorization i can delete it`() {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
-            assertTrue(repositoryWithState.deleteToken(token))
+            assertTrue(repositoryWithState.deleteTokensFromUser(basicAuthorization.userName))
             assertTrue(repositoryWithState.state().isEmpty())
         }
     }

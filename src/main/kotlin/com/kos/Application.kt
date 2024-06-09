@@ -1,24 +1,25 @@
 package com.kos
 
+import com.kos.activities.ActivitiesController
 import com.kos.activities.ActivitiesService
 import com.kos.activities.repository.ActivitiesDatabaseRepository
-import com.kos.activities.repository.ActivitiesInMemoryRepository
+import com.kos.auth.AuthController
 import com.kos.auth.AuthService
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.plugins.*
 import com.kos.raiderio.RaiderIoHTTPClient
+import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesDatabaseRepository
-import com.kos.roles.repository.RolesInMemoryRepository
 import com.kos.views.ViewsController
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
@@ -46,19 +47,23 @@ fun Application.module() {
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
 
-    val authRepository = AuthDatabaseRepository()
-    val authService = AuthService(authRepository)
-
     val rolesActivitiesRepository = RolesActivitiesDatabaseRepository()
 
     val credentialsRepository = CredentialsDatabaseRepository()
     val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+    val credentialsController = CredentialsController(credentialsService)
+
+    val authRepository = AuthDatabaseRepository()
+    val authService = AuthService(authRepository)
+    val authController = AuthController(authService, credentialsService)
 
     val activitiesRepository = ActivitiesDatabaseRepository()
     val activitiesService = ActivitiesService(activitiesRepository)
+    val activitiesController = ActivitiesController(activitiesService, credentialsService)
 
     val rolesRepository = RolesDatabaseRepository()
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
+    val rolesController = RolesController(rolesService, credentialsService)
 
     val charactersRepository = CharactersDatabaseRepository()
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient)
@@ -88,7 +93,7 @@ fun Application.module() {
 
     configureAuthentication(authService, credentialsService)
     configureCors()
-    configureRouting(authService, viewsService, credentialsService, activitiesService, rolesService, viewsController)
+    configureRouting(activitiesController, authController, credentialsController, rolesController, viewsController)
     configureSerialization()
     configureLogging()
 }

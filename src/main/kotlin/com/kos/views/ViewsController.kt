@@ -3,103 +3,133 @@ package com.kos.views
 import arrow.core.Either
 import arrow.core.flatten
 import com.kos.activities.Activities
+import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.raiderio.RaiderIoData
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
 
 class ViewsController(
     private val viewsService: ViewsService,
     private val credentialsService: CredentialsService
 ) {
 
-    suspend fun getViews(user: String?): Either<ControllerError, List<SimpleView>> {
-        return when (user) {
+    suspend fun getViews(client: String?): Either<ControllerError, List<SimpleView>> {
+        return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
-                if (credentialsService.hasPermissions(user, Activities.getAnyViews)) Either.Right(viewsService.getViews())
-                else if (credentialsService.hasPermissions(user, Activities.getOwnViews)) Either.Right(viewsService.getOwnViews(user))
-                else Either.Left(NotEnoughPermissions(user))
+                if (credentialsService.hasPermissions(
+                        client,
+                        Activities.getAnyViews
+                    )
+                ) Either.Right(viewsService.getViews())
+                else if (credentialsService.hasPermissions(
+                        client,
+                        Activities.getOwnViews
+                    )
+                ) Either.Right(viewsService.getOwnViews(client))
+                else Either.Left(NotEnoughPermissions(client))
             }
         }
     }
 
-    suspend fun getView(user: String?, id: String): Either<ControllerError, View> {
-        return when (user) {
+    suspend fun getView(client: String?, id: String): Either<ControllerError, View> {
+        return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if ((maybeView.owner == user && credentialsService.hasPermissions(user, Activities.getOwnView))
-                                    || credentialsService.hasPermissions(user, Activities.getAnyView)) Either.Right(maybeView)
-                        else Either.Left(NotEnoughPermissions(user))
+                        if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.getOwnView))
+                            || credentialsService.hasPermissions(client, Activities.getAnyView)
+                        ) Either.Right(maybeView)
+                        else Either.Left(NotEnoughPermissions(client))
                     }
                 }
             }
         }
     }
 
-    suspend fun getViewData(user: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
-        return when (user) {
+    suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
+        return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if (credentialsService.hasPermissions(user, Activities.getViewData) && maybeView.published)
+                        if (credentialsService.hasPermissions(client, Activities.getViewData) && maybeView.published)
                             Either.Right(viewsService.getData(maybeView)).flatten()
                         else if (!maybeView.published) Either.Left(NotPublished(id))
-                        else Either.Left(NotEnoughPermissions(user))
+                        else Either.Left(NotEnoughPermissions(client))
                     }
                 }
             }
         }
     }
 
-    suspend fun getViewCachedData(user: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
-        return when (user) {
+    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
+        return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if (credentialsService.hasPermissions(user, Activities.getViewCachedData) && maybeView.published)
+                        if (credentialsService.hasPermissions(
+                                client,
+                                Activities.getViewCachedData
+                            ) && maybeView.published
+                        )
                             Either.Right(viewsService.getData(maybeView)).flatten()
                         else if (!maybeView.published) Either.Left(NotPublished(id))
-                        else Either.Left(NotEnoughPermissions(user))
+                        else Either.Left(NotEnoughPermissions(client))
                     }
                 }
             }
         }
     }
 
-    suspend fun createView(user: String?, request: ViewRequest): Either<ControllerError, ViewModified> {
-        return when (user) {
+    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, ViewModified> {
+        return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
-                if (credentialsService.hasPermissions(user, Activities.createViews)) {
-                    when (val res = viewsService.create(user, request)) {
+                if (credentialsService.hasPermissions(client, Activities.createViews)) {
+                    when (val res = viewsService.create(client, request)) {
                         is Either.Right -> Either.Right(res.value)
                         is Either.Left -> Either.Left(TooMuchViews())
                     }
-                } else Either.Left(NotEnoughPermissions(user))
+                } else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
+    suspend fun editView(client: String?, request: ViewRequest, id: String): Either<ControllerError, ViewModified> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> when (val maybeView = viewsService.get(id)) {
+                null -> Either.Left(NotFound(id))
+                else -> {
+                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
+                        || credentialsService.hasPermissions(client, Activities.editAnyView)
+                    ) {
+                        Either.Right(viewsService.edit(maybeView.id, request))
+                    } else Either.Left(NotEnoughPermissions(client))
+                }
+            }
+        }
+    }
+
+    suspend fun deleteView(client: String?, id: String): Either<ControllerError, ViewDeleted> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> when (val maybeView = viewsService.get(id)) {
+                null -> Either.Left(NotFound(id))
+                else -> {
+                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.deleteOwnView))
+                        || credentialsService.hasPermissions(client, Activities.deleteAnyView)
+                    ) {
+                        Either.Right(viewsService.delete(maybeView.id))
+                    } else Either.Left(NotEnoughPermissions(client))
+                }
             }
         }
     }
 
 }
-
-
-
-interface ControllerError
-class NotAuthorized : ControllerError
-class NotEnoughPermissions(val user: String) : ControllerError
-class NotFound(val id: String) : ControllerError
-// class HttpError : ControllerError -> JsonParseError.kt
-
-interface ViewsError : ControllerError
-class NotPublished(val id: String) : ViewsError
-// class TooMuchViews : ViewsError -> ViewsDomain.kt

@@ -2,6 +2,7 @@ package com.kos.views
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
+import com.kos.common.ViewsError
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,11 +28,3 @@ data class ViewDeleted(val viewId: String) : ViewResult {
 data class ViewModified(val viewId: String, val characters: List<Long>) : ViewResult {
     override val isSuccess: Boolean = true
 }
-
-@Serializable
-data class ViewNotFound(val viewId: String) : ViewResult {
-    override val isSuccess: Boolean = false
-}
-
-@Serializable
-class TooMuchViews : ViewsError

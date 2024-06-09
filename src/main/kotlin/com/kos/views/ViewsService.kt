@@ -6,6 +6,7 @@ import arrow.core.traverse
 import com.kos.characters.CharactersService
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
+import com.kos.common.TooMuchViews
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData

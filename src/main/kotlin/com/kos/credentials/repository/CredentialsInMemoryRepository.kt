@@ -1,9 +1,8 @@
 package com.kos.credentials.repository
 
 import com.kos.common.InMemoryRepository
-import com.kos.activities.Activity
 import com.kos.credentials.Credentials
-import com.kos.credentials.Role
+import com.kos.roles.Role
 
 class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository {
     private val users = mutableListOf<Credentials>()

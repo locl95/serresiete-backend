@@ -100,4 +100,16 @@ class AuthServiceTest {
             assertTrue(newToken.isLeft())
         }
     }
+
+    @Test
+    fun `i can logout`() {
+        runBlocking {
+            val authInMemoryRepository = AuthInMemoryRepository().withState(
+                listOf(basicAuthorization, basicRefreshAuthorization)
+            )
+            val authService = AuthService(authInMemoryRepository)
+            authService.logout(basicAuthorization.userName)
+            assertEquals(0, authInMemoryRepository.state().size)
+        }
+    }
 }

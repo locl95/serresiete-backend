@@ -3,7 +3,7 @@ package com.kos.credentials.repository
 import com.kos.common.DatabaseFactory
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsRole
-import com.kos.credentials.Role
+import com.kos.roles.Role
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 

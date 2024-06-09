@@ -1,6 +1,6 @@
 package com.kos.activities
 
-import com.kos.credentials.CredentialsService
+import com.kos.common.respondWithHandledError
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -8,62 +8,54 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.activitiesRouting(activitiesService: ActivitiesService, credentialsService: CredentialsService) {
+fun Route.activitiesRouting(
+    activitiesController: ActivitiesController
+) {
     route("/activities") {
         authenticate("auth-bearer") {
             get {
-                when (val id = call.principal<UserIdPrincipal>()) {
-                    null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> {
-                        if (credentialsService.hasPermissions(id.name, Activities.getAnyActivities)) {
-                            call.respond(HttpStatusCode.OK, activitiesService.getActivities())
-                        } else call.respond(HttpStatusCode.Forbidden)
-                    }
-                }
+                activitiesController.getActivities(call.principal<UserIdPrincipal>()?.name).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(HttpStatusCode.OK, it)
+                })
             }
         }
 
         authenticate("auth-bearer") {
             post {
-                when (val id = call.principal<UserIdPrincipal>()) {
-                    null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> {
-                        if (credentialsService.hasPermissions(id.name, Activities.createActivities)) {
-                            activitiesService.createActivity(call.receive())
-                            call.respond(HttpStatusCode.Created)
-                        } else call.respond(HttpStatusCode.Forbidden)
-                    }
-                }
+                activitiesController.createActivity(call.principal<UserIdPrincipal>()?.name, call.receive()).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(HttpStatusCode.Created)
+                })
             }
         }
         route("/{activity}") {
             authenticate("auth-bearer") {
                 delete {
-                    when (val id = call.principal<UserIdPrincipal>()) {
-                        null -> call.respond(HttpStatusCode.Unauthorized)
-                        else -> {
-                            val activity = call.parameters["activity"].orEmpty()
-                            if (credentialsService.hasPermissions(id.name, Activities.deleteActivities)) {
-                                activitiesService.deleteActivity(activity)
-                                call.respond(HttpStatusCode.NoContent)
-                            } else call.respond(HttpStatusCode.Forbidden)
-                        }
-                    }
+                    activitiesController.deleteActivity(
+                        call.principal<UserIdPrincipal>()?.name,
+                        call.parameters["activity"].orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
                 }
             }
         }
 
         authenticate("auth-bearer") {
             get("/{role}") {
-                when (val id = call.principal<UserIdPrincipal>()) {
-                    null -> call.respond(HttpStatusCode.Unauthorized)
-                    else -> {
-                        val role = call.parameters["role"].orEmpty()
-                        if (credentialsService.hasPermissions(id.name, Activities.getAnyActivities)) {
-                            call.respond(HttpStatusCode.OK, credentialsService.getRoleActivities(role))
-                        } else call.respond(HttpStatusCode.Forbidden)
-                    }
-                }
+                activitiesController.getActivitiesFromRole(
+                    call.principal<UserIdPrincipal>()?.name,
+                    call.parameters["role"].orEmpty()
+                ).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(HttpStatusCode.OK, it)
+                })
             }
         }
     }

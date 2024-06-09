@@ -2,7 +2,7 @@ package com.kos.credentials.repository
 
 import com.kos.common.WithState
 import com.kos.credentials.Credentials
-import com.kos.credentials.Role
+import com.kos.roles.Role
 
 interface CredentialsRepository : WithState<CredentialsRepositoryState, CredentialsRepository> {
     suspend fun getCredentials(): List<Credentials>
@@ -17,5 +17,5 @@ interface CredentialsRepository : WithState<CredentialsRepositoryState, Credenti
 
 data class CredentialsRepositoryState(
     val users: List<Credentials>,
-    val credentialsRoles: Map<String, List<Role>>,
+    val credentialsRoles: Map<String, List<Role>>
 )

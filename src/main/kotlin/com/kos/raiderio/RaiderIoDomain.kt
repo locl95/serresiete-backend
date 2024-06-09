@@ -179,12 +179,3 @@ data class RaiderIoData(
     val mythicPlusAlternateRuns: List<MythicPlusRun>
 )
 
-@Serializable
-data class RaiderIoError(
-    val statusCode: Int,
-    val error: String,
-    val message: String
-): HttpError {
-    override fun error(): String = "$message. $error: $statusCode"
-}
-

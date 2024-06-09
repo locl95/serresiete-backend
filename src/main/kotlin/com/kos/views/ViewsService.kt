@@ -6,6 +6,7 @@ import arrow.core.traverse
 import com.kos.characters.CharactersService
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
+import com.kos.common.TooMuchViews
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
@@ -31,7 +32,7 @@ class ViewsService(
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
             else -> {
-                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.characterIds.mapNotNull {
+                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.published, simpleView.characterIds.mapNotNull {
                     charactersService.get(it)
                 })
             }
@@ -48,7 +49,7 @@ class ViewsService(
 
     suspend fun edit(id: String, request: ViewRequest): ViewModified {
         val characters = charactersService.createAndReturnIds(request.characters)
-        return viewsRepository.edit(id, request.name, characters)
+        return viewsRepository.edit(id, request.name, request.published, characters)
     }
 
     suspend fun delete(id: String): ViewDeleted {

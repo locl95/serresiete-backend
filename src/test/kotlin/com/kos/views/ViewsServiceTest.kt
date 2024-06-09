@@ -10,6 +10,7 @@ import com.kos.views.ViewsTestHelper.basicSimpleView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
 import com.kos.views.ViewsTestHelper.owner
+import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsInMemoryRepository
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -58,7 +59,7 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create(owner, ViewRequest(name, listOf())).isRight())
+            assertTrue(service.create(owner, ViewRequest(name, published, listOf())).isRight())
             assertTrue(viewsRepository.state().size == 1)
             assertTrue(viewsRepository.state().all { it.owner == owner })
         }
@@ -77,7 +78,7 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().size == 2)
             assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(service.create(owner, ViewRequest(name, listOf())).isLeft())
+            assertTrue(service.create(owner, ViewRequest(name, published, listOf())).isLeft())
             assertTrue(viewsRepository.state().size == 2)
         }
     }
@@ -106,7 +107,7 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
             assertEquals(
                 service.edit(
-                    id, ViewRequest(name, listOf(request1, request2, request3, request4))
+                    id, ViewRequest(name, published, listOf(request1, request2, request3, request4))
                 ), ViewModified(id, listOf(1, 2, 3, 4))
             )
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })

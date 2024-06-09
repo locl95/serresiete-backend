@@ -8,3 +8,5 @@ fun<A,B> List<Either<A, B>>.split(): Pair<List<A>, List<B>> {
     val rightList = rights.map { it as Either.Right<B> }.map { it.value }
     return Pair(leftList, rightList)
 }
+
+fun<A,B> Either<A,B>.getLeftOrNull(): A? = this.swap().getOrNull()

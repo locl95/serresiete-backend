@@ -38,7 +38,10 @@ class ViewsController(
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.getOwnView))
+                        if ((maybeView.owner == client && credentialsService.hasPermissions(
+                                client,
+                                Activities.getOwnView
+                            ))
                             || credentialsService.hasPermissions(client, Activities.getAnyView)
                         ) Either.Right(maybeView)
                         else Either.Left(NotEnoughPermissions(client))
@@ -69,7 +72,7 @@ class ViewsController(
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
-                return when (val maybeView = viewsService.get(id)) {
+                return when (val maybeView = viewsService.getSimple(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
                         if (credentialsService.hasPermissions(
@@ -77,7 +80,7 @@ class ViewsController(
                                 Activities.getViewCachedData
                             ) && maybeView.published
                         )
-                            Either.Right(viewsService.getData(maybeView)).flatten()
+                            Either.Right(viewsService.getCachedData(maybeView)).flatten()
                         else if (!maybeView.published) Either.Left(NotPublished(id))
                         else Either.Left(NotEnoughPermissions(client))
                     }
@@ -122,7 +125,10 @@ class ViewsController(
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
-                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.deleteOwnView))
+                    if ((maybeView.owner == client && credentialsService.hasPermissions(
+                            client,
+                            Activities.deleteOwnView
+                        ))
                         || credentialsService.hasPermissions(client, Activities.deleteAnyView)
                     ) {
                         Either.Right(viewsService.delete(maybeView.id))

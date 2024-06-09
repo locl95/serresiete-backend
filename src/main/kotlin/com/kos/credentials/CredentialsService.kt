@@ -2,6 +2,7 @@ package com.kos.credentials
 
 import com.kos.common.isDefined
 import com.kos.credentials.repository.CredentialsRepository
+import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesRepository
 import org.mindrot.jbcrypt.BCrypt
 

@@ -1,6 +1,7 @@
 package com.kos.credentials
 
 import com.kos.common.respondWithHandledError
+import com.kos.roles.RoleRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

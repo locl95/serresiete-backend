@@ -5,6 +5,7 @@ import com.kos.activities.Activities
 import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
+import com.kos.roles.Role
 
 class CredentialsController(val credentialsService: CredentialsService) {
     suspend fun createCredential(client: String?, credentials: Credentials): Either<ControllerError, Unit> {

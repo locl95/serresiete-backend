@@ -6,8 +6,8 @@ import io.ktor.server.response.*
 
 interface ControllerError
 class NotAuthorized : ControllerError
-class NotEnoughPermissions(val user: String) : ControllerError
-class NotFound(val id: String) : ControllerError
+data class NotEnoughPermissions(val user: String) : ControllerError
+data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
 interface HttpError : ControllerError {
     fun error(): String

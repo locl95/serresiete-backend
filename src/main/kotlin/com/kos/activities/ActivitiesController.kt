@@ -5,7 +5,7 @@ import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
 import com.kos.credentials.CredentialsService
-import com.kos.credentials.Role
+import com.kos.roles.Role
 
 class ActivitiesController(private val activitiesService: ActivitiesService, private val credentialsService: CredentialsService) {
     suspend fun getActivities(client: String?): Either<ControllerError, List<Activity>> {

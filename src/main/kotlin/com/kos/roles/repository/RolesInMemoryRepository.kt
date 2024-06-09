@@ -1,7 +1,6 @@
 package com.kos.roles.repository
 
 import RolesRepository
-import com.kos.activities.Activity
 import com.kos.common.InMemoryRepository
 import com.kos.roles.Role
 
@@ -25,7 +24,7 @@ class RolesInMemoryRepository : RolesRepository, InMemoryRepository {
         return roles
     }
 
-    override suspend fun withState(initialState: List<Activity>): RolesRepository {
+    override suspend fun withState(initialState: List<Role>): RolesRepository {
         roles.addAll(initialState)
         return this
     }

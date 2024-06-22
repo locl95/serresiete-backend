@@ -1,12 +1,10 @@
 package com.kos.characters.repository
 
 import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
 import com.kos.common.DatabaseFactory.dbQuery
-import com.kos.views.InsertCharacterError
+import com.kos.common.InsertCharacterError
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.sql.SQLException

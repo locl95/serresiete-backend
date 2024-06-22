@@ -39,8 +39,8 @@ abstract class CharactersRepositoryTestCommon {
                 CharactersTestHelper.basicCharacter.realm
             )
 
-            val initalState = repository.state()
-            assertEquals(listOf(), initalState)
+            val initialState = repository.state()
+            assertEquals(listOf(), initialState)
             assertTrue(repository.insert(listOf(character, character)).isLeft())
 
             val finalState = repository.state()

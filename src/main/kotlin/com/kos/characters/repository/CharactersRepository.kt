@@ -3,9 +3,8 @@ package com.kos.characters.repository
 import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
+import com.kos.common.InsertCharacterError
 import com.kos.common.WithState
-import com.kos.views.InsertCharacterError
-import java.sql.SQLException
 
 interface CharactersRepository: WithState<List<Character>, CharactersRepository> {
 

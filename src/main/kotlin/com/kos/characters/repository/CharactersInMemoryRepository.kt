@@ -4,8 +4,7 @@ import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
 import com.kos.common.InMemoryRepository
-import com.kos.views.InsertCharacterError
-import java.sql.SQLException
+import com.kos.common.InsertCharacterError
 
 class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     val characters: MutableList<Character> = mutableListOf()

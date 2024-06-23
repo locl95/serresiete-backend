@@ -7,6 +7,7 @@ import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.common.InsertCharacterError
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
 
 class CharactersDatabaseRepository : CharactersRepository {
@@ -44,16 +45,19 @@ class CharactersDatabaseRepository : CharactersRepository {
             val charsToInsert = characters.map {
                 Character(selectNextId(), it.name, it.region, it.realm)
             }
-            try {
-                val insertedCharacters = Characters.batchInsert(charsToInsert) {
-                    this[Characters.id] = it.id
-                    this[Characters.name] = it.name
-                    this[Characters.region] = it.region
-                    this[Characters.realm] = it.realm
-                }.map { resultRowToCharacter(it) }
-                Either.Right(insertedCharacters)
-            } catch (e: SQLException) {
-                Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+            transaction {
+                try {
+                    val insertedCharacters = Characters.batchInsert(charsToInsert) {
+                        this[Characters.id] = it.id
+                        this[Characters.name] = it.name
+                        this[Characters.region] = it.region
+                        this[Characters.realm] = it.realm
+                    }.map { resultRowToCharacter(it) }
+                    Either.Right(insertedCharacters)
+                } catch (e: SQLException) {
+                    rollback()
+                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                }
             }
         }
     }

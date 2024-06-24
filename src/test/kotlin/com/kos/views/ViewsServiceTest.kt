@@ -19,6 +19,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
@@ -105,11 +106,11 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
-            assertEquals(
-                service.edit(
-                    id, ViewRequest(name, published, listOf(request1, request2, request3, request4))
-                ), ViewModified(id, listOf(1, 2, 3, 4))
-            )
+
+            service.edit(
+                id, ViewRequest(name, published, listOf(request1, request2, request3, request4))
+            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }
     }

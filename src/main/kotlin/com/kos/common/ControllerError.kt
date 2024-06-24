@@ -1,8 +1,10 @@
 package com.kos.common
 
+import com.kos.views.ViewResult
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
+import kotlinx.serialization.Serializable
 
 interface ControllerError
 class NotAuthorized : ControllerError
@@ -28,6 +30,7 @@ data class RaiderIoError(
 interface ViewsError : ControllerError
 class NotPublished(val id: String) : ViewsError
 class TooMuchViews : ViewsError
+data class InsertCharacterError(val message: String) : ViewsError
 
 suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
     when (error) {
@@ -39,5 +42,6 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is BadRequest -> respond(HttpStatusCode.BadRequest, error.problem)
         is JsonParseError -> respond(HttpStatusCode.InternalServerError, error.error())
         is RaiderIoError -> respond(HttpStatusCode.InternalServerError, error.error())
+        is InsertCharacterError -> respond(HttpStatusCode.InternalServerError, error.message)
     }
 }

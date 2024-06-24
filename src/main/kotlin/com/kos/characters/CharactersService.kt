@@ -2,6 +2,7 @@ package com.kos.characters
 
 import arrow.core.Either
 import com.kos.characters.repository.CharactersRepository
+import com.kos.common.InsertCharacterError
 import com.kos.common.collect
 import com.kos.common.split
 import com.kos.raiderio.RaiderIoClient
@@ -13,7 +14,7 @@ data class CharactersService(
     private val charactersRepository: CharactersRepository,
     private val raiderioClient: RaiderIoClient
 ) {
-    suspend fun createAndReturnIds(characters: List<CharacterRequest>): List<Long> {
+    suspend fun createAndReturnIds(characters: List<CharacterRequest>): Either<InsertCharacterError, List<Long>> {
         fun splitExistentAndNew(
             charactersRequest: List<CharacterRequest>,
             currentCharacters: List<Character>
@@ -34,7 +35,8 @@ data class CharactersService(
             existentAndNew.second.map { async { it to raiderioClient.exists(it) } }.awaitAll()
         }.collect({ it.second }) { it.first }
 
-        return charactersRepository.insert(newThatExist).map { it.id } + existentAndNew.first.map { it.id }
+        return charactersRepository.insert(newThatExist)
+            .map { list -> list.map { it.id } + existentAndNew.first.map { it.id } }
     }
 
     suspend fun get(id: Long): Character? = charactersRepository.get(id)

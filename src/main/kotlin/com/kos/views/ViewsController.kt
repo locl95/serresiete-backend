@@ -112,7 +112,7 @@ class ViewsController(
                     if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
                         || credentialsService.hasPermissions(client, Activities.editAnyView)
                     ) {
-                        Either.Right(viewsService.edit(maybeView.id, request))
+                        viewsService.edit(maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }

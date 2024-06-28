@@ -19,7 +19,8 @@ data class CharactersService(
             charactersRequest: List<CharacterRequest>,
             currentCharacters: List<Character>
         ): List<Either<Character, CharacterRequest>> {
-            return charactersRequest.fold(emptyList()) { acc, character ->
+            val charactersRequestLowerCase = charactersRequest.map{ it.toLowerCase() }.toSet()
+            return charactersRequestLowerCase.fold(emptyList()) { acc, character ->
                 when (val maybeCharacter =
                     currentCharacters.find { character.same(it) }) {
                     null -> acc + Either.Right(character)

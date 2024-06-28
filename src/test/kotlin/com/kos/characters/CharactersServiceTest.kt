@@ -55,6 +55,26 @@ class CharactersServiceTest {
     }
 
     @Test
+    fun `inserting a character twice with different capital letters only inserts one`() {
+        runBlocking {
+            val request1 = CharacterRequest(basicCharacter.name, basicCharacter.region, basicCharacter.realm)
+            val request2 = CharacterRequest("Kakarona", basicCharacter.region, basicCharacter.realm)
+
+            `when`(raiderIoClient.exists(request1)).thenReturn(true)
+            `when`(raiderIoClient.exists(request2)).thenReturn(true)
+
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+
+
+            val request = listOf(request1, request2)
+            val expected: List<Long> = listOf(1)
+            charactersService.createAndReturnIds(request).fold({ fail() }) { assertEquals(expected, it) }
+
+        }
+    }
+
+    @Test
     fun `i can get a character`() {
         runBlocking {
             val charactersRepository = CharactersInMemoryRepository().withState(listOf(basicCharacter))

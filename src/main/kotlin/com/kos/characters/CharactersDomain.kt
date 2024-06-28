@@ -10,6 +10,9 @@ data class CharacterRequest(val name: String, val region: String, val realm: Str
     fun toCharacter(id: Long) = Character(id, name, region, realm)
     fun same(other: Character): Boolean =
         this.name == other.name && this.region == other.region && this.realm == other.realm
+    fun toLowerCase(): CharacterRequest {
+        return CharacterRequest(name.lowercase(), region.lowercase(), realm.lowercase())
+    }
 }
 
 @Serializable

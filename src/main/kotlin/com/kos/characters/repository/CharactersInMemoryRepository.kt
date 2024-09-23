@@ -15,7 +15,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     }
 
     override suspend fun insert(characters: List<CharacterRequest>): Either<InsertCharacterError, List<Character>> {
-        val initialStateCharacters = this.characters
+        val initialStateCharacters = this.characters.toList()
         characters.forEach {
             if (this.characters.any { character -> it.same(character) }) {
                 this.characters.clear()

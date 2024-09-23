@@ -1,12 +1,10 @@
 package com.kos.characters
 
-import arrow.core.right
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
-import java.sql.SQLException
 import kotlin.test.*
 
 abstract class CharactersRepositoryTestCommon {
@@ -31,7 +29,7 @@ abstract class CharactersRepositoryTestCommon {
     }
 
     @Test
-    fun `given an empty repository inserting a character that already exist fails`() {
+    fun `given an empty repository inserting a character that already exists fails`() {
         runBlocking {
             val character = CharacterRequest(
                 CharactersTestHelper.basicCharacter.name,
@@ -45,6 +43,19 @@ abstract class CharactersRepositoryTestCommon {
 
             val finalState = repository.state()
             assertEquals(listOf(), finalState)
+        }
+    }
+
+    @Test
+    fun `given a repository that includes a character, adding the same one fails`() {
+        runBlocking {
+            val repo =
+                repository.withState(listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2))
+            assertTrue(repo.insert(listOf(CharactersTestHelper.basicRequest)).isLeft())
+            assertEquals(
+                listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2),
+                repository.state()
+            )
         }
     }
 }

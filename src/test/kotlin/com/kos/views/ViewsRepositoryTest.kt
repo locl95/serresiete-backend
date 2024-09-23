@@ -85,6 +85,38 @@ abstract class ViewsRepositoryTest {
             assertEquals(finalState, listOf())
         }
     }
+
+    @Test
+    fun `given a repository with a view i can patch it`() {
+        runBlocking {
+            val repo = repository.withState(listOf(basicSimpleView))
+            val patchedName = "new-name"
+            val patch = repo.patch(basicSimpleView.id, patchedName, null, null)
+            val patchedView = repo.state().first()
+            assertEquals(ViewModified(basicSimpleView.id, basicSimpleView.characterIds), patch)
+            assertEquals(basicSimpleView.id, patchedView.id)
+            assertEquals(basicSimpleView.published, patchedView.published)
+            assertEquals(basicSimpleView.characterIds, patchedView.characterIds)
+            assertEquals(patchedName, patchedView.name)
+        }
+    }
+
+    @Test
+    fun `given a repository with a view i can patch more than one field`() {
+        runBlocking {
+            val repo = repository.withState(listOf(basicSimpleView))
+            val characters: List<Long> = listOf(1, 2, 3)
+            val patchedName = "new-name"
+            val patchedPublish = false
+            val patch = repo.patch(basicSimpleView.id, patchedName, patchedPublish, characters)
+            val patchedView = repo.state().first()
+            assertEquals(ViewModified(basicSimpleView.id, characters), patch)
+            assertEquals(basicSimpleView.id, patchedView.id)
+            assertEquals(patchedPublish, patchedView.published)
+            assertEquals(characters, patchedView.characterIds)
+            assertEquals(patchedName, patchedView.name)
+        }
+    }
 }
 
 class ViewsInMemoryRepositoryTest : ViewsRepositoryTest() {

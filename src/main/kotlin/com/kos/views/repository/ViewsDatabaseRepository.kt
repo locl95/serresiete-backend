@@ -104,6 +104,23 @@ class ViewsDatabaseRepository : ViewsRepository {
         return ViewModified(id, characters)
     }
 
+    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewModified {
+        dbQuery {
+            Views.update({ Views.id.eq(id) }) { statement ->
+                name?.let { statement[Views.name] = it }
+                published?.let { statement[Views.published] = it }
+            }
+            characters?.let {
+                CharactersView.deleteWhere { viewId.eq(id) }
+                CharactersView.batchInsert(it) { cid ->
+                    this[CharactersView.viewId] = id
+                    this[CharactersView.characterId] = cid
+                }
+            }
+        }
+        return ViewModified(id, characters.orEmpty()) //TODO: Fix this
+    }
+
     override suspend fun delete(id: String): ViewDeleted {
         dbQuery { Views.deleteWhere { Views.id.eq(id) } }
         return ViewDeleted(id)

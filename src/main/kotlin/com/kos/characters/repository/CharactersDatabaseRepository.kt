@@ -55,7 +55,7 @@ class CharactersDatabaseRepository : CharactersRepository {
                     }.map { resultRowToCharacter(it) }
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
-                    rollback()
+                    rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
                     Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
                 }
             }

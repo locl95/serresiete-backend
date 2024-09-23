@@ -28,6 +28,24 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return ViewModified(id, characters)
     }
 
+    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewModified {
+        val index = views.indexOfFirst { it.id == id }
+        val oldView = views[index]
+        views.removeAt(index)
+        val simpleView = SimpleView(
+            id,
+            name ?: oldView.name,
+            oldView.owner,
+            published ?: oldView.published,
+            characters ?: oldView.characterIds
+        )
+        views.add(
+            index,
+            simpleView
+        )
+        return ViewModified(id, simpleView.characterIds)
+    }
+
     override suspend fun delete(id: String): ViewDeleted {
         val index = views.indexOfFirst { it.id == id }
         views.removeAt(index)

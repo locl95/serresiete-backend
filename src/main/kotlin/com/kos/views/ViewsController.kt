@@ -119,6 +119,22 @@ class ViewsController(
         }
     }
 
+    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewModified> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> when (val maybeView = viewsService.get(id)) {
+                null -> Either.Left(NotFound(id))
+                else -> {
+                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
+                        || credentialsService.hasPermissions(client, Activities.editAnyView)
+                    ) {
+                        viewsService.patch(maybeView.id, request)
+                    } else Either.Left(NotEnoughPermissions(client))
+                }
+            }
+        }
+    }
+
     suspend fun deleteView(client: String?, id: String): Either<ControllerError, ViewDeleted> {
         return when (client) {
             null -> Either.Left(NotAuthorized())

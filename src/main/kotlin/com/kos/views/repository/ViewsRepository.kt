@@ -10,6 +10,7 @@ interface ViewsRepository : WithState<List<SimpleView>, ViewsRepository> {
     suspend fun get(id: String): SimpleView?
     suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewModified
     suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>): ViewModified
+    suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewModified
     suspend fun delete(id: String): ViewDeleted
     suspend fun getViews(): List<SimpleView>
 }

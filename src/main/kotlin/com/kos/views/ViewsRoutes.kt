@@ -76,6 +76,19 @@ fun Route.viewsRouting(
             }
         }
         authenticate("auth-bearer") {
+            patch("/{id}") {
+                viewsController.patchView(
+                    call.principal<UserIdPrincipal>()?.name,
+                    call.receive(),
+                    call.parameters["id"].orEmpty()
+                ).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(HttpStatusCode.OK, it)
+                })
+            }
+        }
+        authenticate("auth-bearer") {
             delete("/{id}") {
                 viewsController.deleteView(
                     call.principal<UserIdPrincipal>()?.name,

@@ -10,6 +10,7 @@ import com.kos.common.WithLogger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -31,7 +32,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient, WithLogg
         Either.Left(error)
     }
 
-    private suspend fun getRaiderioProfile(region: String, realm: String, name: String) =
+    private suspend fun getRaiderioProfile(region: String, realm: String, name: String): HttpResponse =
         client.get(baseURI.toString() + partialProfileUri) {
             headers {
                 append(HttpHeaders.Accept, "*/*")
@@ -65,10 +66,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient, WithLogg
 
     override suspend fun exists(characterRequest: CharacterRequest): Boolean {
         val response = getRaiderioProfile(characterRequest.region, characterRequest.realm, characterRequest.name)
-        val jsonString = response.body<String>()
-        val decodedResponse: Either<HttpError, RaiderIoProfile> = responseToEitherErrorOrProfile(jsonString)
-
-        return decodedResponse.isRight()
+        return response.status.value < 300
     }
 
     override suspend fun cutoff(): Either<HttpError, RaiderIoCutoff> {

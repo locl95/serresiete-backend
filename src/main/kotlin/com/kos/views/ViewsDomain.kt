@@ -13,6 +13,8 @@ data class View(val id: String, val name: String, val owner: String, val publish
 
 @Serializable
 data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>)
+@Serializable
+data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<CharacterRequest>?)
 
 @Serializable
 sealed interface ViewResult {

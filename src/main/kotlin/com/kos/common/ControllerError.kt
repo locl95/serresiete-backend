@@ -1,10 +1,10 @@
 package com.kos.common
 
-import com.kos.views.ViewResult
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
-import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
+import kotlin.math.log
 
 interface ControllerError
 class NotAuthorized : ControllerError
@@ -30,7 +30,15 @@ data class RaiderIoError(
 interface ViewsError : ControllerError
 class NotPublished(val id: String) : ViewsError
 class TooMuchViews : ViewsError
-data class InsertCharacterError(val message: String) : ViewsError
+
+interface DatabaseError : ControllerError
+data class InsertCharacterError(val message: String) : DatabaseError
+
+suspend fun ApplicationCall.respondLogging(error: String) {
+    val logger = LoggerFactory.getLogger("ktor.application")
+    logger.error(error)
+    respond(HttpStatusCode.InternalServerError, error)
+}
 
 suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
     when (error) {
@@ -40,8 +48,8 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is NotPublished -> respond(HttpStatusCode.BadRequest, "view not published")
         is TooMuchViews -> respond(HttpStatusCode.BadRequest, "too much views")
         is BadRequest -> respond(HttpStatusCode.BadRequest, error.problem)
-        is JsonParseError -> respond(HttpStatusCode.InternalServerError, error.error())
-        is RaiderIoError -> respond(HttpStatusCode.InternalServerError, error.error())
-        is InsertCharacterError -> respond(HttpStatusCode.InternalServerError, error.message)
+        is JsonParseError -> respondLogging(error.error())
+        is RaiderIoError -> respondLogging(error.error())
+        is InsertCharacterError -> respondLogging(error.message)
     }
 }

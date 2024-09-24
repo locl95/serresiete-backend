@@ -1,12 +1,10 @@
 package com.kos.characters
 
-import arrow.core.right
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
-import java.sql.SQLException
 import kotlin.test.*
 
 abstract class CharactersRepositoryTestCommon {
@@ -51,27 +49,13 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given a repository that includes a character, adding the same one fails`() {
         runBlocking {
-            val character = CharacterRequest(
-                CharactersTestHelper.basicCharacter.name,
-                CharactersTestHelper.basicCharacter.region,
-                CharactersTestHelper.basicCharacter.realm
+            val repo =
+                repository.withState(listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2))
+            assertTrue(repo.insert(listOf(CharactersTestHelper.basicRequest)).isLeft())
+            assertEquals(
+                listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2),
+                repository.state()
             )
-            val character2 = CharacterRequest(
-                CharactersTestHelper.basicCharacter2.name,
-                CharactersTestHelper.basicCharacter2.region,
-                CharactersTestHelper.basicCharacter2.realm
-            )
-
-            assertTrue(repository.insert(listOf(character, character2)).isRight())
-            val initialState = repository.state()
-            assertEquals(listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2), initialState)
-
-            assertTrue(repository.insert(listOf(character)).isLeft())
-
-            val finalState = repository.state()
-            assertEquals(listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2), finalState)
-
-
         }
     }
 }

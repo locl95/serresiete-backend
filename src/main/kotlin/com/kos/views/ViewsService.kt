@@ -4,10 +4,7 @@ import arrow.core.Either
 import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
-import com.kos.common.HttpError
-import com.kos.common.JsonParseError
-import com.kos.common.TooMuchViews
-import com.kos.common.ViewsError
+import com.kos.common.*
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
@@ -33,24 +30,36 @@ class ViewsService(
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
             else -> {
-                View(simpleView.id, simpleView.name, simpleView.owner, simpleView.published, simpleView.characterIds.mapNotNull {
-                    charactersService.get(it)
-                })
+                View(
+                    simpleView.id,
+                    simpleView.name,
+                    simpleView.owner,
+                    simpleView.published,
+                    simpleView.characterIds.mapNotNull {
+                        charactersService.get(it)
+                    })
             }
         }
     }
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, request: ViewRequest): Either<ViewsError, ViewModified> {
+    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
         val characterIds = charactersService.createAndReturnIds(request.characters)
         return characterIds.map { viewsRepository.create(request.name, owner, it) }
     }
 
-    suspend fun edit(id: String, request: ViewRequest): Either<ViewsError, ViewModified> {
+    suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
         val characters = charactersService.createAndReturnIds(request.characters)
         return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
+    }
+
+    suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
+        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest) })) {
+            null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
+            else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
+        }
     }
 
     suspend fun delete(id: String): ViewDeleted {

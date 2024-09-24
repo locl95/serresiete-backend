@@ -130,4 +130,53 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().isEmpty())
         }
     }
+
+    @Test
+    fun `i can patch a view`() {
+        runBlocking {
+            val patchedName = "new-name"
+            val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
+            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
+            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+            assertTrue(viewsRepository.state().size == 1)
+            val patch = service.patch(basicSimpleView.id, ViewPatchRequest(patchedName, null, null))
+            val patchedView = viewsRepository.state().first()
+            assertEquals(patchedName, patchedView.name)
+            assertEquals(patch.getOrNull(), ViewModified(basicSimpleView.id, basicSimpleView.characterIds))
+        }
+    }
+
+    @Test
+    fun `i can patch a view modifying more than one character`(): Unit {
+        runBlocking {
+
+            val request1 = CharacterRequest("a", "r", "r")
+            val request2 = CharacterRequest("b", "r", "r")
+            val request3 = CharacterRequest("c", "r", "r")
+            val request4 = CharacterRequest("d", "r", "r")
+
+            `when`(raiderIoClient.exists(request1)).thenReturn(true)
+            `when`(raiderIoClient.exists(request2)).thenReturn(true)
+            `when`(raiderIoClient.exists(request3)).thenReturn(true)
+            `when`(raiderIoClient.exists(request4)).thenReturn(true)
+
+            val viewsRepository =
+                ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
+            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
+            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
+
+            service.patch(
+                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4))
+            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+
+            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
+        }
+    }
 }

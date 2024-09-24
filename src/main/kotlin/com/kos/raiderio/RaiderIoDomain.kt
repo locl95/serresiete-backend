@@ -144,9 +144,7 @@ data class RaiderIoProfile(
     @SerialName("mythic_plus_ranks")
     val mythicPlusRanks: MythicPlusRanks,
     @SerialName("mythic_plus_best_runs")
-    val mythicPlusBestRuns: List<MythicPlusRun>,
-    @SerialName("mythic_plus_alternate_runs")
-    val mythicPlusAlternateRuns: List<MythicPlusRun>
+    val mythicPlusBestRuns: List<MythicPlusRun>
 ) {
     fun toRaiderIoData(characterId: Long, quantile: Double, specRanks: List<MythicPlusRankWithSpecName>) = RaiderIoData(
         characterId,
@@ -156,8 +154,7 @@ data class RaiderIoProfile(
         spec,
         quantile,
         MythicPlusRanksWithSpecs(mythicPlusRanks.overall, mythicPlusRanks.`class`, specRanks),
-        mythicPlusBestRuns,
-        mythicPlusAlternateRuns
+        mythicPlusBestRuns
     )
 }
 
@@ -175,7 +172,6 @@ data class RaiderIoData(
     val spec: String,
     val quantile: Double,
     val mythicPlusRanks: MythicPlusRanksWithSpecs,
-    val mythicPlusBestRuns: List<MythicPlusRun>,
-    val mythicPlusAlternateRuns: List<MythicPlusRun>
+    val mythicPlusBestRuns: List<MythicPlusRun>
 )
 

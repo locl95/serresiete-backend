@@ -24,8 +24,7 @@ object TestHelper {
              "region": 0          
          }                        
      },                           
-     "mythicPlusBestRuns": [],                           
-     "mythicPlusAlternateRuns": []                            
+     "mythicPlusBestRuns": []                      
    }"""
 
     private val now = OffsetDateTime.now()

@@ -18,8 +18,7 @@ object RaiderIoMockHelper {
                         MythicPlusRank(1, 1, 1),
                         MythicPlusRank(1, 1, 1)
                     ),
-                    listOf(),
-                    listOf(),
+                    listOf()
                 ),
                 listOf()
             )

@@ -42,7 +42,7 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient, WithLogg
                 parameters.append("name", name)
                 parameters.append(
                     "fields",
-                    "mythic_plus_scores_by_season:current,mythic_plus_best_runs:all,mythic_plus_ranks,mythic_plus_alternate_runs:all"
+                    "mythic_plus_scores_by_season:current,mythic_plus_best_runs:all,mythic_plus_ranks"
                 )
             }
         }

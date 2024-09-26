@@ -14,7 +14,7 @@ data class View(val id: String, val name: String, val owner: String, val publish
 @Serializable
 data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>)
 @Serializable
-data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<CharacterRequest>?)
+data class ViewPatchRequest(val name: String? = null, val published: Boolean? = null, val characters: List<CharacterRequest>? = null)
 
 @Serializable
 sealed interface ViewResult {

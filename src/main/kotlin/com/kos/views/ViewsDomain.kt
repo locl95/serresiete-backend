@@ -2,17 +2,48 @@ package com.kos.views
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterRequest
-import com.kos.common.ViewsError
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class SimpleView(val id: String, val name: String, val owner: String, val published: Boolean, val characterIds: List<Long>)
+enum class Game {
+    WOW {
+        override fun toString(): String = "wow"
+    },
+    LOL {
+        override fun toString(): String = "lol"
+    };
+
+    companion object {
+        fun fromString(value: String): Game = when (value) {
+            "wow" -> WOW
+            "lol" -> LOL
+            else -> throw IllegalArgumentException("Unknown game: $value")
+        }
+    }
+}
 
 @Serializable
-data class View(val id: String, val name: String, val owner: String, val published: Boolean, val characters: List<Character>)
+data class SimpleView(
+    val id: String,
+    val name: String,
+    val owner: String,
+    val published: Boolean,
+    val characterIds: List<Long>,
+    val game: Game
+)
 
 @Serializable
-data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>)
+data class View(
+    val id: String,
+    val name: String,
+    val owner: String,
+    val published: Boolean,
+    val characters: List<Character>,
+    val game: Game
+)
+
+@Serializable
+data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>, val game: Game)
+
 @Serializable
 data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<CharacterRequest>?)
 

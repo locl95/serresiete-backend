@@ -37,7 +37,9 @@ class ViewsService(
                     simpleView.published,
                     simpleView.characterIds.mapNotNull {
                         charactersService.get(it)
-                    })
+                    },
+                    simpleView.game
+                )
             }
         }
     }
@@ -47,7 +49,7 @@ class ViewsService(
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
         val characterIds = charactersService.createAndReturnIds(request.characters)
-        return characterIds.map { viewsRepository.create(request.name, owner, it) }
+        return characterIds.map { viewsRepository.create(request.name, owner, it, request.game) }
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {

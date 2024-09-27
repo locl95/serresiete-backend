@@ -60,9 +60,27 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create(owner, ViewRequest(name, published, listOf())).isRight())
+            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isRight())
             assertTrue(viewsRepository.state().size == 1)
             assertTrue(viewsRepository.state().all { it.owner == owner })
+            assertTrue(viewsRepository.state().all { it.game == Game.WOW })
+        }
+    }
+
+    @Test
+    fun `i can create a lol view`() {
+        runBlocking {
+            val viewsRepository = ViewsInMemoryRepository().withState(listOf())
+            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
+            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
+            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+            assertTrue(viewsRepository.state().isEmpty())
+            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
+            assertTrue(viewsRepository.state().size == 1)
+            assertTrue(viewsRepository.state().all { it.owner == owner })
+            assertTrue(viewsRepository.state().all { it.game == Game.LOL })
         }
     }
 
@@ -79,7 +97,7 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().size == 2)
             assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(service.create(owner, ViewRequest(name, published, listOf())).isLeft())
+            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isLeft())
             assertTrue(viewsRepository.state().size == 2)
         }
     }
@@ -108,7 +126,7 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
             service.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4))
+                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })

@@ -1,6 +1,7 @@
 package com.kos.views.repository
 
 import com.kos.common.InMemoryRepository
+import com.kos.views.Game
 import com.kos.views.SimpleView
 import com.kos.views.ViewDeleted
 import com.kos.views.ViewModified
@@ -14,9 +15,9 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun get(id: String): SimpleView? = views.find { it.id == id }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewModified {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): ViewModified {
         val id = UUID.randomUUID().toString()
-        views.add(SimpleView(id, name, owner, true, characterIds)) // All views are visible by default
+        views.add(SimpleView(id, name, owner, true, characterIds, game)) // All views are visible by default
         return ViewModified(id, characterIds)
     }
 
@@ -24,7 +25,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
         views.removeAt(index)
-        views.add(index, SimpleView(id, name, oldView.owner, published, characters))
+        views.add(index, SimpleView(id, name, oldView.owner, published, characters, oldView.game))
         return ViewModified(id, characters)
     }
 
@@ -37,7 +38,8 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
             name ?: oldView.name,
             oldView.owner,
             published ?: oldView.published,
-            characters ?: oldView.characterIds
+            characters ?: oldView.characterIds,
+            oldView.game
         )
         views.add(
             index,

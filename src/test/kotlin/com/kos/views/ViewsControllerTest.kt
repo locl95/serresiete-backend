@@ -168,7 +168,7 @@ class ViewsControllerTest {
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.createViews)))
             )
-            val res = controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf())).getOrNull()
+            val res = controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getOrNull()
 
             assertTrue(res?.viewId?.isNotEmpty())
             assertEquals(listOf(), res?.characters)
@@ -191,7 +191,7 @@ class ViewsControllerTest {
                 mapOf(Pair(role, listOf(Activities.createViews)))
             )
 
-            assertIs<TooMuchViews>(controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf())).getLeftOrNull())
+            assertIs<TooMuchViews>(controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getLeftOrNull())
         }
     }
 

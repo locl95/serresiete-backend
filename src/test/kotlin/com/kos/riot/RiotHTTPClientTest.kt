@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class RiotHTTPClientTest {
     private val client = HttpClient(CIO)
-    private val riotHTTPClient = RiotHTTPClient(client, "RGAPI-d1bc7ff4-02c5-4c8c-bd76-2faace137f56")
+    private val riotHTTPClient = RiotHTTPClient(client, "RGAPI-a66a7b4f-ecc9-4600-a778-76ba2b6aad29")
 
     @AfterTest
     fun tearDown() {
@@ -47,8 +47,8 @@ class RiotHTTPClientTest {
     fun `dummy test to check everything is going under control 4`() {
         runBlocking {
             val res = riotHTTPClient.getMatchById("EUW1_7130322326")
-            assertTrue(res.isRight())
             println(res)
+            assertTrue(res.isRight())
         }
     }
 

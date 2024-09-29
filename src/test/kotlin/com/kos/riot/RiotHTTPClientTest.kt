@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class RiotHTTPClientTest {
     private val client = HttpClient(CIO)
-    private val riotHTTPClient = RiotHTTPClient(client, "RGAPI-a66a7b4f-ecc9-4600-a778-76ba2b6aad29")
+    private val riotHTTPClient = RiotHTTPClient(client, System.getenv("RIOT_API_KEY"))
 
     @AfterTest
     fun tearDown() {

@@ -1,15 +1,17 @@
 package com.kos.characters.repository
 
 import arrow.core.Either
-import com.kos.characters.Character
-import com.kos.characters.CharacterRequest
+import com.kos.characters.*
 import com.kos.common.InsertCharacterError
 import com.kos.common.WithState
+import com.kos.views.Game
 
-interface CharactersRepository: WithState<List<Character>, CharactersRepository> {
+data class CharactersState(val wowCharacters: List<WowCharacter>, val lolCharacters: List<LolCharacter>)
+
+interface CharactersRepository : WithState<CharactersState, CharactersRepository> {
 
     //TODO: insert should be on conflict do nothing so we can avoid the select all + diff on service
-    suspend fun insert(characters: List<CharacterRequest>): Either<InsertCharacterError, List<Character>>
-    suspend fun get(id: Long): Character?
-    suspend fun get(): List<Character>
+    suspend fun insert(characters: List<CharacterInsertRequest>, game: Game): Either<InsertCharacterError, List<Character>>
+    suspend fun get(id: Long, game: Game): Character?
+    suspend fun get(game: Game): List<Character>
 }

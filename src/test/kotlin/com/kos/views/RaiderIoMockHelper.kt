@@ -1,16 +1,16 @@
 package com.kos.views
 
 import arrow.core.Either
-import com.kos.characters.Character
+import com.kos.characters.WowCharacter
 import com.kos.common.HttpError
 import com.kos.raiderio.*
 
 object RaiderIoMockHelper {
-    fun get(character: Character): Either<HttpError, RaiderIoResponse> {
+    fun get(wowCharacter: WowCharacter): Either<HttpError, RaiderIoResponse> {
         return Either.Right(
             RaiderIoResponse(
                 RaiderIoProfile(
-                    character.name,
+                    wowCharacter.name,
                     "class",
                     "spec",
                     listOf(MythicPlusSeasonScore("df-3", SeasonScores(0.0, 0.0, 0.0, 0.0, 0.0))),

@@ -12,7 +12,7 @@ data class GetSummonerResponse(
     val id: String,
     val accountId: String,
     val puuid: String,
-    val profileIconId: Long,
+    val profileIconId: Int,
     val revisionDate: Long,
     val summonerLevel: Int
 )

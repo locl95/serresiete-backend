@@ -78,8 +78,8 @@ class CharactersDomainTest {
 
     @Test
     fun `toCharacter should create a Character with the correct properties`() {
-        val characterRequest = CharacterRequest("Gandalf", "Middle Earth", "Rivendell")
-        val character = characterRequest.toCharacter(1L)
+        val wowCharacterRequest = WowCharacterRequest("Gandalf", "Middle Earth", "Rivendell")
+        val character = wowCharacterRequest.toCharacter(1L)
         assertEquals(1L, character.id)
         assertEquals("Gandalf", character.name)
         assertEquals("Middle Earth", character.region)
@@ -88,17 +88,17 @@ class CharactersDomainTest {
 
     @Test
     fun `same should return true for identical characters`() {
-        val characterRequest = CharacterRequest("Aragorn", "Middle Earth", "Gondor")
-        val character = characterRequest.toCharacter(2L)
-        val result = characterRequest.same(character)
+        val wowCharacterRequest = WowCharacterRequest("Aragorn", "Middle Earth", "Gondor")
+        val character = wowCharacterRequest.toCharacter(2L)
+        val result = wowCharacterRequest.same(character)
         assertTrue(result)
     }
 
     @Test
     fun `same should return false for characters with different properties`() {
-        val characterRequest = CharacterRequest("Legolas", "Middle Earth", "Lothlorien")
-        val character = characterRequest.toCharacter(3L)
-        val result = characterRequest.same(character.copy(name = "DifferentName"))
+        val wowCharacterRequest = WowCharacterRequest("Legolas", "Middle Earth", "Lothlorien")
+        val character = wowCharacterRequest.toCharacter(3L)
+        val result = wowCharacterRequest.same(character.copy(name = "DifferentName"))
         assertFalse(result)
     }
 }

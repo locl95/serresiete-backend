@@ -1,7 +1,7 @@
 package com.kos.views
 
 import com.kos.characters.Character
-import com.kos.characters.CharacterRequest
+import com.kos.characters.WowCharacterRequest
 import kotlinx.serialization.Serializable
 
 enum class Game {
@@ -42,10 +42,10 @@ data class View(
 )
 
 @Serializable
-data class ViewRequest(val name: String, val published: Boolean, val characters: List<CharacterRequest>, val game: Game)
+data class ViewRequest(val name: String, val published: Boolean, val characters: List<WowCharacterRequest>, val game: Game)
 
 @Serializable
-data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<CharacterRequest>?)
+data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<WowCharacterRequest>?)
 
 @Serializable
 sealed interface ViewResult {

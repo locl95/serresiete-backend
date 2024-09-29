@@ -1,10 +1,10 @@
 package com.kos.characters.repository
 
 import arrow.core.Either
-import com.kos.characters.Character
-import com.kos.characters.CharacterRequest
+import com.kos.characters.*
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.common.InsertCharacterError
+import com.kos.views.Game
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -12,19 +12,28 @@ import java.sql.SQLException
 
 class CharactersDatabaseRepository : CharactersRepository {
 
-    override suspend fun withState(initialState: List<Character>): CharactersDatabaseRepository {
+    override suspend fun withState(initialState: CharactersState): CharactersDatabaseRepository {
         dbQuery {
-            Characters.batchInsert(initialState) {
-                this[Characters.id] = it.id
-                this[Characters.name] = it.name
-                this[Characters.realm] = it.realm
-                this[Characters.region] = it.region
+            WowCharacters.batchInsert(initialState.wowCharacters) {
+                this[WowCharacters.id] = it.id
+                this[WowCharacters.name] = it.name
+                this[WowCharacters.realm] = it.realm
+                this[WowCharacters.region] = it.region
+            }
+            LolCharacters.batchInsert(initialState.lolCharacters) {
+                this[LolCharacters.id] = it.id
+                this[WowCharacters.name] = it.name
+                this[LolCharacters.tag] = it.tag
+                this[LolCharacters.puuid] = it.puuid
+                this[LolCharacters.summonerIcon] = it.summonerIcon
+                this[LolCharacters.summonerId] = it.summonerId
+                this[LolCharacters.summonerLevel] = it.summonerLevel
             }
         }
         return this
     }
 
-    object Characters : Table() {
+    object WowCharacters : Table("wow_characters") {
         val id = long("id")
         val name = text("name")
         val realm = text("realm")
@@ -33,28 +42,90 @@ class CharactersDatabaseRepository : CharactersRepository {
         override val primaryKey = PrimaryKey(id)
     }
 
-    private fun resultRowToCharacter(row: ResultRow) = Character(
-        row[Characters.id],
-        row[Characters.name],
-        row[Characters.region],
-        row[Characters.realm]
+    private fun resultRowToWowCharacter(row: ResultRow) = WowCharacter(
+        row[WowCharacters.id],
+        row[WowCharacters.name],
+        row[WowCharacters.region],
+        row[WowCharacters.realm]
     )
 
-    override suspend fun insert(characters: List<CharacterRequest>): Either<InsertCharacterError, List<Character>> {
+    object LolCharacters : Table("lol_characters") {
+        val id = long("id")
+        val name = text("name")
+        val tag = text("tag")
+        val puuid = text("puuid")
+        val summonerIcon = integer("summoner_icon")
+        val summonerId = text("summoner_id")
+        val summonerLevel = integer("summoner_level")
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    private fun resultRowToLolCharacter(row: ResultRow) = LolCharacter(
+        row[LolCharacters.id],
+        row[LolCharacters.name],
+        row[LolCharacters.tag],
+        row[LolCharacters.puuid],
+        row[LolCharacters.summonerIcon],
+        row[LolCharacters.summonerId],
+        row[LolCharacters.summonerLevel]
+    )
+
+    override suspend fun insert(
+        characters: List<CharacterInsertRequest>,
+        game: Game
+    ): Either<InsertCharacterError, List<Character>> {
         return dbQuery {
-            val charsToInsert = characters.map {
-                Character(selectNextId(), it.name, it.region, it.realm)
+            val charsToInsert: List<Character> = characters.map {
+                when (it) {
+                    is WowCharacterRequest -> WowCharacter(selectNextId(), it.name, it.region, it.realm)
+                    is LolCharacterEnrichedRequest -> LolCharacter(
+                        selectNextId(),
+                        it.name,
+                        it.tag,
+                        it.puuid,
+                        it.summonerIconId,
+                        it.summonerId,
+                        it.summonerLevel
+                    )
+                }
             }
             transaction {
                 try {
-                    val insertedCharacters = Characters.batchInsert(charsToInsert) {
-                        this[Characters.id] = it.id
-                        this[Characters.name] = it.name
-                        this[Characters.region] = it.region
-                        this[Characters.realm] = it.realm
-                    }.map { resultRowToCharacter(it) }
+                    val insertedCharacters = when (game) {
+                        Game.WOW -> WowCharacters.batchInsert(charsToInsert) {
+                            when (it) {
+                                is WowCharacter -> {
+                                    this[WowCharacters.id] = it.id
+                                    this[WowCharacters.name] = it.name
+                                    this[WowCharacters.region] = it.region
+                                    this[WowCharacters.realm] = it.realm
+                                }
+
+                                is LolCharacter -> throw IllegalArgumentException()
+                            }
+                        }.map { resultRowToWowCharacter(it) }
+
+                        Game.LOL -> LolCharacters.batchInsert(charsToInsert) {
+                            when (it) {
+                                is WowCharacter -> throw IllegalArgumentException()
+                                is LolCharacter -> {
+                                    this[LolCharacters.id] = it.id
+                                    this[WowCharacters.name] = it.name
+                                    this[LolCharacters.tag] = it.tag
+                                    this[LolCharacters.puuid] = it.puuid
+                                    this[LolCharacters.summonerIcon] = it.summonerIcon
+                                    this[LolCharacters.summonerId] = it.summonerId
+                                    this[LolCharacters.summonerLevel] = it.summonerLevel
+                                }
+                            }
+                        }.map { resultRowToLolCharacter(it) }
+                    }
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
+                    rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
+                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                } catch (e: IllegalArgumentException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
                     Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
                 }
@@ -62,20 +133,35 @@ class CharactersDatabaseRepository : CharactersRepository {
         }
     }
 
-    override suspend fun get(id: Long): Character? {
+    override suspend fun get(id: Long, game: Game): Character? {
         return dbQuery {
-            Characters.select { Characters.id.eq(id) }.singleOrNull()?.let {
-                resultRowToCharacter(it)
+            when (game) {
+                Game.WOW -> WowCharacters.select { WowCharacters.id.eq(id) }.singleOrNull()?.let {
+                    resultRowToWowCharacter(it)
+                }
+
+                Game.LOL -> LolCharacters.select { LolCharacters.id.eq(id) }.singleOrNull()?.let {
+                    resultRowToLolCharacter(it)
+                }
             }
         }
     }
 
-    override suspend fun get(): List<Character> =
-        dbQuery { Characters.selectAll().map { resultRowToCharacter(it) } }
+    override suspend fun get(game: Game): List<Character> =
+        dbQuery {
+            when (game) {
+                Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
+                Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
+            }
+        }
 
-    override suspend fun state(): List<Character> {
+
+    override suspend fun state(): CharactersState {
         return dbQuery {
-            Characters.selectAll().map { resultRowToCharacter(it) }
+           CharactersState(
+                WowCharacters.selectAll().map { resultRowToWowCharacter(it) },
+                LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
+            )
         }
     }
 

@@ -1,11 +1,14 @@
 package com.kos.views
 
-import com.kos.characters.CharacterRequest
+import com.kos.characters.WowCharacterRequest
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
+import com.kos.riot.RiotClient
 import com.kos.views.ViewsTestHelper.basicSimpleView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
@@ -14,7 +17,6 @@ import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsInMemoryRepository
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import kotlin.test.Test
@@ -23,13 +25,14 @@ import kotlin.test.fail
 
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
+    private val riotClient = mock(RiotClient::class.java)
 
     @Test
     fun `i can get own views`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -41,8 +44,8 @@ class ViewsServiceTest {
     fun `i can get a simple view`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -54,8 +57,8 @@ class ViewsServiceTest {
     fun `i can create views`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf())
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -71,8 +74,8 @@ class ViewsServiceTest {
     fun `i can create a lol view`() {
         runBlocking {
             val viewsRepository = ViewsInMemoryRepository().withState(listOf())
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -89,8 +92,8 @@ class ViewsServiceTest {
         runBlocking {
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView, basicSimpleView.copy(id = "2")))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -106,10 +109,10 @@ class ViewsServiceTest {
     fun `i can edit a view modifying more than one character`(): Unit {
         runBlocking {
 
-            val request1 = CharacterRequest("a", "r", "r")
-            val request2 = CharacterRequest("b", "r", "r")
-            val request3 = CharacterRequest("c", "r", "r")
-            val request4 = CharacterRequest("d", "r", "r")
+            val request1 = WowCharacterRequest("a", "r", "r")
+            val request2 = WowCharacterRequest("b", "r", "r")
+            val request3 = WowCharacterRequest("c", "r", "r")
+            val request4 = WowCharacterRequest("d", "r", "r")
 
             `when`(raiderIoClient.exists(request1)).thenReturn(true)
             `when`(raiderIoClient.exists(request2)).thenReturn(true)
@@ -118,8 +121,8 @@ class ViewsServiceTest {
 
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -138,8 +141,8 @@ class ViewsServiceTest {
         runBlocking {
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -154,8 +157,8 @@ class ViewsServiceTest {
         runBlocking {
             val patchedName = "new-name"
             val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleView))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
@@ -171,10 +174,10 @@ class ViewsServiceTest {
     fun `i can patch a view modifying more than one character`(): Unit {
         runBlocking {
 
-            val request1 = CharacterRequest("a", "r", "r")
-            val request2 = CharacterRequest("b", "r", "r")
-            val request3 = CharacterRequest("c", "r", "r")
-            val request4 = CharacterRequest("d", "r", "r")
+            val request1 = WowCharacterRequest("a", "r", "r")
+            val request2 = WowCharacterRequest("b", "r", "r")
+            val request3 = WowCharacterRequest("c", "r", "r")
+            val request4 = WowCharacterRequest("d", "r", "r")
 
             `when`(raiderIoClient.exists(request1)).thenReturn(true)
             `when`(raiderIoClient.exists(request2)).thenReturn(true)
@@ -183,8 +186,8 @@ class ViewsServiceTest {
 
             val viewsRepository =
                 ViewsInMemoryRepository().withState(listOf(basicSimpleView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository().withState(listOf())
-            val charactersService = CharactersService(charactersRepository, raiderIoClient)
+            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)

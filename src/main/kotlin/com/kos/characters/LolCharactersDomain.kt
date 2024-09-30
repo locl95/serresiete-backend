@@ -2,6 +2,7 @@ package com.kos.characters
 
 import kotlinx.serialization.Serializable
 
+@Serializable
 data class LolCharacter(
     override val id: Long,
     override val name: String,

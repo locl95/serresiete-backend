@@ -63,7 +63,7 @@ data class ViewRequest(
 )
 
 @Serializable
-data class ViewPatchRequest(val name: String?, val published: Boolean?, val characters: List<CharacterCreateRequest>?)
+data class ViewPatchRequest(val name: String? = null, val published: Boolean? = null, val characters: List<CharacterCreateRequest>? = null)
 
 @Serializable
 sealed interface ViewResult {

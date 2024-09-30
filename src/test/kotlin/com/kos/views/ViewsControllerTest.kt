@@ -2,7 +2,7 @@ package com.kos.views
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.characters.Character
+import com.kos.characters.WowCharacter
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.common.NotEnoughPermissions
@@ -27,7 +27,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import com.kos.assertTrue
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.LolCharacter
+import com.kos.characters.repository.CharactersState
 import com.kos.common.TooMuchViews
+import com.kos.riot.RiotClient
 import kotlin.test.assertIs
 
 //TODO: Behaviour of get data
@@ -35,6 +39,7 @@ import kotlin.test.assertIs
 
 class ViewsControllerTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
+    private val riotClient = mock(RiotClient::class.java)
     private val viewsRepository = ViewsInMemoryRepository()
     private val charactersRepository = CharactersInMemoryRepository()
     private val dataCacheRepository = DataCacheInMemoryRepository()
@@ -44,7 +49,7 @@ class ViewsControllerTest {
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
         viewsState: List<SimpleView>,
-        charactersState: List<Character>,
+        charactersState: CharactersState,
         dataCacheState: List<DataCache>,
         rolesActivitiesState: Map<Role, List<Activity>>
     ): ViewsController {
@@ -55,7 +60,7 @@ class ViewsControllerTest {
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient)
-        val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient)
+        val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
         return ViewsController(viewsService, credentialsService)
@@ -82,7 +87,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleView, basicSimpleView.copy(owner = "not-owner")),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnViews)))
             )
@@ -102,7 +107,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleView, notOwnerView),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getAnyViews)))
             )
@@ -122,7 +127,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleView, notOwnerView),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnView)))
             )
@@ -142,7 +147,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnView)))
             )
@@ -164,11 +169,12 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.createViews)))
             )
-            val res = controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getOrNull()
+            val res =
+                controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getOrNull()
 
             assertTrue(res?.viewId?.isNotEmpty())
             assertEquals(listOf(), res?.characters)
@@ -186,12 +192,17 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleView, basicSimpleView),
-                listOf(),
+                emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.createViews)))
             )
 
-            assertIs<TooMuchViews>(controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getLeftOrNull())
+            assertIs<TooMuchViews>(
+                controller.createView(
+                    "owner",
+                    ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)
+                ).getLeftOrNull()
+            )
         }
     }
 

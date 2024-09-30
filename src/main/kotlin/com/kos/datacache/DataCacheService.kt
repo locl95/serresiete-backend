@@ -2,13 +2,16 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.sequence
+import com.kos.characters.WowCharacter
 import com.kos.characters.Character
+import com.kos.characters.LolCharacter
 import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
 import com.kos.common.split
 import com.kos.datacache.repository.DataCacheRepository
 import com.kos.raiderio.RaiderIoClient
 import com.kos.raiderio.RaiderIoData
+import com.kos.views.Game
 import com.kos.views.SimpleView
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,7 +34,16 @@ data class DataCacheService(
     }
 
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
+
     suspend fun getData(simpleView: SimpleView): Either<JsonParseError, List<RaiderIoData>> {
+        return when(simpleView.game) {
+            Game.WOW -> getWowData(simpleView)
+            Game.LOL -> getLolData(simpleView)
+        }
+    }
+
+    suspend fun getLolData(simpleView: SimpleView): Either<JsonParseError, List<RaiderIoData>> = TODO()
+    suspend fun getWowData(simpleView: SimpleView): Either<JsonParseError, List<RaiderIoData>> {
         return simpleView.characterIds.mapNotNull {
             when (val data = get(it).minByOrNull { dc -> dc.inserted }) {
                 null -> null
@@ -48,11 +60,21 @@ data class DataCacheService(
         }.sequence()
     }
 
-    suspend fun cache(characters: List<Character>) = coroutineScope {
+    @Suppress("UNCHECKED_CAST")
+    suspend fun cache(characters: List<Character>, game: Game) {
+        when(game) {
+            Game.WOW -> cacheWowCharacters(characters as List<WowCharacter>)
+            Game.LOL -> cacheLolCharacters(characters as List<LolCharacter>)
+        }
+    }
+
+    private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>) = logger.info("lol cache not implemented")
+
+    private suspend fun cacheWowCharacters(wowCharacters: List<WowCharacter>) = coroutineScope {
         when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> logger.error(cutoffOrError.value.error())
             is Either.Right -> {
-                val errorsAndData = characters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
+                val errorsAndData = wowCharacters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
                     .awaitAll()
                     .split()
                 errorsAndData.first.forEach { logger.error(it.error()) }

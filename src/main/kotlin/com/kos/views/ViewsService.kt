@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
+import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.datacache.DataCacheService
 import com.kos.raiderio.RaiderIoClient
@@ -36,7 +37,7 @@ class ViewsService(
                     simpleView.owner,
                     simpleView.published,
                     simpleView.characterIds.mapNotNull {
-                        charactersService.get(it)
+                        charactersService.get(it, simpleView.game)
                     },
                     simpleView.game
                 )
@@ -48,17 +49,17 @@ class ViewsService(
 
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
-        val characterIds = charactersService.createAndReturnIds(request.characters)
+        val characterIds = charactersService.createAndReturnIds(request.characters, request.game)
         return characterIds.map { viewsRepository.create(request.name, owner, it, request.game) }
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        val characters = charactersService.createAndReturnIds(request.characters)
+        val characters = charactersService.createAndReturnIds(request.characters, request.game)
         return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
     }
 
     suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest) })) {
+        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest, Game.WOW)})) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
             null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
             else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
         }
@@ -74,7 +75,7 @@ class ViewsService(
             is Either.Right -> {
                 val eitherErrorOrResponse = view.characters.map { char ->
                     async {
-                        raiderIoClient.get(char).map {
+                        raiderIoClient.get(char as WowCharacter).map {//TODO: Fix
                             Pair(char.id, it)
                         }
                     }

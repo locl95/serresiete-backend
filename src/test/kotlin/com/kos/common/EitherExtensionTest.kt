@@ -48,4 +48,18 @@ class EitherExtensionTest {
         assertEquals(emptyList(), leftValues)
         assertEquals(listOf("Hello", "World"), rightValues)
     }
+
+    @Test
+    fun `getLeftOrNull should return left value when Either is Left`() {
+        val either: Either<String, Int> = Either.Left("Error")
+        val result = either.getLeftOrNull()
+        assertEquals("Error", result)
+    }
+
+    @Test
+    fun `getLeftOrNull should return null when Either is Right`() {
+        val either: Either<String, Int> = Either.Right(42)
+        val result = either.getLeftOrNull()
+        assertEquals(null, result)
+    }
 }

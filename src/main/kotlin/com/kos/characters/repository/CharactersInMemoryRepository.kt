@@ -1,46 +1,90 @@
 package com.kos.characters.repository
 
 import arrow.core.Either
-import com.kos.characters.Character
-import com.kos.characters.CharacterRequest
+import com.kos.characters.*
 import com.kos.common.InMemoryRepository
 import com.kos.common.InsertCharacterError
+import com.kos.views.Game
 
 class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
-    val characters: MutableList<Character> = mutableListOf()
+    private val wowCharacters: MutableList<WowCharacter> = mutableListOf()
+    private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
 
     private fun nextId(): Long {
-        return if (characters.isEmpty()) 1
-        else characters.map { it.id }.maxBy { it } + 1
+        return if (wowCharacters.isEmpty()) 1
+        else wowCharacters.map { it.id }.maxBy { it } + 1
     }
 
-    override suspend fun insert(characters: List<CharacterRequest>): Either<InsertCharacterError, List<Character>> {
-        val initialStateCharacters = this.characters.toList()
-        characters.forEach {
-            if (this.characters.any { character -> it.same(character) }) {
-                this.characters.clear()
-                this.characters.addAll(initialStateCharacters)
-                return Either.Left(InsertCharacterError("Error inserting character $it"))
+    override suspend fun insert(
+        characters: List<CharacterInsertRequest>,
+        game: Game
+    ): Either<InsertCharacterError, List<Character>> {
+        val wowInitialCharacters = this.wowCharacters.toList()
+        val lolInitialCharacters = this.lolCharacters.toList()
+        when (game) {
+            Game.WOW -> {
+                characters.forEach {
+                    when (it) {
+                        is WowCharacterRequest -> {
+                            if (this.wowCharacters.any { character -> it.same(character) }) {
+                                this.wowCharacters.clear()
+                                this.wowCharacters.addAll(wowInitialCharacters)
+                                return Either.Left(InsertCharacterError("Error inserting character $it"))
+                            }
+                            this.wowCharacters.add(it.toCharacter(nextId()))
+                        }
+
+                        is LolCharacterEnrichedRequest -> TODO()
+                    }
+                }
+                return Either.Right(this.wowCharacters)
             }
-            this.characters.add(it.toCharacter(nextId()))
+
+            Game.LOL -> {
+                characters.forEach {
+                    when (it) {
+                        is WowCharacterRequest -> TODO()
+                        is LolCharacterEnrichedRequest -> {
+                            println(this.lolCharacters)
+                            if (this.lolCharacters.any { character -> it.same(character) }) {
+                                this.lolCharacters.clear()
+                                this.lolCharacters.addAll(lolInitialCharacters)
+                                return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                            }
+                            this.lolCharacters.add(it.toCharacter(nextId()))
+                        }
+                    }
+                }
+                return Either.Right(this.lolCharacters)
+            }
         }
-        return Either.Right(this.characters)
     }
 
-    override suspend fun get(id: Long): Character? = characters.find { it.id == id }
-    override suspend fun get(): List<Character> = characters
+    override suspend fun get(id: Long, game: Game): Character? =
+        when (game) {
+            Game.WOW -> wowCharacters.find { it.id == id }
+            Game.LOL -> lolCharacters.find { it.id == id }
+        }
 
-    override suspend fun state(): List<Character> {
-        return characters
+    override suspend fun get(game: Game): List<Character> =
+        when (game) {
+            Game.WOW -> wowCharacters
+            Game.LOL -> lolCharacters
+        }
+
+    override suspend fun state(): CharactersState {
+        return CharactersState(wowCharacters, lolCharacters)
     }
 
-    override suspend fun withState(initialState: List<Character>): CharactersInMemoryRepository {
-        characters.addAll(initialState)
+    override suspend fun withState(initialState: CharactersState): CharactersInMemoryRepository {
+        wowCharacters.addAll(initialState.wowCharacters)
+        lolCharacters.addAll(initialState.lolCharacters)
         return this
     }
 
     override fun clear() {
-        characters.clear()
+        wowCharacters.clear()
+        lolCharacters.clear()
     }
 
 }

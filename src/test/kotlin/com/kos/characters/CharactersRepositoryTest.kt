@@ -1,9 +1,16 @@
 package com.kos.characters
 
+import com.kos.characters.CharactersTestHelper.basicCharacter
+import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.characters.CharactersTestHelper.basicLolCharacterEnrichedRequest
+import com.kos.characters.CharactersTestHelper.basicRequest
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.common.DatabaseFactory
+import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 
@@ -15,49 +22,60 @@ abstract class CharactersRepositoryTestCommon {
     abstract fun beforeEach()
 
     @Test
-    fun `given an empty repository i can insert characters`() {
+    fun `given an empty repository i can insert wow characters`() {
         runBlocking {
-            val request = CharacterRequest(
-                CharactersTestHelper.basicCharacter.name,
-                CharactersTestHelper.basicCharacter.region,
-                CharactersTestHelper.basicCharacter.realm
-            )
-            val expected = listOf(CharactersTestHelper.basicCharacter)
-            repository.insert(listOf(request)).fold({ fail() }) { assertEquals(expected, it) }
-
+            val expected = listOf(basicCharacter)
+            repository.insert(listOf(basicRequest), Game.WOW).fold({ fail() }) { assertEquals(expected, it) }
         }
     }
 
     @Test
-    fun `given an empty repository inserting a character that already exists fails`() {
+    fun `given an empty repository i can insert lol characters`() {
         runBlocking {
-            val character = CharacterRequest(
-                CharactersTestHelper.basicCharacter.name,
-                CharactersTestHelper.basicCharacter.region,
-                CharactersTestHelper.basicCharacter.realm
+            val expected = listOf(basicLolCharacter)
+            repository.insert(listOf(basicLolCharacterEnrichedRequest), Game.LOL).fold({ fail() }) { assertEquals(expected, it) }
+        }
+    }
+
+    @Test
+    fun `given an empty repository inserting a wow character that already exists fails`() {
+        runBlocking {
+            val character = WowCharacterRequest(
+                basicCharacter.name,
+                basicCharacter.region,
+                basicCharacter.realm
             )
 
             val initialState = repository.state()
-            assertEquals(listOf(), initialState)
-            assertTrue(repository.insert(listOf(character, character)).isLeft())
+            assertEquals(emptyCharactersState, initialState)
+            assertTrue(repository.insert(listOf(character, character), Game.WOW).isLeft())
 
             val finalState = repository.state()
-            assertEquals(listOf(), finalState)
+            assertEquals(emptyCharactersState, finalState)
         }
     }
 
     @Test
-    fun `given a repository that includes a character, adding the same one fails`() {
+    fun `given a repository that includes a wow character, adding the same one fails`() {
         runBlocking {
             val repo =
-                repository.withState(listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2))
-            assertTrue(repo.insert(listOf(CharactersTestHelper.basicRequest)).isLeft())
+                repository.withState(
+                    CharactersState(
+                        listOf(
+                            basicCharacter,
+                            CharactersTestHelper.basicWowCharacter2
+                        ), listOf()
+                    )
+                )
+            assertTrue(repo.insert(listOf(CharactersTestHelper.basicRequest), Game.WOW).isLeft())
             assertEquals(
-                listOf(CharactersTestHelper.basicCharacter, CharactersTestHelper.basicCharacter2),
+                CharactersState(listOf(basicCharacter, CharactersTestHelper.basicWowCharacter2), listOf()),
                 repository.state()
             )
         }
     }
+
+
 }
 
 class CharactersInMemoryRepositoryTest : CharactersRepositoryTestCommon() {

@@ -4,6 +4,7 @@ import com.kos.characters.CharactersTestHelper.basicCharacter
 import com.kos.datacache.TestHelper.dataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.raiderio.RaiderIoClient
+import com.kos.views.Game
 import com.kos.views.RaiderIoMockHelper
 import com.kos.views.ViewsTestHelper.basicSimpleView
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,7 @@ class DataCacheServiceTest {
                 )
             )
             val service = DataCacheService(repo, raiderIoClient)
-            val data = service.getData(basicSimpleView.copy(characterIds = listOf(1, 3)))
+            val data = service.getWowData(basicSimpleView.copy(characterIds = listOf(1, 3)))
             assertTrue(data.isRight { it.size == 2 })
             assertEquals(listOf<Long>(1, 3), data.map { it.map { d -> d.id } }.getOrNull())
         }
@@ -43,14 +44,14 @@ class DataCacheServiceTest {
                 )
             )
             val service = DataCacheService(repo, raiderIoClient)
-            val data = service.getData(basicSimpleView.copy(characterIds = listOf(1)))
+            val data = service.getWowData(basicSimpleView.copy(characterIds = listOf(1)))
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(0.0), data.map { it.map { d -> d.score } }.getOrNull())
         }
     }
 
     @Test
-    fun `i can cache data`() {
+    fun `i can cache wow data`() {
         runBlocking {
             `when`(raiderIoClient.get(basicCharacter)).thenReturn(RaiderIoMockHelper.get(basicCharacter))
             `when`(raiderIoClient.get(basicCharacter.copy(id = 2))).thenReturn(
@@ -60,7 +61,7 @@ class DataCacheServiceTest {
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
             val service = DataCacheService(repo, raiderIoClient)
             assertEquals(listOf(dataCache), repo.state())
-            service.cache(listOf(basicCharacter, basicCharacter.copy(id = 2)))
+            service.cache(listOf(basicCharacter, basicCharacter.copy(id = 2)), Game.WOW)
             assertEquals(3, repo.state().size)
         }
     }

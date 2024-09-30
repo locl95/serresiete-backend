@@ -1,20 +1,12 @@
 package com.kos.riot
 
 import com.kos.assertTrue
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
+import com.kos.riot.RiotHTTPClientHelper.client
 import kotlinx.coroutines.runBlocking
-import kotlin.test.AfterTest
 import kotlin.test.Test
 
 class RiotHTTPClientTest {
-    private val client = HttpClient(CIO)
-    private val riotHTTPClient = RiotHTTPClient(client, "RGAPI-a66a7b4f-ecc9-4600-a778-76ba2b6aad29")
-
-    @AfterTest
-    fun tearDown() {
-        client.close()
-    }
+    private val riotHTTPClient = RiotHTTPClient(client, "fake-key")
 
     @Test
     fun `dummy test to check everything is going under control`() {

@@ -96,7 +96,7 @@ class ViewsController(
                 if (credentialsService.hasPermissions(client, Activities.createViews)) {
                     when (val res = viewsService.create(client, request)) {
                         is Either.Right -> Either.Right(res.value)
-                        is Either.Left -> Either.Left(TooMuchViews())
+                        is Either.Left -> res
                     }
                 } else Either.Left(NotEnoughPermissions(client))
             }

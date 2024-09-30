@@ -1,5 +1,7 @@
 package com.kos.common
 
+import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -31,6 +33,24 @@ class NullableExtensionTest {
         val nullValue: CustomType? = null
         val result = nullValue.isDefined()
         assertFalse(result)
+    }
+
+    @Test
+    fun `should call right when the receiver is not null`() {
+        runBlocking {
+            val value: Int = 42
+            val result = value.fold(left = { "Left" }, right = { it.toString() })
+            assertEquals("42", result)
+        }
+    }
+
+    @Test
+    fun `should call left when the receiver is null`() {
+        runBlocking {
+            val value: Int? = null
+            val result = value.fold(left = { "Left" }, right = { it.toString() })
+            assertEquals(result, "Left")
+        }
     }
 
     data class CustomType(val value: String)

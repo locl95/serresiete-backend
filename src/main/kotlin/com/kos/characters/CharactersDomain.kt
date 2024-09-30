@@ -11,7 +11,6 @@ sealed interface Character {
 @Serializable
 sealed interface CharacterCreateRequest {
     val name: String
-    fun toCharacter(id: Long): Character
     fun same(other: Character): Boolean
 }
 

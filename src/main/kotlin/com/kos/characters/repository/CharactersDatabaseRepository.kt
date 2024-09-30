@@ -111,7 +111,7 @@ class CharactersDatabaseRepository : CharactersRepository {
                                 is WowCharacter -> throw IllegalArgumentException()
                                 is LolCharacter -> {
                                     this[LolCharacters.id] = it.id
-                                    this[WowCharacters.name] = it.name
+                                    this[LolCharacters.name] = it.name
                                     this[LolCharacters.tag] = it.tag
                                     this[LolCharacters.puuid] = it.puuid
                                     this[LolCharacters.summonerIcon] = it.summonerIcon

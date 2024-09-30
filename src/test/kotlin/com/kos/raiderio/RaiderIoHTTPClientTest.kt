@@ -14,11 +14,6 @@ class RaiderIoHTTPClientTest {
 
     private val raiderIoClient = RaiderIoHTTPClient(client)
 
-    @AfterTest
-    fun tearDown() {
-        client.close()
-    }
-
     //TODO: This suite must be more extensive
 
     @Test

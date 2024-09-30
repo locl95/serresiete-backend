@@ -22,37 +22,42 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         val wowInitialCharacters = this.wowCharacters.toList()
         val lolInitialCharacters = this.lolCharacters.toList()
         when (game) {
-            Game.WOW -> characters.forEach {
-                when (it) {
-                    is WowCharacterRequest -> {
-                        if (this.wowCharacters.any { character -> it.same(character) }) {
-                            this.wowCharacters.clear()
-                            this.wowCharacters.addAll(wowInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting character $it"))
+            Game.WOW -> {
+                characters.forEach {
+                    when (it) {
+                        is WowCharacterRequest -> {
+                            if (this.wowCharacters.any { character -> it.same(character) }) {
+                                this.wowCharacters.clear()
+                                this.wowCharacters.addAll(wowInitialCharacters)
+                                return Either.Left(InsertCharacterError("Error inserting character $it"))
+                            }
+                            this.wowCharacters.add(it.toCharacter(nextId()))
                         }
-                        this.wowCharacters.add(it.toCharacter(nextId()))
-                    }
 
-                    is LolCharacterEnrichedRequest -> TODO()
+                        is LolCharacterEnrichedRequest -> TODO()
+                    }
                 }
+                return Either.Right(this.wowCharacters)
             }
 
-            Game.LOL -> characters.forEach {
-                when (it) {
-                    is WowCharacterRequest -> TODO()
-                    is LolCharacterEnrichedRequest -> {
-                        if (this.lolCharacters.any { character -> it.same(character) }) {
-                            this.lolCharacters.clear()
-                            this.lolCharacters.addAll(lolInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+            Game.LOL -> {
+                characters.forEach {
+                    when (it) {
+                        is WowCharacterRequest -> TODO()
+                        is LolCharacterEnrichedRequest -> {
+                            println(this.lolCharacters)
+                            if (this.lolCharacters.any { character -> it.same(character) }) {
+                                this.lolCharacters.clear()
+                                this.lolCharacters.addAll(lolInitialCharacters)
+                                return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                            }
+                            this.lolCharacters.add(it.toCharacter(nextId()))
                         }
-                        this.lolCharacters.add(it.toCharacter(nextId()))
                     }
                 }
+                return Either.Right(this.lolCharacters)
             }
         }
-
-        return Either.Right(this.wowCharacters)
     }
 
     override suspend fun get(id: Long, game: Game): Character? =

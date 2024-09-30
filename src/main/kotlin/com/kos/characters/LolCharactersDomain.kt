@@ -14,9 +14,6 @@ data class LolCharacterRequest(
     override val name: String,
     val tag: String
 ) : CharacterCreateRequest {
-    override fun toCharacter(id: Long): LolCharacter {
-        TODO("Not yet implemented")
-    }
 
     override fun same(other: Character): Boolean {
         return when (other) {
@@ -36,7 +33,7 @@ data class LolCharacterEnrichedRequest(
 
 ) : CharacterInsertRequest {
     override fun toCharacter(id: Long): LolCharacter {
-        TODO("Not yet implemented")
+        return LolCharacter(id, this.name, this.tag, this.puuid, this.summonerIconId, this.summonerId, this.summonerLevel)
     }
 
     override fun same(other: Character): Boolean {

@@ -1,5 +1,7 @@
 package com.kos.characters
 
+import kotlinx.serialization.Serializable
+
 data class LolCharacter(
     override val id: Long,
     override val name: String,
@@ -10,6 +12,7 @@ data class LolCharacter(
     val summonerLevel: Int
 ) : Character
 
+@Serializable
 data class LolCharacterRequest(
     override val name: String,
     val tag: String

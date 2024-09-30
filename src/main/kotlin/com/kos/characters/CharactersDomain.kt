@@ -1,5 +1,6 @@
 package com.kos.characters
 
+import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,6 +9,7 @@ sealed interface Character {
     val name: String
 }
 
+@Polymorphic
 @Serializable
 sealed interface CharacterCreateRequest {
     val name: String

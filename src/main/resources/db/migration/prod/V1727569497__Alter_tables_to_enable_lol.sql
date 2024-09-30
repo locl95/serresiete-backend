@@ -10,5 +10,5 @@ create table lol_characters
     summoner_id varchar(64) not null,
     summoner_level integer not null,
     constraint up UNIQUE (puuid),
-    constraint usi UNIQUE (summoner_id),
+    constraint usi UNIQUE (summoner_id)
 );

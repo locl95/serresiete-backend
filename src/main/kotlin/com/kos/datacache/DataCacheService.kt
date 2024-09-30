@@ -3,6 +3,7 @@ package com.kos.datacache
 import arrow.core.Either
 import arrow.core.sequence
 import com.kos.characters.Character
+import com.kos.common.HttpError
 import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
 import com.kos.common.split
@@ -48,9 +49,12 @@ data class DataCacheService(
         }.sequence()
     }
 
-    suspend fun cache(characters: List<Character>) = coroutineScope {
+    suspend fun cache(characters: List<Character>): List<HttpError> = coroutineScope {
         when (val cutoffOrError = raiderIoClient.cutoff()) {
-            is Either.Left -> logger.error(cutoffOrError.value.error())
+            is Either.Left -> {
+                logger.error(cutoffOrError.value.error())
+                listOf(cutoffOrError.value)
+            }
             is Either.Right -> {
                 val errorsAndData = characters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
                     .awaitAll()
@@ -72,9 +76,12 @@ data class DataCacheService(
                 }
                 dataCacheRepository.insert(data)
                 data.forEach { logger.info("Cached character ${it.characterId}") }
+                errorsAndData.first
             }
         }
     }
+
+
 
     suspend fun clear(): Int = dataCacheRepository.deleteExpiredRecord(ttl)
 }

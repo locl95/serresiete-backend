@@ -20,6 +20,11 @@ import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesDatabaseRepository
+import com.kos.tasks.CacheDataTask
+import com.kos.tasks.TokenCleanupTask
+import com.kos.tasks.repository.TasksDatabaseRepository
+import com.kos.tasks.repository.TasksInMemoryRepository
+import com.kos.tasks.repository.TasksRepository
 import com.kos.views.ViewsController
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
@@ -75,14 +80,15 @@ fun Application.module() {
     val viewsController = ViewsController(viewsService, credentialsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    val tasksRepository = TasksDatabaseRepository()
 
     executorService.scheduleAtFixedRate(
-        TokenCleanupTask(authService, coroutineScope),
+        TokenCleanupTask(tasksRepository, authService, coroutineScope),
         0, 60, TimeUnit.MINUTES
     )
 
     executorService.scheduleAtFixedRate(
-        CacheDataTask(dataCacheService, charactersService, coroutineScope),
+        CacheDataTask(tasksRepository, dataCacheService, charactersService, coroutineScope),
         0, 60, TimeUnit.MINUTES
     )
 

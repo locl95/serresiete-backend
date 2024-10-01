@@ -1,8 +1,9 @@
-package com.kos.riot
+package com.kos.httpclients.riot
 
 import arrow.core.Either
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
+import com.kos.httpclients.domain.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -74,7 +75,7 @@ data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClie
                 //parameters.append("queue", 1) //Filter the list of match ids by a specific queue id. This filter is mutually inclusive of the type filter meaning any match ids returned must match both the queue and type filters.
                 //parameters.append("type", "type") //Filter the list of match ids by the type of match. This filter is mutually inclusive of the queue filter meaning any match ids returned must match both the queue and type filters.
                 //parameters.append("start", 1) //Defaults to 0. Start index.
-                //parameters.append("count", 1) //Defaults to 20. Valid values: 0 to 100. Number of match ids to return.
+                parameters.append("count", "1") //Defaults to 20. Valid values: 0 to 100. Number of match ids to return.
             }
 
         }

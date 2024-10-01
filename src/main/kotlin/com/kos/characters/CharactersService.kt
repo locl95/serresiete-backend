@@ -7,8 +7,8 @@ import com.kos.common.InsertCharacterError
 import com.kos.common.WithLogger
 import com.kos.common.collect
 import com.kos.common.split
-import com.kos.raiderio.RaiderIoClient
-import com.kos.riot.RiotClient
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

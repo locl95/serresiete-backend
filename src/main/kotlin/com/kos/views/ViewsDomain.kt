@@ -2,17 +2,7 @@ package com.kos.views
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
-import com.kos.characters.WowCharacterRequest
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 enum class Game {
@@ -63,7 +53,11 @@ data class ViewRequest(
 )
 
 @Serializable
-data class ViewPatchRequest(val name: String? = null, val published: Boolean? = null, val characters: List<CharacterCreateRequest>? = null)
+data class ViewPatchRequest(
+    val name: String? = null,
+    val published: Boolean? = null,
+    val characters: List<CharacterCreateRequest>? = null
+)
 
 @Serializable
 sealed interface ViewResult {

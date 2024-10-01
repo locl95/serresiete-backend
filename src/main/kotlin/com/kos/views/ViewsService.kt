@@ -7,8 +7,9 @@ import com.kos.characters.CharactersService
 import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.datacache.DataCacheService
-import com.kos.raiderio.RaiderIoClient
-import com.kos.raiderio.RaiderIoData
+import com.kos.httpclients.domain.Data
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.domain.RaiderIoData
 import com.kos.views.repository.ViewsRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -69,7 +70,14 @@ class ViewsService(
         return viewsRepository.delete(id)
     }
 
-    suspend fun getData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
+    suspend fun getData(view: View): Either<HttpError, List<Data>> {
+        return when(view.game) {
+            Game.WOW -> getWowData(view)
+            Game.LOL -> TODO()
+        }
+    }
+
+    private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
         val eitherJsonErrorOrData = when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> Either.Left(cutoffOrError.value)
             is Either.Right -> {

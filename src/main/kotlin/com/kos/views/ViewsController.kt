@@ -5,7 +5,8 @@ import arrow.core.flatten
 import com.kos.activities.Activities
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
-import com.kos.raiderio.RaiderIoData
+import com.kos.httpclients.domain.Data
+import com.kos.httpclients.domain.RaiderIoData
 
 class ViewsController(
     private val viewsService: ViewsService,
@@ -51,7 +52,7 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
+    suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<Data>> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
@@ -68,7 +69,7 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<RaiderIoData>> {
+    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<Data>> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {

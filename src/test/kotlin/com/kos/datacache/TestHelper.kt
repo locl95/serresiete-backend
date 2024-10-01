@@ -24,7 +24,8 @@ object TestHelper {
              "region": 0          
          }                        
      },                           
-     "mythicPlusBestRuns": []                      
+     "mythicPlusBestRuns": [],
+     "type": "com.kos.httpclients.domain.RaiderIoData"
    }"""
 
     private val now = OffsetDateTime.now()

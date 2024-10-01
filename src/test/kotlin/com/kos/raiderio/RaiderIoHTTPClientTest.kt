@@ -3,10 +3,11 @@ package com.kos.raiderio
 import arrow.core.Either
 import com.kos.characters.WowCharacter
 import com.kos.common.HttpError
+import com.kos.httpclients.raiderio.RaiderIoHTTPClient
+import com.kos.httpclients.domain.RaiderIoResponse
 import com.kos.raiderio.RaiderioHttpClientHelper.client
 import com.kos.raiderio.RaiderioHttpClientHelper.raiderioProfileResponse
 import kotlinx.coroutines.runBlocking
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

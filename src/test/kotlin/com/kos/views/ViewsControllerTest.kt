@@ -15,7 +15,7 @@ import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.raiderio.RaiderIoClient
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.roles.Role
 import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
@@ -31,7 +31,7 @@ import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.LolCharacter
 import com.kos.characters.repository.CharactersState
 import com.kos.common.TooMuchViews
-import com.kos.riot.RiotClient
+import com.kos.httpclients.riot.RiotClient
 import kotlin.test.assertIs
 
 //TODO: Behaviour of get data
@@ -59,7 +59,7 @@ class ViewsControllerTest {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)

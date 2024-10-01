@@ -7,10 +7,8 @@ import com.kos.characters.CharactersTestHelper.basicGetSummonerResponse
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.raiderio.RaiderIoClient
-import com.kos.riot.GetPUUIDResponse
-import com.kos.riot.GetSummonerResponse
-import com.kos.riot.RiotClient
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.mock

@@ -60,7 +60,13 @@ class ViewsService(
     }
 
     suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest, Game.WOW)})) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
+        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
+            { charactersRequest ->
+                charactersService.createAndReturnIds(
+                    charactersRequest,
+                    Game.WOW
+                )
+            })) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
             null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
             else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
         }
@@ -71,10 +77,15 @@ class ViewsService(
     }
 
     suspend fun getData(view: View): Either<HttpError, List<Data>> {
-        return when(view.game) {
+        return when (view.game) {
             Game.WOW -> getWowData(view)
-            Game.LOL -> TODO()
+            Game.LOL -> getLolData(view)
         }
+    }
+
+
+    private suspend fun getLolData(view: View): Either<HttpError, List<Data>> {
+        return dataCacheService.getData(view.characters.map { it.id })
     }
 
     private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
@@ -128,5 +139,5 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds)
 }

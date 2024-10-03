@@ -12,6 +12,7 @@ import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
 import com.kos.common.split
 import com.kos.datacache.repository.DataCacheRepository
+import com.kos.httpclients.HttpUtils.retryWithFixedDelay
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -48,8 +49,8 @@ data class DataCacheService(
 
 
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
-    suspend fun getData(simpleView: SimpleView): Either<JsonParseError, List<Data>> {
-        return simpleView.characterIds.mapNotNull {
+    suspend fun getData(characterIds: List<Long>): Either<JsonParseError, List<Data>> {
+        return characterIds.mapNotNull {
             when (val data = get(it).minByOrNull { dc -> dc.inserted }) {
                 null -> null
                 else -> {
@@ -75,14 +76,16 @@ data class DataCacheService(
 
     private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>) {
         coroutineScope {
-            val errorsAndData: Pair<List<HttpError>, List<Pair<Long,RiotData>>> = lolCharacters.map {
+            val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> = lolCharacters.map {
                 async {
-                    val leagues: Either<HttpError, List<LeagueEntryResponse>> = riotClient.getLeagueEntriesBySummonerId(it.summonerId)
-                    val matches: Either<HttpError, List<GetMatchResponse>> = riotClient.getMatchesByPuuid(it.puuid).flatMap { m ->
-                        m.map {
-                            async { riotClient.getMatchById(it) }
-                        }.awaitAll().sequence()
-                    }
+                    val leagues: Either<HttpError, List<LeagueEntryResponse>> =
+                        retryWithFixedDelay(5, 1200L) { riotClient.getLeagueEntriesBySummonerId(it.summonerId) }
+                    val matches: Either<HttpError, List<GetMatchResponse>> =
+                        retryWithFixedDelay(5, 1200L) { riotClient.getMatchesByPuuid(it.puuid) }.flatMap { m ->
+                            m.map {
+                                async { retryWithFixedDelay(5, 1200L) { riotClient.getMatchById(it) } }
+                            }.awaitAll().sequence()
+                        }
                     either {
                         val leagueEntries = leagues.bind()
                         val matchEntries = matches.bind()
@@ -106,7 +109,7 @@ data class DataCacheService(
             is Either.Left -> logger.error(cutoffOrError.value.error())
             is Either.Right -> {
                 val errorsAndData =
-                    wowCharacters.map { async { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } }
+                    wowCharacters.map { async { retryWithFixedDelay(3, 1000L) { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } } }
                         .awaitAll()
                         .split()
                 errorsAndData.first.forEach { logger.error(it.error()) }

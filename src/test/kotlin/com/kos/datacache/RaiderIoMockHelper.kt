@@ -1,4 +1,4 @@
-package com.kos.views
+package com.kos.datacache
 
 import arrow.core.Either
 import com.kos.characters.WowCharacter

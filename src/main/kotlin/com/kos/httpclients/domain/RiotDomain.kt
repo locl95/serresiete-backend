@@ -76,10 +76,18 @@ data class RiotError(val status: RiotStatus) : HttpError {
 @Serializable
 data class MatchProfile(
     val championId: Int,
+    val role: String,
+    val individualPosition: String,
+    val lane: String,
     val kills: Int,
     val deaths: Int,
     val assists: Int,
-    val assistMePings: Int
+    val assistMePings: Int,
+    val visionWardsBoughtInGame: Int,
+    val enemyMissingPings: Int,
+    val wardsPlaced: Int,
+    val gameDuration: Int,
+    val totalTimeSpentDead: Int
 )
 
 @Serializable
@@ -112,8 +120,26 @@ data class RiotData(
                 lolCharacter.name,
                 leagues.associate { leagueEntryResponse ->
                     val gamesPlayed = leagueEntryResponse.wins + leagueEntryResponse.losses
-                    val playerMatches =
-                        matches.flatMap { getMatchResponse -> getMatchResponse.info.participants.filter { it.puuid == lolCharacter.puuid } }
+                    val playerMatches: List<MatchProfile> =
+                        matches.flatMap { getMatchResponse ->
+                            getMatchResponse.info.participants.filter { it.puuid == lolCharacter.puuid }.map {
+                                MatchProfile(
+                                    it.championId,
+                                    it.role,
+                                    it.individualPosition,
+                                    it.lane,
+                                    it.kills,
+                                    it.deaths,
+                                    it.assists,
+                                    it.assistMePings,
+                                    it.visionWardsBoughtInGame,
+                                    it.enemyMissingPings,
+                                    it.wardsPlaced,
+                                    getMatchResponse.info.gameDuration,
+                                    it.totalTimeSpentDead
+                                )
+                            }
+                        }
                     leagueEntryResponse.queueType to LeagueProfile(
                         playerMatches.groupBy { it.role }.mapValues { it.value.size }.maxBy { it.value }.key,
                         leagueEntryResponse.tier,
@@ -121,15 +147,7 @@ data class RiotData(
                         leagueEntryResponse.leaguePoints,
                         gamesPlayed,
                         leagueEntryResponse.wins.toDouble() / gamesPlayed,
-                        playerMatches.map {
-                            MatchProfile(
-                                it.championId,
-                                it.kills,
-                                it.deaths,
-                                it.assists,
-                                it.assistMePings
-                            )
-                        }
+                        playerMatches
                     )
                 }
             )

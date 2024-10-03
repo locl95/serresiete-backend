@@ -16,7 +16,7 @@ interface HttpError : ControllerError {
 }
 
 data class JsonParseError(val json: String, val path: String, val error: String? = null) : HttpError {
-    override fun error(): String = "ParsedJson: ${json}\nPath: $path"
+    override fun error(): String = "ParsedJson: ${json}\nPath: $path Error: $error"
 }
 
 data class RaiderIoError(

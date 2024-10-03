@@ -75,7 +75,7 @@ data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClie
                 //parameters.append("queue", 1) //Filter the list of match ids by a specific queue id. This filter is mutually inclusive of the type filter meaning any match ids returned must match both the queue and type filters.
                 //parameters.append("type", "type") //Filter the list of match ids by the type of match. This filter is mutually inclusive of the queue filter meaning any match ids returned must match both the queue and type filters.
                 //parameters.append("start", 1) //Defaults to 0. Start index.
-                parameters.append("count", "1") //Defaults to 20. Valid values: 0 to 100. Number of match ids to return.
+                parameters.append("count", "5") //Defaults to 20. Valid values: 0 to 100. Number of match ids to return.
             }
 
         }

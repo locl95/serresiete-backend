@@ -1,9 +1,9 @@
-package com.kos.views
+package com.kos.datacache
 
 import arrow.core.Either
 import com.kos.characters.WowCharacter
 import com.kos.common.HttpError
-import com.kos.raiderio.*
+import com.kos.httpclients.domain.*
 
 object RaiderIoMockHelper {
     fun get(wowCharacter: WowCharacter): Either<HttpError, RaiderIoResponse> {

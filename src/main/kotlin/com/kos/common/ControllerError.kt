@@ -15,15 +15,15 @@ interface HttpError : ControllerError {
     fun error(): String
 }
 
-data class JsonParseError(val json: String, val path: String) : HttpError {
-    override fun error(): String = "ParsedJson: ${json}\nPath: $path"
+data class JsonParseError(val json: String, val path: String, val error: String? = null) : HttpError {
+    override fun error(): String = "ParsedJson: ${json}\nPath: $path Error: $error"
 }
 
 data class RaiderIoError(
     val statusCode: Int,
     val error: String,
     val message: String
-): HttpError {
+) : HttpError {
     override fun error(): String = "$message. $error: $statusCode"
 }
 

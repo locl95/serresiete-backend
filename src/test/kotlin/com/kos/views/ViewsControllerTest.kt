@@ -2,7 +2,6 @@ package com.kos.views
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.characters.WowCharacter
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.common.NotEnoughPermissions
@@ -15,11 +14,11 @@ import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.raiderio.RaiderIoClient
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.roles.Role
 import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
-import com.kos.views.ViewsTestHelper.basicSimpleView
+import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.repository.ViewsInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.mock
@@ -28,10 +27,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import com.kos.assertTrue
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
-import com.kos.characters.LolCharacter
 import com.kos.characters.repository.CharactersState
 import com.kos.common.TooMuchViews
-import com.kos.riot.RiotClient
+import com.kos.httpclients.riot.RiotClient
 import kotlin.test.assertIs
 
 //TODO: Behaviour of get data
@@ -59,7 +57,7 @@ class ViewsControllerTest {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
@@ -86,12 +84,12 @@ class ViewsControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf(basicSimpleView, basicSimpleView.copy(owner = "not-owner")),
+                listOf(basicSimpleWowView, basicSimpleWowView.copy(owner = "not-owner")),
                 emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnViews)))
             )
-            assertEquals(listOf(basicSimpleView), controller.getViews("owner").getOrNull())
+            assertEquals(listOf(basicSimpleWowView), controller.getViews("owner").getOrNull())
         }
     }
 
@@ -103,15 +101,15 @@ class ViewsControllerTest {
                 mapOf(Pair("owner", listOf(role)))
             )
 
-            val notOwnerView = basicSimpleView.copy(owner = "not-owner")
+            val notOwnerView = basicSimpleWowView.copy(owner = "not-owner")
             val controller = createController(
                 credentialsState,
-                listOf(basicSimpleView, notOwnerView),
+                listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getAnyViews)))
             )
-            assertEquals(listOf(basicSimpleView, notOwnerView), controller.getViews("owner").getOrNull())
+            assertEquals(listOf(basicSimpleWowView, notOwnerView), controller.getViews("owner").getOrNull())
         }
     }
 
@@ -123,15 +121,15 @@ class ViewsControllerTest {
                 mapOf(Pair("owner", listOf(role)))
             )
 
-            val notOwnerView = basicSimpleView.copy(owner = "not-owner", id = "2")
+            val notOwnerView = basicSimpleWowView.copy(owner = "not-owner", id = "2")
             val controller = createController(
                 credentialsState,
-                listOf(basicSimpleView, notOwnerView),
+                listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnView)))
             )
-            assertEquals(basicSimpleView, controller.getView("owner", basicSimpleView.id).getOrNull()?.toSimple())
+            assertEquals(basicSimpleWowView, controller.getView("owner", basicSimpleWowView.id).getOrNull()?.toSimple())
             assertEquals(NotEnoughPermissions("owner"), controller.getView("owner", notOwnerView.id).getLeftOrNull())
         }
     }
@@ -152,8 +150,8 @@ class ViewsControllerTest {
                 mapOf(Pair(role, listOf(Activities.getOwnView)))
             )
             assertEquals(
-                NotFound(basicSimpleView.id),
-                controller.getView("owner", basicSimpleView.id).getLeftOrNull()
+                NotFound(basicSimpleWowView.id),
+                controller.getView("owner", basicSimpleWowView.id).getLeftOrNull()
             )
         }
     }
@@ -174,7 +172,7 @@ class ViewsControllerTest {
                 mapOf(Pair(role, listOf(Activities.createViews)))
             )
             val res =
-                controller.createView("owner", ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)).getOrNull()
+                controller.createView("owner", ViewRequest(basicSimpleWowView.name, true, listOf(), Game.WOW)).getOrNull()
 
             assertTrue(res?.viewId?.isNotEmpty())
             assertEquals(listOf(), res?.characters)
@@ -191,7 +189,7 @@ class ViewsControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf(basicSimpleView, basicSimpleView),
+                listOf(basicSimpleWowView, basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.createViews)))
@@ -200,7 +198,7 @@ class ViewsControllerTest {
             assertIs<TooMuchViews>(
                 controller.createView(
                     "owner",
-                    ViewRequest(basicSimpleView.name, true, listOf(), Game.WOW)
+                    ViewRequest(basicSimpleWowView.name, true, listOf(), Game.WOW)
                 ).getLeftOrNull()
             )
         }

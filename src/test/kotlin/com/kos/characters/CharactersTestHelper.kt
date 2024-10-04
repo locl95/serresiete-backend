@@ -1,8 +1,8 @@
 package com.kos.characters
 
 import com.kos.characters.repository.CharactersState
-import com.kos.riot.GetPUUIDResponse
-import com.kos.riot.GetSummonerResponse
+import com.kos.httpclients.domain.GetPUUIDResponse
+import com.kos.httpclients.domain.GetSummonerResponse
 
 object CharactersTestHelper {
     val emptyCharactersState = CharactersState(listOf(), listOf())

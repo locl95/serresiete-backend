@@ -1,6 +1,7 @@
 package com.kos.riot
 
 import com.kos.assertTrue
+import com.kos.httpclients.riot.RiotHTTPClient
 import com.kos.riot.RiotHTTPClientHelper.client
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test

@@ -15,8 +15,8 @@ import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.plugins.*
-import com.kos.raiderio.RaiderIoHTTPClient
-import com.kos.riot.RiotHTTPClient
+import com.kos.httpclients.raiderio.RaiderIoHTTPClient
+import com.kos.httpclients.riot.RiotHTTPClient
 import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
@@ -75,7 +75,7 @@ fun Application.module() {
 
     val viewsRepository = ViewsDatabaseRepository()
     val dataCacheRepository = DataCacheDatabaseRepository()
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
     val viewsController = ViewsController(viewsService, credentialsService)
 

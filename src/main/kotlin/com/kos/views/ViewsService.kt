@@ -7,8 +7,9 @@ import com.kos.characters.CharactersService
 import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.datacache.DataCacheService
-import com.kos.raiderio.RaiderIoClient
-import com.kos.raiderio.RaiderIoData
+import com.kos.httpclients.domain.Data
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.domain.RaiderIoData
 import com.kos.views.repository.ViewsRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -59,7 +60,13 @@ class ViewsService(
     }
 
     suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest, Game.WOW)})) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
+        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
+            { charactersRequest ->
+                charactersService.createAndReturnIds(
+                    charactersRequest,
+                    Game.WOW
+                )
+            })) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
             null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
             else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
         }
@@ -69,7 +76,19 @@ class ViewsService(
         return viewsRepository.delete(id)
     }
 
-    suspend fun getData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
+    suspend fun getData(view: View): Either<HttpError, List<Data>> {
+        return when (view.game) {
+            Game.WOW -> getWowData(view)
+            Game.LOL -> getLolData(view)
+        }
+    }
+
+
+    private suspend fun getLolData(view: View): Either<HttpError, List<Data>> {
+        return dataCacheService.getData(view.characters.map { it.id })
+    }
+
+    private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
         val eitherJsonErrorOrData = when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> Either.Left(cutoffOrError.value)
             is Either.Right -> {
@@ -120,5 +139,5 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds)
 }

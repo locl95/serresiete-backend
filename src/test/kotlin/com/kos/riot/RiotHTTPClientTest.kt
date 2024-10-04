@@ -6,6 +6,8 @@ import com.kos.riot.RiotHTTPClientHelper.client
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 
+//TODO: Añadir test sobre las excepciones
+
 class RiotHTTPClientTest {
     private val riotHTTPClient = RiotHTTPClient(client, "fake-key")
 

@@ -1,6 +1,6 @@
 package com.kos.datacache
 
-import com.kos.characters.CharactersTestHelper.basicCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
@@ -86,15 +86,15 @@ class DataCacheServiceTest {
     @Test
     fun `i can cache wow data`() {
         runBlocking {
-            `when`(raiderIoClient.get(basicCharacter)).thenReturn(RaiderIoMockHelper.get(basicCharacter))
-            `when`(raiderIoClient.get(basicCharacter.copy(id = 2))).thenReturn(
-                RaiderIoMockHelper.get(basicCharacter.copy(id = 2))
+            `when`(raiderIoClient.get(basicWowCharacter)).thenReturn(RaiderIoMockHelper.get(basicWowCharacter))
+            `when`(raiderIoClient.get(basicWowCharacter.copy(id = 2))).thenReturn(
+                RaiderIoMockHelper.get(basicWowCharacter.copy(id = 2))
             )
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
             val repo = DataCacheInMemoryRepository().withState(listOf(wowDataCache))
             val service = DataCacheService(repo, raiderIoClient, riotClient)
             assertEquals(listOf(wowDataCache), repo.state())
-            service.cache(listOf(basicCharacter, basicCharacter.copy(id = 2)), Game.WOW)
+            service.cache(listOf(basicWowCharacter, basicWowCharacter.copy(id = 2)), Game.WOW)
             assertEquals(3, repo.state().size)
         }
     }

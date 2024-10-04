@@ -23,6 +23,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
+//TODO: Add testing for:
+//TODO: getCachedData(simpleView: SimpleView)
+//TODO: getData when view is from WOW
+//TODO: getData when view is from LOL
+
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)

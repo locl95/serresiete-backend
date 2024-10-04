@@ -1,9 +1,10 @@
 package com.kos.characters
 
-import com.kos.characters.CharactersTestHelper.basicCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacterEnrichedRequest
-import com.kos.characters.CharactersTestHelper.basicRequest
+import com.kos.characters.CharactersTestHelper.basicWowCharacter2
+import com.kos.characters.CharactersTestHelper.basicWowRequest
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
@@ -24,8 +25,8 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given an empty repository i can insert wow characters`() {
         runBlocking {
-            val expected = listOf(basicCharacter)
-            repository.insert(listOf(basicRequest), Game.WOW).fold({ fail() }) { assertEquals(expected, it) }
+            val expected = listOf(basicWowCharacter)
+            repository.insert(listOf(basicWowRequest), Game.WOW).fold({ fail() }) { assertEquals(expected, it) }
         }
     }
 
@@ -33,7 +34,8 @@ abstract class CharactersRepositoryTestCommon {
     fun `given an empty repository i can insert lol characters`() {
         runBlocking {
             val expected = listOf(basicLolCharacter)
-            repository.insert(listOf(basicLolCharacterEnrichedRequest), Game.LOL).fold({ fail() }) { assertEquals(expected, it) }
+            repository.insert(listOf(basicLolCharacterEnrichedRequest), Game.LOL)
+                .fold({ fail() }) { assertEquals(expected, it) }
         }
     }
 
@@ -41,9 +43,9 @@ abstract class CharactersRepositoryTestCommon {
     fun `given an empty repository inserting a wow character that already exists fails`() {
         runBlocking {
             val character = WowCharacterRequest(
-                basicCharacter.name,
-                basicCharacter.region,
-                basicCharacter.realm
+                basicWowCharacter.name,
+                basicWowCharacter.region,
+                basicWowCharacter.realm
             )
 
             val initialState = repository.state()
@@ -59,19 +61,44 @@ abstract class CharactersRepositoryTestCommon {
     fun `given a repository that includes a wow character, adding the same one fails`() {
         runBlocking {
             val repo =
-                repository.withState(
-                    CharactersState(
-                        listOf(
-                            basicCharacter,
-                            CharactersTestHelper.basicWowCharacter2
-                        ), listOf()
-                    )
-                )
-            assertTrue(repo.insert(listOf(CharactersTestHelper.basicRequest), Game.WOW).isLeft())
+                repository.withState(CharactersState(listOf(basicWowCharacter, basicWowCharacter2), listOf()))
+            assertTrue(repo.insert(listOf(basicWowRequest), Game.WOW).isLeft())
             assertEquals(
-                CharactersState(listOf(basicCharacter, CharactersTestHelper.basicWowCharacter2), listOf()),
+                CharactersState(listOf(basicWowCharacter, basicWowCharacter2), listOf()),
                 repository.state()
             )
+        }
+    }
+
+    @Test
+    fun `given a repository with characters of multiple types, I can retrieve them one by one`() {
+        runBlocking {
+            val repo = repository.withState(CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)))
+            assertEquals(basicWowCharacter, repo.get(basicWowCharacter.id, Game.WOW))
+            assertEquals(basicLolCharacter, repo.get(basicLolCharacter.id, Game.LOL))
+        }
+    }
+
+    @Test
+    fun `given a repository with characters of multiple types, I can retrieve all of them`() {
+        runBlocking {
+            val repo = repository.withState(
+                CharactersState(
+                    listOf(basicWowCharacter, basicWowCharacter2),
+                    listOf(basicLolCharacter)
+                )
+            )
+            assertEquals(listOf(basicWowCharacter, basicWowCharacter2), repo.get(Game.WOW))
+            assertEquals(listOf(basicLolCharacter), repo.get(Game.LOL))
+        }
+    }
+
+    @Test
+    fun `given an empty repository, I can't insert characters when game does not match`() {
+        runBlocking {
+            assertTrue(repository.insert(listOf(basicLolCharacterEnrichedRequest), Game.WOW).isLeft())
+            assertTrue(repository.insert(listOf(basicWowRequest), Game.LOL).isLeft())
+            assertEquals(emptyCharactersState, repository.state())
         }
     }
 

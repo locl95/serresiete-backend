@@ -34,7 +34,11 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                             this.wowCharacters.add(it.toCharacter(nextId()))
                         }
 
-                        is LolCharacterEnrichedRequest -> TODO()
+                        is LolCharacterEnrichedRequest -> {
+                            this.wowCharacters.clear()
+                            this.wowCharacters.addAll(wowInitialCharacters)
+                            return Either.Left(InsertCharacterError("Error inserting character $it"))
+                        }
                     }
                 }
                 return Either.Right(this.wowCharacters)
@@ -43,7 +47,12 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
             Game.LOL -> {
                 characters.forEach {
                     when (it) {
-                        is WowCharacterRequest -> TODO()
+                        is WowCharacterRequest -> {
+                            this.lolCharacters.clear()
+                            this.lolCharacters.addAll(lolInitialCharacters)
+                            return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                        }
+
                         is LolCharacterEnrichedRequest -> {
                             println(this.lolCharacters)
                             if (this.lolCharacters.any { character -> it.same(character) }) {

@@ -22,7 +22,7 @@ class CharactersDatabaseRepository : CharactersRepository {
             }
             LolCharacters.batchInsert(initialState.lolCharacters) {
                 this[LolCharacters.id] = it.id
-                this[WowCharacters.name] = it.name
+                this[LolCharacters.name] = it.name
                 this[LolCharacters.tag] = it.tag
                 this[LolCharacters.puuid] = it.puuid
                 this[LolCharacters.summonerIcon] = it.summonerIcon
@@ -158,7 +158,7 @@ class CharactersDatabaseRepository : CharactersRepository {
 
     override suspend fun state(): CharactersState {
         return dbQuery {
-           CharactersState(
+            CharactersState(
                 WowCharacters.selectAll().map { resultRowToWowCharacter(it) },
                 LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
             )

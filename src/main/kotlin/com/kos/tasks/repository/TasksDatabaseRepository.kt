@@ -34,6 +34,12 @@ class TasksDatabaseRepository : TasksRepository {
         }
     }
 
+    override suspend fun getLastExecution(taskType: TaskType): Task? {
+        return dbQuery {
+            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1).map { resultRowToTask(it) }.firstOrNull()
+        }
+    }
+
     override suspend fun state(): List<Task> {
         return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
     }

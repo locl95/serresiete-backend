@@ -21,11 +21,8 @@ import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesDatabaseRepository
-import com.kos.tasks.CacheDataTask
-import com.kos.tasks.TokenCleanupTask
+import com.kos.tasks.TasksService
 import com.kos.tasks.repository.TasksDatabaseRepository
-import com.kos.tasks.repository.TasksInMemoryRepository
-import com.kos.tasks.repository.TasksRepository
 import com.kos.views.ViewsController
 import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
@@ -36,9 +33,9 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -86,22 +83,10 @@ fun Application.module() {
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     val tasksRepository = TasksDatabaseRepository()
+    val tasksService =
+        TasksService(tasksRepository, executorService, authService, dataCacheService, charactersService, coroutineScope)
 
-    executorService.scheduleAtFixedRate(
-        TokenCleanupTask(tasksRepository, authService, coroutineScope),
-        0, 60, TimeUnit.MINUTES
-    )
-
-    executorService.scheduleAtFixedRate(
-        CacheDataTask(tasksRepository, dataCacheService, charactersService, coroutineScope),
-        0, 60, TimeUnit.MINUTES
-    )
-
-    Runtime.getRuntime().addShutdownHook(Thread {
-        executorService.shutdown()
-    })
-
-
+    coroutineScope.launch { tasksService.launchTasks() }
     configureAuthentication(authService, credentialsService)
     configureCors()
     configureRouting(activitiesController, authController, credentialsController, rolesController, viewsController)

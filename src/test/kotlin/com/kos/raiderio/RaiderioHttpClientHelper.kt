@@ -1,6 +1,6 @@
 package com.kos.raiderio
 
-import arrow.core.Either
+import com.kos.httpclients.domain.*
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*

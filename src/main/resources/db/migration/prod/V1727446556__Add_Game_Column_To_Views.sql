@@ -1,0 +1,1 @@
+alter table views add column game text not null default 'wow'

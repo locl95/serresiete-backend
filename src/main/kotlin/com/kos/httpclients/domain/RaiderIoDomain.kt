@@ -1,13 +1,15 @@
-package com.kos.raiderio
+package com.kos.httpclients.domain
 
 import arrow.core.Either
 import arrow.core.traverse
-import com.kos.common.JsonParseError
 import com.kos.characters.Spec
-import com.kos.common.HttpError
+import com.kos.common.JsonParseError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
 data class RaiderIoCutoff(val totalPopulation: Int)
@@ -173,5 +175,5 @@ data class RaiderIoData(
     val quantile: Double,
     val mythicPlusRanks: MythicPlusRanksWithSpecs,
     val mythicPlusBestRuns: List<MythicPlusRun>
-)
+): Data
 

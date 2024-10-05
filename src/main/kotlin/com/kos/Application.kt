@@ -15,7 +15,8 @@ import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.plugins.*
-import com.kos.raiderio.RaiderIoHTTPClient
+import com.kos.httpclients.raiderio.RaiderIoHTTPClient
+import com.kos.httpclients.riot.RiotHTTPClient
 import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
@@ -40,12 +41,16 @@ fun main() {
 }
 
 fun Application.module() {
+    val riotApiKey = System.getenv("RIOT_API_KEY")
+    println(riotApiKey)
+
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     DatabaseFactory.init(mustClean = false)
 
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
+    val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
 
     val rolesActivitiesRepository = RolesActivitiesDatabaseRepository()
 
@@ -66,11 +71,11 @@ fun Application.module() {
     val rolesController = RolesController(rolesService, credentialsService)
 
     val charactersRepository = CharactersDatabaseRepository()
-    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient)
+    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
 
     val viewsRepository = ViewsDatabaseRepository()
     val dataCacheRepository = DataCacheDatabaseRepository()
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient)
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
     val viewsController = ViewsController(viewsService, credentialsService)
 

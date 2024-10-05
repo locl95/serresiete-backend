@@ -1,6 +1,7 @@
 package com.kos.views.repository
 
 import com.kos.common.DatabaseFactory.dbQuery
+import com.kos.views.Game
 import com.kos.views.SimpleView
 import com.kos.views.ViewDeleted
 import com.kos.views.ViewModified
@@ -17,6 +18,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[Views.name] = it.name
                 this[Views.owner] = it.owner
                 this[Views.published] = it.published
+                this[Views.game] = it.game.toString()
             }
             initialState.forEach { sv ->
                 CharactersView.batchInsert(sv.characterIds) {
@@ -33,6 +35,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
         val published = bool("published")
+        val game = varchar("game", 3)
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -44,7 +47,8 @@ class ViewsDatabaseRepository : ViewsRepository {
             row[Views.owner],
             row[Views.published],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
-                .map { resultRowToCharacterView(it).first }
+                .map { resultRowToCharacterView(it).first },
+            Game.fromString(row[Views.game])
         )
     }
 
@@ -72,7 +76,7 @@ class ViewsDatabaseRepository : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>): ViewModified {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): ViewModified {
         val id = UUID.randomUUID().toString()
         dbQuery {
             Views.insert {
@@ -80,6 +84,7 @@ class ViewsDatabaseRepository : ViewsRepository {
                 it[Views.name] = name
                 it[Views.owner] = owner
                 it[Views.published] = true
+                it[Views.game] = game.toString()
             }
             CharactersView.batchInsert(characterIds) {
                 this[CharactersView.viewId] = id

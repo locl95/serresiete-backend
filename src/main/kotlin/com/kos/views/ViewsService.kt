@@ -4,10 +4,12 @@ import arrow.core.Either
 import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
+import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.datacache.DataCacheService
-import com.kos.raiderio.RaiderIoClient
-import com.kos.raiderio.RaiderIoData
+import com.kos.httpclients.domain.Data
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.domain.RaiderIoData
 import com.kos.views.repository.ViewsRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -36,8 +38,10 @@ class ViewsService(
                     simpleView.owner,
                     simpleView.published,
                     simpleView.characterIds.mapNotNull {
-                        charactersService.get(it)
-                    })
+                        charactersService.get(it, simpleView.game)
+                    },
+                    simpleView.game
+                )
             }
         }
     }
@@ -46,17 +50,23 @@ class ViewsService(
 
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
         if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
-        val characterIds = charactersService.createAndReturnIds(request.characters)
-        return characterIds.map { viewsRepository.create(request.name, owner, it) }
+        val characterIds = charactersService.createAndReturnIds(request.characters, request.game)
+        return characterIds.map { viewsRepository.create(request.name, owner, it, request.game) }
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        val characters = charactersService.createAndReturnIds(request.characters)
+        val characters = charactersService.createAndReturnIds(request.characters, request.game)
         return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
     }
 
     suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null }, { charactersRequest -> charactersService.createAndReturnIds(charactersRequest) })) {
+        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
+            { charactersRequest ->
+                charactersService.createAndReturnIds(
+                    charactersRequest,
+                    request.game
+                )
+            })) {
             null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
             else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
         }
@@ -66,13 +76,25 @@ class ViewsService(
         return viewsRepository.delete(id)
     }
 
-    suspend fun getData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
+    suspend fun getData(view: View): Either<HttpError, List<Data>> {
+        return when (view.game) {
+            Game.WOW -> getWowData(view)
+            Game.LOL -> getLolData(view)
+        }
+    }
+
+
+    private suspend fun getLolData(view: View): Either<HttpError, List<Data>> {
+        return dataCacheService.getData(view.characters.map { it.id })
+    }
+
+    private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
         val eitherJsonErrorOrData = when (val cutoffOrError = raiderIoClient.cutoff()) {
             is Either.Left -> Either.Left(cutoffOrError.value)
             is Either.Right -> {
                 val eitherErrorOrResponse = view.characters.map { char ->
                     async {
-                        raiderIoClient.get(char).map {
+                        raiderIoClient.get(char as WowCharacter).map {//TODO: Fix
                             Pair(char.id, it)
                         }
                     }
@@ -117,5 +139,5 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds)
 }

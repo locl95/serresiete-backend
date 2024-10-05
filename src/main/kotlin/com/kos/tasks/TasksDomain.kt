@@ -40,8 +40,11 @@ enum class Status {
 }
 
 enum class TaskType {
-    CACHE_DATA_TASK {
-        override fun toString(): String = "cacheDataTask"
+    CACHE_WOW_DATA_TASK {
+        override fun toString(): String = "cacheWowDataTask"
+    },
+    CACHE_LOL_DATA_TASK {
+        override fun toString(): String = "cacheLolDataTask"
     },
     TOKEN_CLEANUP_TASK {
         override fun toString(): String = "tokenCleanupTask"
@@ -49,7 +52,8 @@ enum class TaskType {
 
     companion object {
         fun fromString(value: String): TaskType = when (value) {
-            "cacheDataTask" -> CACHE_DATA_TASK
+            "cacheWowDataTask" -> CACHE_WOW_DATA_TASK
+            "cacheLolDataTask" -> CACHE_LOL_DATA_TASK
             "tokenCleanupTask" -> TOKEN_CLEANUP_TASK
             else -> throw IllegalArgumentException("Unknown task: $value")
         }

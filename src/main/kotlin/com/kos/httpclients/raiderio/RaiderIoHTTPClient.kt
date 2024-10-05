@@ -1,12 +1,13 @@
-package com.kos.raiderio
+package com.kos.httpclients.raiderio
 
 import arrow.core.Either
-import com.kos.characters.Character
-import com.kos.characters.CharacterRequest
-import com.kos.common.HttpError
-import com.kos.common.JsonParseError
-import com.kos.common.RaiderIoError
-import com.kos.common.WithLogger
+import com.kos.characters.WowCharacter
+import com.kos.characters.WowCharacterRequest
+import com.kos.common.*
+import com.kos.httpclients.domain.RaiderIoCutoff
+import com.kos.httpclients.domain.RaiderIoProfile
+import com.kos.httpclients.domain.RaiderIoProtocol
+import com.kos.httpclients.domain.RaiderIoResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -48,15 +49,15 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient, WithLogg
             }
         }
 
-    override suspend fun get(character: Character): Either<HttpError, RaiderIoResponse> {
-        val response = getRaiderioProfile(character.region, character.realm, character.name)
+    override suspend fun get(wowCharacter: WowCharacter): Either<HttpError, RaiderIoResponse> {
+        val response = getRaiderioProfile(wowCharacter.region, wowCharacter.realm, wowCharacter.name)
         val jsonString = response.body<String>()
         val decodedResponse: Either<HttpError, RaiderIoProfile> = responseToEitherErrorOrProfile(jsonString)
 
         return decodedResponse.fold({ httpError -> Either.Left(httpError) }) {
             RaiderIoProtocol.parseMythicPlusRanks(
                 jsonString,
-                character.specsWithName(it.`class`),
+                wowCharacter.specsWithName(it.`class`),
                 it.seasonScores[0].scores
             ).fold({ jsonError -> Either.Left(jsonError) }) { specsWithName ->
                 Either.Right(RaiderIoResponse(it, specsWithName))
@@ -64,8 +65,8 @@ data class RaiderIoHTTPClient(val client: HttpClient) : RaiderIoClient, WithLogg
         }
     }
 
-    override suspend fun exists(characterRequest: CharacterRequest): Boolean {
-        val response = getRaiderioProfile(characterRequest.region, characterRequest.realm, characterRequest.name)
+    override suspend fun exists(wowCharacterRequest: WowCharacterRequest): Boolean {
+        val response = getRaiderioProfile(wowCharacterRequest.region, wowCharacterRequest.realm, wowCharacterRequest.name)
         return response.status.value < 300
     }
 

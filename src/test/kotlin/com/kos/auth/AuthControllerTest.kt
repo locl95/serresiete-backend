@@ -16,8 +16,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import com.kos.assertTrue
 import com.kos.auth.AuthTestHelper.basicAuthorization
-
-//TODO: Add refresh
+import kotlin.test.assertEquals
 
 class AuthControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
@@ -68,6 +67,7 @@ class AuthControllerTest {
             assertTrue(res?.refreshToken?.token?.isNotEmpty())
         }
     }
+
     @Test
     fun `i can logout`() {
         runBlocking {
@@ -82,6 +82,27 @@ class AuthControllerTest {
                 listOf(basicAuthorization.copy(userName = "owner"))
             )
             assertTrue(controller.logout("owner").getOrNull())
+        }
+    }
+
+    @Test
+    fun `I can refresh tokens`() {
+        runBlocking {
+            val credentialsState = CredentialsRepositoryState(
+                listOf(basicCredentials.copy(userName = "owner")),
+                mapOf()
+            )
+
+            val controller = createController(
+                credentialsState,
+                mapOf(),
+                listOf(basicAuthorization.copy(userName = "owner").copy(isAccess = false))
+            )
+
+            val res = controller.refresh(basicAuthorization.token).getOrNull()
+            assertTrue(res?.isAccess)
+            assertEquals("owner", res?.userName)
+            assertTrue(res?.token?.isNotEmpty())
         }
     }
 

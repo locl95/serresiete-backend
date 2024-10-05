@@ -66,14 +66,14 @@ data class DataCacheService(
     }
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun cache(characters: List<Character>, game: Game) {
-        when (game) {
+    suspend fun cache(characters: List<Character>, game: Game): List<HttpError> {
+        return when (game) {
             Game.WOW -> cacheWowCharacters(characters as List<WowCharacter>)
             Game.LOL -> cacheLolCharacters(characters as List<LolCharacter>)
         }
     }
 
-    private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>) {
+    private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> =
         coroutineScope {
             val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> = lolCharacters.map {
                 async {
@@ -100,40 +100,44 @@ data class DataCacheService(
             }
             dataCacheRepository.insert(data)
             data.forEach { logger.info("Cached character ${it.characterId}") }
+            errorsAndData.first
         }
-    }
 
-    private suspend fun cacheWowCharacters(wowCharacters: List<WowCharacter>) = coroutineScope {
-        either {
-            val cutoff = raiderIoClient.cutoff().bind()
-            val errorsAndData =
-                wowCharacters.map {
-                    async {
-                        retryWithFixedDelay(3, 1000L) {
-                            raiderIoClient.get(it).map { r -> Pair(it.id, r) }
+
+    private suspend fun cacheWowCharacters(wowCharacters: List<WowCharacter>): List<HttpError> =
+        coroutineScope {
+            val cutoffErrorOrMaybeErrors = either {
+                val cutoff = raiderIoClient.cutoff().bind()
+                val errorsAndData =
+                    wowCharacters.map {
+                        async {
+                            retryWithFixedDelay(3, 1000L) {
+                                raiderIoClient.get(it).map { r -> Pair(it.id, r) }
+                            }
                         }
                     }
+                        .awaitAll()
+                        .split()
+                val data = errorsAndData.second.map {
+                    DataCache(
+                        it.first, json.encodeToString<Data>(
+                            it.second.profile.toRaiderIoData(
+                                it.first,
+                                BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoff.totalPopulation * 100).setScale(
+                                    2,
+                                    RoundingMode.HALF_EVEN
+                                ).toDouble(),
+                                it.second.specs
+                            )
+                        ), OffsetDateTime.now()
+                    )
                 }
-                    .awaitAll()
-                    .split()
-            val data = errorsAndData.second.map {
-                DataCache(
-                    it.first, json.encodeToString<Data>(
-                        it.second.profile.toRaiderIoData(
-                            it.first,
-                            BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoff.totalPopulation * 100).setScale(
-                                2,
-                                RoundingMode.HALF_EVEN
-                            ).toDouble(),
-                            it.second.specs
-                        )
-                    ), OffsetDateTime.now()
-                )
+                dataCacheRepository.insert(data)
+                data.forEach { logger.info("Cached character ${it.characterId}") }
+                errorsAndData.first
             }
-            dataCacheRepository.insert(data)
-            data.forEach { logger.info("Cached character ${it.characterId}") }
+            cutoffErrorOrMaybeErrors.mapLeft { listOf(it) }.fold({ it }, { it })
         }
-    }
 
     suspend fun clear(): Int = dataCacheRepository.deleteExpiredRecord(ttl)
 }

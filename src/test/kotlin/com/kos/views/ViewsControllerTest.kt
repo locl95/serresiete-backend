@@ -220,7 +220,6 @@ class ViewsControllerTest {
                 mapOf(Pair("owner", listOf(role)))
             )
 
-
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
@@ -248,7 +247,6 @@ class ViewsControllerTest {
                 mapOf(Pair("owner", listOf(role)))
             )
 
-
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
@@ -256,7 +254,6 @@ class ViewsControllerTest {
                 listOf(lolDataCache),
                 mapOf(Pair(role, listOf(Activities.getViewData)))
             )
-
 
             controller.getViewData("owner", basicSimpleLolView.id)
                 .onRight {
@@ -273,7 +270,6 @@ class ViewsControllerTest {
                 listOf(basicCredentials.copy(userName = "owner")),
                 mapOf(Pair("owner", listOf(role)))
             )
-
 
             val controller = createController(
                 credentialsState,
@@ -298,7 +294,6 @@ class ViewsControllerTest {
                 listOf(basicCredentials.copy(userName = "owner")),
                 mapOf(Pair("owner", listOf(role)))
             )
-
 
             val controller = createController(
                 credentialsState,

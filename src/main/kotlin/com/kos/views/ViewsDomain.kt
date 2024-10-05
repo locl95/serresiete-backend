@@ -56,7 +56,8 @@ data class ViewRequest(
 data class ViewPatchRequest(
     val name: String? = null,
     val published: Boolean? = null,
-    val characters: List<CharacterCreateRequest>? = null
+    val characters: List<CharacterCreateRequest>? = null,
+    val game: Game
 )
 
 @Serializable

@@ -14,8 +14,6 @@ import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-//TODO: This must be removed i guess, just for testing rn
-
 data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClient {
     val baseURI: (String) -> URI = { region -> URI("https://$region.api.riotgames.com") }
     private val json = Json {

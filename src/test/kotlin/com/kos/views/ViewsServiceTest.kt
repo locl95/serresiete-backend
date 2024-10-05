@@ -102,7 +102,9 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             val newName = "new-name"
-            assertTrue(service.edit(basicSimpleLolView.id, ViewRequest(newName, published, listOf(), Game.LOL)).isRight())
+            assertTrue(
+                service.edit(basicSimpleLolView.id, ViewRequest(newName, published, listOf(), Game.LOL)).isRight()
+            )
             assertTrue(viewsRepository.state().size == 1)
             assertTrue(viewsRepository.state().all { it.owner == owner })
             assertTrue(viewsRepository.state().all { it.name == newName })
@@ -186,7 +188,7 @@ class ViewsServiceTest {
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
             val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
             assertTrue(viewsRepository.state().size == 1)
-            val patch = service.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null))
+            val patch = service.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null, Game.WOW))
             val patchedView = viewsRepository.state().first()
             assertEquals(patchedName, patchedView.name)
             assertEquals(patch.getOrNull(), ViewModified(basicSimpleWowView.id, basicSimpleWowView.characterIds))
@@ -217,7 +219,7 @@ class ViewsServiceTest {
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
             service.patch(
-                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4))
+                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
             ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })

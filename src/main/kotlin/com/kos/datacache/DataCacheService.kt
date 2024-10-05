@@ -17,7 +17,6 @@ import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
-import com.kos.views.SimpleView
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -105,31 +104,34 @@ data class DataCacheService(
     }
 
     private suspend fun cacheWowCharacters(wowCharacters: List<WowCharacter>) = coroutineScope {
-        when (val cutoffOrError = raiderIoClient.cutoff()) {
-            is Either.Left -> logger.error(cutoffOrError.value.error())
-            is Either.Right -> {
-                val errorsAndData =
-                    wowCharacters.map { async { retryWithFixedDelay(3, 1000L) { raiderIoClient.get(it).map { r -> Pair(it.id, r) } } } }
-                        .awaitAll()
-                        .split()
-                errorsAndData.first.forEach { logger.error(it.error()) }
-                val data = errorsAndData.second.map {
-                    DataCache(
-                        it.first, json.encodeToString<Data>(
-                            it.second.profile.toRaiderIoData(
-                                it.first,
-                                BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoffOrError.value.totalPopulation * 100).setScale(
-                                    2,
-                                    RoundingMode.HALF_EVEN
-                                ).toDouble(),
-                                it.second.specs
-                            )
-                        ), OffsetDateTime.now()
-                    )
+        either {
+            val cutoff = raiderIoClient.cutoff().bind()
+            val errorsAndData =
+                wowCharacters.map {
+                    async {
+                        retryWithFixedDelay(3, 1000L) {
+                            raiderIoClient.get(it).map { r -> Pair(it.id, r) }
+                        }
+                    }
                 }
-                dataCacheRepository.insert(data)
-                data.forEach { logger.info("Cached character ${it.characterId}") }
+                    .awaitAll()
+                    .split()
+            val data = errorsAndData.second.map {
+                DataCache(
+                    it.first, json.encodeToString<Data>(
+                        it.second.profile.toRaiderIoData(
+                            it.first,
+                            BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoff.totalPopulation * 100).setScale(
+                                2,
+                                RoundingMode.HALF_EVEN
+                            ).toDouble(),
+                            it.second.specs
+                        )
+                    ), OffsetDateTime.now()
+                )
             }
+            dataCacheRepository.insert(data)
+            data.forEach { logger.info("Cached character ${it.characterId}") }
         }
     }
 

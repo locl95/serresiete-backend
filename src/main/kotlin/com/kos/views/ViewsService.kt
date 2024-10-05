@@ -64,9 +64,9 @@ class ViewsService(
             { charactersRequest ->
                 charactersService.createAndReturnIds(
                     charactersRequest,
-                    Game.WOW
+                    request.game
                 )
-            })) { //TODO: THIS NEEDS TO BE FIXED AND ITS BIG ISSUE
+            })) {
             null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
             else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
         }

@@ -51,7 +51,7 @@ data class CharactersService(
                         }
                     }
                         .awaitAll()
-                }.collect({ it.second }) { it.first } //TODO: El as está feo
+                }.collect({ it.second }) { it.first }
             }
 
             Game.LOL -> coroutineScope {

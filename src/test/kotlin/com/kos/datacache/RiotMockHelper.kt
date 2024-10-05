@@ -3,10 +3,7 @@ package com.kos.datacache
 import arrow.core.Either
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.common.HttpError
-import com.kos.httpclients.domain.GetMatchResponse
-import com.kos.httpclients.domain.LeagueEntryResponse
-import com.kos.httpclients.domain.MatchInfo
-import com.kos.httpclients.domain.MatchParticipant
+import com.kos.httpclients.domain.*
 
 object RiotMockHelper {
     val leagueEntries: Either<HttpError, List<LeagueEntryResponse>> =
@@ -63,4 +60,99 @@ object RiotMockHelper {
             )
         )
     )
+
+    val riotData: RiotData =
+        RiotData(
+            summonerIcon = 1389,
+            summonerLevel = 499,
+            summonerName = "GTP ZeroMVPs",
+            leagues = mapOf(
+                Pair(
+                    "RANKED_SOLO_5x5",
+                    LeagueProfile(
+                        mainRole = "SUPPORT",
+                        tier = "GOLD",
+                        rank = "I",
+                        leaguePoints = 1,
+                        gamesPlayed = 27,
+                        winrate = 0.5925925925925926,
+                        matches = listOf(
+                            MatchProfile(
+                                championId = 497,
+                                role = "SUPPORT",
+                                individualPosition = "UTILITY",
+                                lane = "BOTTOM",
+                                kills = 2,
+                                deaths = 7,
+                                assists = 15,
+                                assistMePings = 0,
+                                visionWardsBoughtInGame = 8,
+                                enemyMissingPings = 0,
+                                wardsPlaced = 47,
+                                gameDuration = 1883,
+                                totalTimeSpentDead = 174
+                            ), MatchProfile(
+                                championId = 497,
+                                role = "SUPPORT",
+                                individualPosition = "UTILITY",
+                                lane = "NONE",
+                                kills = 0,
+                                deaths = 2,
+                                assists = 20,
+                                assistMePings = 0,
+                                visionWardsBoughtInGame = 5,
+                                enemyMissingPings = 2,
+                                wardsPlaced = 20,
+                                gameDuration = 1146,
+                                totalTimeSpentDead = 24
+                            ), MatchProfile(
+                                championId = 12,
+                                role = "SUPPORT",
+                                individualPosition = "UTILITY",
+                                lane = "NONE",
+                                kills = 2,
+                                deaths = 2,
+                                assists = 4,
+                                assistMePings = 0,
+                                visionWardsBoughtInGame = 6,
+                                enemyMissingPings = 0,
+                                wardsPlaced = 11,
+                                gameDuration = 917,
+                                totalTimeSpentDead = 36
+                            ), MatchProfile(
+                                championId = 497,
+                                role = "SUPPORT",
+                                individualPosition = "UTILITY",
+                                lane = "BOTTOM",
+                                kills = 2,
+                                deaths = 3,
+                                assists = 21,
+                                assistMePings = 0,
+                                visionWardsBoughtInGame = 16,
+                                enemyMissingPings = 0,
+                                wardsPlaced = 51,
+                                gameDuration = 1712,
+                                totalTimeSpentDead = 67
+                            ), MatchProfile(
+                                championId = 235,
+                                role = "SUPPORT",
+                                individualPosition = "UTILITY",
+                                lane = "BOTTOM",
+                                kills = 0,
+                                deaths = 2,
+                                assists = 13,
+                                assistMePings = 0,
+                                visionWardsBoughtInGame = 11,
+                                enemyMissingPings = 0,
+                                wardsPlaced = 32,
+                                gameDuration = 1856,
+                                totalTimeSpentDead = 73
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+
 }

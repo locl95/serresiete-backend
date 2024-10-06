@@ -54,7 +54,6 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         }
 
                         is LolCharacterEnrichedRequest -> {
-                            println(this.lolCharacters)
                             if (this.lolCharacters.any { character -> it.same(character) }) {
                                 this.lolCharacters.clear()
                                 this.lolCharacters.addAll(lolInitialCharacters)

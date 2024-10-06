@@ -12,7 +12,7 @@ import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
 import com.kos.common.split
 import com.kos.datacache.repository.DataCacheRepository
-import com.kos.httpclients.HttpUtils.retryWithFixedDelay
+import com.kos.httpclients.HttpUtils.retryEitherWithFixedDelay
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -78,11 +78,11 @@ data class DataCacheService(
             val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> = lolCharacters.map {
                 async {
                     val leagues: Either<HttpError, List<LeagueEntryResponse>> =
-                        retryWithFixedDelay(5, 1200L) { riotClient.getLeagueEntriesBySummonerId(it.summonerId) }
+                        retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") { riotClient.getLeagueEntriesBySummonerId(it.summonerId) }
                     val matches: Either<HttpError, List<GetMatchResponse>> =
-                        retryWithFixedDelay(5, 1200L) { riotClient.getMatchesByPuuid(it.puuid) }.flatMap { m ->
+                        retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") { riotClient.getMatchesByPuuid(it.puuid) }.flatMap { m ->
                             m.map {
-                                async { retryWithFixedDelay(5, 1200L) { riotClient.getMatchById(it) } }
+                                async { retryEitherWithFixedDelay(5, 1200L, "getMatchById") { riotClient.getMatchById(it) } }
                             }.awaitAll().sequence()
                         }
                     either {
@@ -111,7 +111,7 @@ data class DataCacheService(
                 val errorsAndData =
                     wowCharacters.map {
                         async {
-                            retryWithFixedDelay(3, 1000L) {
+                            retryEitherWithFixedDelay(3, 1000L, "raiderIoGet") {
                                 raiderIoClient.get(it).map { r -> Pair(it.id, r) }
                             }
                         }

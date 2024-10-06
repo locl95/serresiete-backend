@@ -44,7 +44,6 @@ fun main() {
 
 fun Application.module() {
     val riotApiKey = System.getenv("RIOT_API_KEY")
-    println(riotApiKey)
 
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 

@@ -1,22 +1,24 @@
 package com.kos.httpclients
 
+import arrow.core.Either
 import com.kos.common.WithLogger
 import kotlinx.coroutines.delay
 
-object HttpUtils : WithLogger("Retry"){
-    suspend fun <T> retryWithFixedDelay(
+object HttpUtils : WithLogger("retry") {
+    suspend fun <L, R> retryEitherWithFixedDelay(
         retries: Int,
         delayTime: Long = 1200L,
-        block: suspend () -> T
-    ): T {
-        return try {
-            block()
-        } catch (e: Exception) {
-            if (retries > 0) {
-                logger.info("Retryies left $retries")
-                delay(delayTime)
-                retryWithFixedDelay(retries - 1, delayTime, block)
-            } else throw e
+        functionName: String,
+        block: suspend () -> Either<L, R>
+    ): Either<L, R> {
+        return when (val res = block()) {
+            is Either.Right -> res
+            is Either.Left ->
+                if (retries > 0) {
+                    logger.info("Retries left $retries for $functionName")
+                    delay(delayTime)
+                    retryEitherWithFixedDelay(retries - 1, delayTime, functionName, block)
+                } else res
         }
     }
 }

@@ -176,7 +176,8 @@
 									"var jsonData = JSON.parse(responseBody)",
 									"pm.collectionVariables.set(\"viewId\", jsonData.viewId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -195,7 +196,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [\n        {\n            \"name\": \"kakarona\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"osborno\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"sanxxei\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        }\n    ]\n}",
+							"raw": "{\n    \"name\": \"lol-view-example\",\n    \"game\": \"LOL\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"sanxei\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Handx\",\n            \"tag\": \"013\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -213,7 +214,106 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Create WOW View",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"wow-view-example\",\n    \"game\": \"WOW\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"kakarona\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        },\n        {\n            \"name\": \"osborno\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        },\n        {\n            \"name\": \"sanxxei\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUri}}/api/views",
+									"host": [
+										"{{baseUri}}"
+									],
+									"path": [
+										"api",
+										"views"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "72"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"viewId\": \"3da5cfbc-06a5-43e0-aad5-96dbdaf3743b\",\n    \"characters\": [\n        2,\n        16,\n        14\n    ]\n}"
+						},
+						{
+							"name": "Create LOL View",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"lol-view-example\",\n    \"game\": \"LOL\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"sanxei\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Handx\",\n            \"tag\": \"013\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUri}}/api/views",
+									"host": [
+										"{{baseUri}}"
+									],
+									"path": [
+										"api",
+										"views"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "67"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"viewId\": \"83607273-e2d9-44db-8d12-ad4dec00ecc0\",\n    \"characters\": [\n        49\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "Edit View",
@@ -295,9 +395,11 @@
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody)",
-									"pm.collectionVariables.set(\"token\", jsonData.token);"
+									"pm.collectionVariables.set(\"token\", jsonData.accessToken.token);",
+									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken.token);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -342,22 +444,18 @@
 									"var jsonData = JSON.parse(responseBody)",
 									"pm.collectionVariables.set(\"token\", jsonData.token);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
 					"request": {
 						"auth": {
-							"type": "basic",
-							"basic": [
+							"type": "bearer",
+							"bearer": [
 								{
-									"key": "password",
-									"value": "{{password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{user}}",
+									"key": "token",
+									"value": "{{refreshToken}}",
 									"type": "string"
 								}
 							]
@@ -365,13 +463,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/auth",
+							"raw": "{{baseUri}}/api/auth/refresh",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"auth"
+								"auth",
+								"refresh"
 							]
 						}
 					},
@@ -424,8 +523,38 @@
 				{
 					"name": "Create Credentials",
 					"request": {
-						"method": "GET",
-						"header": []
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user\": \"testUser\",\n    \"password\": \"testPassword\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/credentials/",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"credentials",
+								""
+							]
+						}
 					},
 					"response": []
 				},
@@ -469,8 +598,30 @@
 				{
 					"name": "Get Roles From User",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/credentials/{{user}}/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"credentials",
+								"{{user}}",
+								"roles"
+							]
+						}
 					},
 					"response": []
 				}

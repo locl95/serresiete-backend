@@ -5,57 +5,57 @@ import com.kos.characters.CharactersService
 import com.kos.common.WithLogger
 import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
-import kotlinx.coroutines.CoroutineScope
-import java.time.Duration
+import com.kos.views.Game
 import java.time.OffsetDateTime
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 data class TasksService(
     private val tasksRepository: TasksRepository,
-    private val executorService: ScheduledExecutorService,
-    private val authService: AuthService,
     private val dataCacheService: DataCacheService,
     private val charactersService: CharactersService,
-    private val coroutineScope: CoroutineScope
+    private val authService: AuthService
 ) : WithLogger("tasksService") {
 
-    suspend fun launchTasks() {
-        fun calculateTaskDelay(lastInsertion: OffsetDateTime, now: OffsetDateTime): Long {
-            val differenceBetweenNowAndLastExecutionTime = Duration.between(lastInsertion, now).toMinutes()
-            return if (differenceBetweenNowAndLastExecutionTime >= 60) 0
-            else 60 - differenceBetweenNowAndLastExecutionTime
+    suspend fun runTask(taskType: TaskType) {
+        when (taskType) {
+            TaskType.TOKEN_CLEANUP_TASK -> tokenCleanup()
+            TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType)
+            TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType)
         }
+    }
 
-        val now = OffsetDateTime.now()
-
-        val cacheDataTaskInitDelay: Long =
-            tasksRepository.getLastExecution(TaskType.CACHE_LOL_DATA_TASK)
-                .also { tasksRepository.getLastExecution(TaskType.CACHE_WOW_DATA_TASK) }?.inserted?.let {
-                    calculateTaskDelay(it, now)
-                } ?: 0
-
-        val tokenCleanupInitDelay: Long =
-            tasksRepository.getLastExecution(TaskType.TOKEN_CLEANUP_TASK)?.inserted?.let {
-                calculateTaskDelay(it, now)
-            } ?: 0
-
-        logger.info("Setting $cacheDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_WOW_DATA_TASK} and ${TaskType.CACHE_LOL_DATA_TASK}")
-        logger.info("Setting $tokenCleanupInitDelay minutes of delay before launching ${TaskType.TOKEN_CLEANUP_TASK}")
-
-
-        executorService.scheduleAtFixedRate(
-            TokenCleanupTask(tasksRepository, authService, coroutineScope),
-            tokenCleanupInitDelay, 60, TimeUnit.MINUTES
+    suspend fun tokenCleanup() {
+        logger.info("Running token cleanup task")
+        val deletedTokens = authService.deleteExpiredTokens()
+        logger.info("Deleted $deletedTokens expired tokens")
+        tasksRepository.insertTask(
+            Task.apply(
+                TaskType.TOKEN_CLEANUP_TASK,
+                TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTokens expired tokens"),
+                OffsetDateTime.now()
+            )
         )
+    }
 
-        executorService.scheduleAtFixedRate(
-            CacheDataTask(tasksRepository, dataCacheService, charactersService, coroutineScope),
-            cacheDataTaskInitDelay, 60, TimeUnit.MINUTES
-        )
-
-        Runtime.getRuntime().addShutdownHook(Thread {
-            executorService.shutdown()
-        })
+    suspend fun cacheDataTask(game: Game, taskType: TaskType) {
+        logger.info("Running $taskType")
+        val characters = charactersService.get(game)
+        val errors = dataCacheService.cache(characters, game)
+        if (errors.isEmpty()) {
+            tasksRepository.insertTask(
+                Task.apply(
+                    taskType,
+                    TaskStatus(Status.SUCCESSFUL, null),
+                    OffsetDateTime.now()
+                )
+            )
+        } else {
+            tasksRepository.insertTask(
+                Task.apply(
+                    taskType,
+                    TaskStatus(Status.ERROR, errors.joinToString(",\n") { it.error() }),
+                    OffsetDateTime.now()
+                )
+            )
+        }
     }
 }

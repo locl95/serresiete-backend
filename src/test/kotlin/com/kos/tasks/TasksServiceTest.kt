@@ -116,4 +116,77 @@ class TasksServiceTest {
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
         }
     }
+
+    @Test
+    fun `run task with correct parameters should run token cleanup task`(){
+        runBlocking {
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val tasksRepository = TasksInMemoryRepository()
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+
+            service.runTask(TaskType.TOKEN_CLEANUP_TASK)
+
+            val insertedTask = tasksRepository.state().first()
+
+            assertEquals(1, tasksRepository.state().size)
+            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
+        }
+    }
+
+    @Test
+    fun `run task with correct parameters should run wow data cache task`(){
+        runBlocking {
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val tasksRepository = TasksInMemoryRepository()
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+
+            `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
+            service.runTask(TaskType.CACHE_WOW_DATA_TASK)
+
+            val insertedTask = tasksRepository.state().first()
+
+            assertEquals(1, tasksRepository.state().size)
+            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(TaskType.CACHE_WOW_DATA_TASK, insertedTask.type)
+        }
+    }
+
+    @Test
+    fun `run task with correct parameters should run lol data cache task`(){
+        runBlocking {
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val tasksRepository = TasksInMemoryRepository()
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+
+            service.runTask(TaskType.CACHE_LOL_DATA_TASK)
+
+            val insertedTask = tasksRepository.state().first()
+
+            assertEquals(1, tasksRepository.state().size)
+            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
+        }
+    }
 }

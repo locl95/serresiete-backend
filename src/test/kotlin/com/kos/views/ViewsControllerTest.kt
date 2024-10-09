@@ -25,7 +25,10 @@ import org.mockito.Mockito.mock
 import com.kos.assertTrue
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter2
+import com.kos.characters.CharactersTestHelper.basicWowRequest2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.LolCharacterRequest
 import com.kos.characters.repository.CharactersState
 import com.kos.common.TooMuchViews
 import com.kos.datacache.RaiderIoMockHelper
@@ -306,6 +309,34 @@ class ViewsControllerTest {
             controller.getViewCachedData("owner", basicSimpleLolView.id)
                 .onRight {
                     assertEquals(listOf(riotData), it)
+                }
+                .onLeft { fail(it.toStr()) }
+        }
+    }
+
+    @Test
+    fun `i can edit wow data`() {
+        runBlocking {
+            val credentialsState = CredentialsRepositoryState(
+                listOf(basicCredentials.copy(userName = "owner")),
+                mapOf(Pair("owner", listOf(role)))
+            )
+
+            val controller = createController(
+                credentialsState,
+                listOf(basicSimpleWowView),
+                CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
+                listOf(lolDataCache),
+                mapOf(Pair(role, listOf(Activities.editAnyView)))
+            )
+
+            `when`(raiderIoClient.exists(basicWowRequest2)).thenReturn(true)
+
+            val viewRequest = ViewRequest("new-name", false, characters = listOf(basicWowRequest2), Game.WOW)
+
+            controller.editView("owner", viewRequest, basicSimpleWowView.id)
+                .onRight {
+                    assertEquals(ViewModified(basicSimpleWowView.id, listOf(2)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }

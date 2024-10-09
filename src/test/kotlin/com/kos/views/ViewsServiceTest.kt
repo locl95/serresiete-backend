@@ -2,8 +2,11 @@ package com.kos.views
 
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
 import com.kos.httpclients.raiderio.RaiderIoClient
@@ -145,8 +148,43 @@ class ViewsServiceTest {
             `when`(raiderIoClient.exists(request4)).thenReturn(true)
 
             val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView.copy(characterIds = listOf(1))))
+                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView))
             val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+            assertTrue(viewsRepository.state().all { it.characterIds.isEmpty() })
+
+            service.edit(
+                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
+            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+
+            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
+        }
+    }
+
+    @Test
+    fun `when editing a view, I return the actual characters of the view`() {
+        runBlocking {
+            val request1 = WowCharacterRequest("a", "r", "r")
+            val request2 = WowCharacterRequest("b", "r", "r")
+            val request3 = WowCharacterRequest("c", "r", "r")
+            val request4 = WowCharacterRequest("d", "r", "r")
+
+            `when`(raiderIoClient.exists(request1)).thenReturn(true)
+            `when`(raiderIoClient.exists(request2)).thenReturn(true)
+            `when`(raiderIoClient.exists(request3)).thenReturn(true)
+            `when`(raiderIoClient.exists(request4)).thenReturn(true)
+
+            val viewsRepository =
+                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView.copy(characterIds = listOf(1))))
+            val charactersRepository = CharactersInMemoryRepository().withState(
+                CharactersState(
+                    listOf(basicWowCharacter, basicWowCharacter2),
+                    listOf()
+                )
+            )
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheRepository = DataCacheInMemoryRepository()
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
@@ -155,9 +193,9 @@ class ViewsServiceTest {
 
             service.edit(
                 id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(3, 4, 5, 6)), it) }
 
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
+            assertEquals(listOf<Long>(3, 4, 5, 6), viewsRepository.state().first().characterIds)
         }
     }
 

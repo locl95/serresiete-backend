@@ -11,8 +11,9 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
 
     private fun nextId(): Long {
-        return if (wowCharacters.isEmpty()) 1
-        else wowCharacters.map { it.id }.maxBy { it } + 1
+        val allIds = wowCharacters.map { it.id } + lolCharacters.map { it.id }
+        return if (allIds.isEmpty()) 1
+        else allIds.maxBy { it } + 1
     }
 
     override suspend fun insert(
@@ -23,7 +24,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         val lolInitialCharacters = this.lolCharacters.toList()
         when (game) {
             Game.WOW -> {
-                characters.forEach {
+                val inserted = characters.fold(listOf<Character>()) { acc, it ->
                     when (it) {
                         is WowCharacterRequest -> {
                             if (this.wowCharacters.any { character -> it.same(character) }) {
@@ -31,7 +32,9 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                                 this.wowCharacters.addAll(wowInitialCharacters)
                                 return Either.Left(InsertCharacterError("Error inserting character $it"))
                             }
-                            this.wowCharacters.add(it.toCharacter(nextId()))
+                            val character = it.toCharacter(nextId())
+                            this.wowCharacters.add(character)
+                            acc + character
                         }
 
                         is LolCharacterEnrichedRequest -> {
@@ -41,11 +44,11 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         }
                     }
                 }
-                return Either.Right(this.wowCharacters)
+                return Either.Right(inserted)
             }
 
             Game.LOL -> {
-                characters.forEach {
+                val inserted = characters.fold(listOf<Character>()) { acc, it ->
                     when (it) {
                         is WowCharacterRequest -> {
                             this.lolCharacters.clear()
@@ -59,11 +62,13 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                                 this.lolCharacters.addAll(lolInitialCharacters)
                                 return Either.Left(InsertCharacterError("Error inserting chracter $it"))
                             }
-                            this.lolCharacters.add(it.toCharacter(nextId()))
+                            val character = it.toCharacter(nextId())
+                            this.lolCharacters.add(character)
+                            acc + character
                         }
                     }
                 }
-                return Either.Right(this.lolCharacters)
+                return Either.Right(inserted)
             }
         }
     }

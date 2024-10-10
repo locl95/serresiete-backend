@@ -10,6 +10,8 @@ import com.kos.credentials.CredentialsService
 import com.kos.credentials.credentialsRouting
 import com.kos.roles.RolesController
 import com.kos.roles.rolesRouting
+import com.kos.tasks.TasksController
+import com.kos.tasks.tasksRouting
 import com.kos.views.ViewsController
 import com.kos.views.viewsRouting
 import io.ktor.server.application.*
@@ -22,7 +24,8 @@ fun Application.configureRouting(
     authController: AuthController,
     credentialsController: CredentialsController,
     rolesController: RolesController,
-    viewsController: ViewsController
+    viewsController: ViewsController,
+    tasksController: TasksController
 ) {
 
     routing {
@@ -33,6 +36,7 @@ fun Application.configureRouting(
             rolesRouting(rolesController)
             activitiesRouting(activitiesController)
             credentialsRouting(credentialsController)
+            tasksRouting(tasksController)
         }
     }
 }

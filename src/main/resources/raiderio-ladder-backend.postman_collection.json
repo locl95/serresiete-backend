@@ -940,6 +940,49 @@
 			]
 		},
 		{
+			"name": "tasks",
+			"item": [
+				{
+					"name": "Run task",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"tokenCleanupTask\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/tasks/run",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks",
+								"run"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "raiderio-example",
 			"request": {
 				"method": "GET",

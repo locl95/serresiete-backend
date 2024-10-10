@@ -17,8 +17,8 @@ class CharactersDatabaseRepository : CharactersRepository {
             WowCharacters.batchInsert(initialState.wowCharacters) {
                 this[WowCharacters.id] = it.id
                 this[WowCharacters.name] = it.name
-                this[WowCharacters.realm] = it.realm
                 this[WowCharacters.region] = it.region
+                this[WowCharacters.realm] = it.realm
             }
             LolCharacters.batchInsert(initialState.lolCharacters) {
                 this[LolCharacters.id] = it.id
@@ -30,6 +30,9 @@ class CharactersDatabaseRepository : CharactersRepository {
                 this[LolCharacters.summonerLevel] = it.summonerLevel
             }
         }
+        //This needs to be done to consume serial ids. Could be done in a different way but I don't dislike it.
+        initialState.lolCharacters.forEach { _ -> selectNextId() }
+        initialState.wowCharacters.forEach { _ -> selectNextId() }
         return this
     }
 

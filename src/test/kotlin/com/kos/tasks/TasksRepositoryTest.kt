@@ -7,7 +7,6 @@ import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksDatabaseRepository
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
-import kotlin.math.exp
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

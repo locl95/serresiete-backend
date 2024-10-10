@@ -7,6 +7,7 @@ import com.kos.httpclients.domain.GetSummonerResponse
 object CharactersTestHelper {
     val emptyCharactersState = CharactersState(listOf(), listOf())
     val basicWowRequest = WowCharacterRequest("kakarona", "eu", "zuljin")
+    val basicWowRequest2 = WowCharacterRequest("layser", "eu", "zuljin")
     val basicLolCharacter = LolCharacter(1, "GTP ZeroMVPs", "WOW", "1", 1, "1", 1)
     val basicLolCharacterEnrichedRequest = LolCharacterEnrichedRequest(
         basicLolCharacter.name,
@@ -17,7 +18,7 @@ object CharactersTestHelper {
         basicLolCharacter.summonerLevel
     )
     val basicWowCharacter = basicWowRequest.toCharacter(1)
-    val basicWowCharacter2 = WowCharacter(2, "layser", "eu", "zuljin")
+    val basicWowCharacter2 = basicWowRequest2.toCharacter(2)
     val basicGetSummonerResponse = GetSummonerResponse(
         "1",
         "1",

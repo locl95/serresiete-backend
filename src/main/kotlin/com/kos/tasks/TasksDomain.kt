@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 
 @Serializable
-data class TaskStatus(val status: Status, val message: String)
+data class TaskStatus(val status: Status, val message: String?)
 
 data class Task(val type: TaskType, val taskStatus: String, val inserted: OffsetDateTime) {
     companion object {
@@ -59,3 +59,6 @@ enum class TaskType {
         }
     }
 }
+
+@Serializable
+data class TaskRequest(val type: TaskType)

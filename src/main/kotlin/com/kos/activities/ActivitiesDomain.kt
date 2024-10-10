@@ -32,6 +32,7 @@ object Activities {
     const val deleteRoles = "delete roles"
     const val login = "login"
     const val logout = "logout"
+    const val runTask = "run task"
 }
 typealias Activity = String
 

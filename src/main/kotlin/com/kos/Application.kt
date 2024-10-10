@@ -21,6 +21,7 @@ import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesDatabaseRepository
+import com.kos.tasks.TasksLauncher
 import com.kos.tasks.TasksService
 import com.kos.tasks.repository.TasksDatabaseRepository
 import com.kos.views.ViewsController
@@ -83,9 +84,11 @@ fun Application.module() {
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     val tasksRepository = TasksDatabaseRepository()
     val tasksService =
-        TasksService(tasksRepository, executorService, authService, dataCacheService, charactersService, coroutineScope)
+        TasksService(tasksRepository, dataCacheService, charactersService, authService)
+    val tasksLauncher =
+        TasksLauncher(tasksService, tasksRepository, executorService, authService, dataCacheService, coroutineScope)
 
-    coroutineScope.launch { tasksService.launchTasks() }
+    coroutineScope.launch { tasksLauncher.launchTasks() }
     configureAuthentication(authService, credentialsService)
     configureCors()
     configureRouting(activitiesController, authController, credentialsController, rolesController, viewsController)

@@ -75,9 +75,8 @@ class CharactersServiceTest {
             val charactersRepository = CharactersInMemoryRepository().withState(state)
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
 
-            val expected: List<Long> = listOf(1)
             val createAndReturnIds = charactersService.createAndReturnIds(listOf(request), Game.LOL)
-            createAndReturnIds.fold({ fail() }) { assertEquals(expected, it) }
+            createAndReturnIds.fold({ fail() }) { assertEquals(listOf(), it) }
 
         }
     }

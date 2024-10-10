@@ -9,7 +9,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.credentialsRouting(tasksController: TasksController) {
+fun Route.tasksRouting(tasksController: TasksController) {
     route("/tasks") {
         route("/run") {
             authenticate("auth-bearer") {
@@ -18,7 +18,7 @@ fun Route.credentialsRouting(tasksController: TasksController) {
                         .fold({
                             call.respondWithHandledError(it)
                         }, {
-                            call.respond(HttpStatusCode.Created)
+                            call.respond(HttpStatusCode.NoContent)
                         })
                 }
             }

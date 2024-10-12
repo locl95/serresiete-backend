@@ -3,12 +3,22 @@ package com.kos.tasks.repository
 import com.kos.common.InMemoryRepository
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
+import java.time.OffsetDateTime
 
 class TasksInMemoryRepository : TasksRepository, InMemoryRepository {
     private val tasks: MutableList<Task> = mutableListOf()
 
     override suspend fun insertTask(task: Task) {
         tasks.add(task)
+    }
+
+    override suspend fun deleteOldTasks(olderThanDays: Long): Int {
+        val daysAgo = OffsetDateTime.now().minusDays(olderThanDays)
+        val deletedTasks = tasks.count { it.inserted < daysAgo }
+
+        tasks.removeAll { it.inserted < daysAgo }
+
+        return deletedTasks
     }
 
     override suspend fun getLastExecution(taskType: TaskType): Task? =

@@ -15,12 +15,28 @@ data class TasksService(
     private val authService: AuthService
 ) : WithLogger("tasksService") {
 
+    private val olderThanDays: Long = 7
+
     suspend fun runTask(taskType: TaskType) {
         when (taskType) {
             TaskType.TOKEN_CLEANUP_TASK -> tokenCleanup()
             TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType)
             TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType)
+            TaskType.TASK_CLEANUP_TASK -> taskCleanup()
         }
+    }
+
+    suspend fun taskCleanup() {
+        logger.info("Running task cleanup task")
+        val deletedTasks = tasksRepository.deleteOldTasks(olderThanDays)
+        logger.info("Deleted $deletedTasks old tasks")
+        tasksRepository.insertTask(
+            Task.apply(
+                TaskType.TASK_CLEANUP_TASK,
+                TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTasks old tasks"),
+                OffsetDateTime.now()
+            )
+        )
     }
 
     suspend fun tokenCleanup() {

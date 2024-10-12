@@ -5,6 +5,7 @@ import com.kos.common.WithLogger
 import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
 import com.kos.tasks.runnables.CacheGameDataRunnable
+import com.kos.tasks.runnables.TasksCleanupRunnable
 import com.kos.tasks.runnables.TokenCleanupRunnable
 import com.kos.views.Game
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ data class TasksLauncher(
         val wowDataTaskDelay = 60
         val lolDataTaskDelay = 30
         val tokenCleanupDelay = 15
+        val tasksCleanupDelay = 10080
 
 
         suspend fun getTaskInitialDelay(now: OffsetDateTime, taskType: TaskType, timeDelay: Int): Long =
@@ -38,15 +40,17 @@ data class TasksLauncher(
         val cacheWowDataTaskInitDelay: Long = getTaskInitialDelay(now, TaskType.CACHE_WOW_DATA_TASK, wowDataTaskDelay)
         val cacheLolDataTaskInitDelay: Long = getTaskInitialDelay(now, TaskType.CACHE_LOL_DATA_TASK, lolDataTaskDelay)
         val tokenCleanupInitDelay: Long = getTaskInitialDelay(now, TaskType.TOKEN_CLEANUP_TASK, tokenCleanupDelay)
+        val tasksCleanupInitDelay: Long = getTaskInitialDelay(now, TaskType.TASK_CLEANUP_TASK, tasksCleanupDelay)
 
         logger.info("Setting $cacheWowDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_WOW_DATA_TASK}")
         logger.info("Setting $cacheLolDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_WOW_DATA_TASK}")
         logger.info("Setting $tokenCleanupInitDelay minutes of delay before launching ${TaskType.TOKEN_CLEANUP_TASK}")
+        logger.info("Setting $tasksCleanupInitDelay minutes of delay before launching ${TaskType.TASK_CLEANUP_TASK}")
 
 
         executorService.scheduleAtFixedRate(
             TokenCleanupRunnable(tasksService, coroutineScope),
-            tokenCleanupInitDelay, 60, TimeUnit.MINUTES
+            tokenCleanupInitDelay, tokenCleanupDelay.toLong(), TimeUnit.MINUTES
         )
 
         executorService.scheduleAtFixedRate(
@@ -57,7 +61,7 @@ data class TasksLauncher(
                 Game.LOL,
                 TaskType.CACHE_LOL_DATA_TASK
             ),
-            cacheLolDataTaskInitDelay, 60, TimeUnit.MINUTES
+            cacheLolDataTaskInitDelay, lolDataTaskDelay.toLong(), TimeUnit.MINUTES
         )
 
         executorService.scheduleAtFixedRate(
@@ -68,7 +72,15 @@ data class TasksLauncher(
                 Game.WOW,
                 TaskType.CACHE_WOW_DATA_TASK
             ),
-            cacheWowDataTaskInitDelay, 60, TimeUnit.MINUTES
+            cacheWowDataTaskInitDelay, wowDataTaskDelay.toLong(), TimeUnit.MINUTES
+        )
+
+        executorService.scheduleAtFixedRate(
+            TasksCleanupRunnable(
+                tasksService,
+                coroutineScope
+            ),
+            tasksCleanupInitDelay, tasksCleanupDelay.toLong(), TimeUnit.MINUTES
         )
 
         Runtime.getRuntime().addShutdownHook(Thread {

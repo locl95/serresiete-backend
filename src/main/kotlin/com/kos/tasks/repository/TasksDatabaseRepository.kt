@@ -4,6 +4,7 @@ import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -31,6 +32,12 @@ class TasksDatabaseRepository : TasksRepository {
                 it[taskStatus] = task.taskStatus
                 it[inserted] = task.inserted.toString()
             }
+        }
+    }
+
+    override suspend fun deleteOldTasks(olderThanDays: Long): Int {
+        return dbQuery {
+            Tasks.deleteWhere { inserted.less(OffsetDateTime.now().minusDays(olderThanDays).toString()) }
         }
     }
 

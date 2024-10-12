@@ -1,21 +1,30 @@
 package com.kos.tasks
 
+import com.kos.auth.OffsetDateTimeSerializer
 import kotlinx.serialization.json.Json
 import java.time.OffsetDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
+import java.util.*
 
 @Serializable
 data class TaskStatus(val status: Status, val message: String?)
 
-data class Task(val type: TaskType, val taskStatus: String, val inserted: OffsetDateTime) {
+@Serializable
+data class Task(
+    val id: String,
+    val type: TaskType,
+    val taskStatus: String,
+    @Serializable(with = OffsetDateTimeSerializer::class)
+    val inserted: OffsetDateTime
+) {
     companion object {
         private val json = Json {
             ignoreUnknownKeys = true
         }
 
-        fun apply(type: TaskType, taskStatus: TaskStatus, inserted: OffsetDateTime): Task {
-            return Task(type, json.encodeToString(taskStatus), inserted)
+        fun apply(id: String, type: TaskType, taskStatus: TaskStatus, inserted: OffsetDateTime): Task {
+            return Task(id, type, json.encodeToString(taskStatus), inserted)
         }
     }
 }
@@ -39,6 +48,7 @@ enum class Status {
     }
 }
 
+@Serializable
 enum class TaskType {
     CACHE_WOW_DATA_TASK {
         override fun toString(): String = "cacheWowDataTask"

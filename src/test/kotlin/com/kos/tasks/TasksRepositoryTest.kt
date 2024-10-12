@@ -51,6 +51,27 @@ abstract class TasksRepositoryTest {
             assertEquals(repositoryWithState.state(), listOf(recentlyInsertedTask))
         }
     }
+
+    @Test
+    fun `given a repository with tasks I can retrieve them`() {
+        runBlocking {
+            val now = OffsetDateTime.now()
+            val task = task(now)
+            val repositoryWithState = repository.withState(listOf(task))
+            assertEquals(listOf(task), repositoryWithState.get())
+        }
+    }
+
+    @Test
+    fun `given a repository with tasks I can retrieve them by id`() {
+        runBlocking {
+            val now = OffsetDateTime.now()
+            val knownId = "1"
+            val task = task(now).copy(id = knownId)
+            val repositoryWithState = repository.withState(listOf(task))
+            assertEquals(task, repositoryWithState.get(knownId))
+        }
+    }
 }
 
 class TasksInMemoryRepositoryTest : TasksRepositoryTest() {

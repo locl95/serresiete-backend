@@ -12,6 +12,14 @@ class TasksInMemoryRepository : TasksRepository, InMemoryRepository {
         tasks.add(task)
     }
 
+    override suspend fun get(): List<Task> {
+        return tasks.toList()
+    }
+
+    override suspend fun get(id: String): Task? {
+        return tasks.find { it.id == id }
+    }
+
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {
         val daysAgo = OffsetDateTime.now().minusDays(olderThanDays)
         val deletedTasks = tasks.count { it.inserted < daysAgo }

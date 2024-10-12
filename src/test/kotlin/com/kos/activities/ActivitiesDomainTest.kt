@@ -36,5 +36,8 @@ class CredentialsDomainTest {
         assertEquals("login", Activities.login)
         assertEquals("logout", Activities.logout)
         assertEquals("delete role from user", Activities.deleteRoleFromUser)
+        assertEquals("run task", Activities.runTask)
+        assertEquals("get task", Activities.getTask)
+        assertEquals("get tasks", Activities.getTasks)
     }
 }

@@ -19,6 +19,7 @@ class TasksDatabaseRepository : TasksRepository {
     }
 
     private fun resultRowToTask(row: ResultRow) = Task(
+        row[Tasks.id],
         TaskType.fromString(row[Tasks.type]),
         row[Tasks.taskStatus],
         OffsetDateTime.parse(row[Tasks.inserted])
@@ -27,12 +28,20 @@ class TasksDatabaseRepository : TasksRepository {
     override suspend fun insertTask(task: Task) {
         dbQuery {
             Tasks.insert {
-                it[id] = UUID.randomUUID().toString()
+                it[id] = task.id
                 it[type] = task.type.toString()
                 it[taskStatus] = task.taskStatus
                 it[inserted] = task.inserted.toString()
             }
         }
+    }
+
+    override suspend fun get(): List<Task> {
+        return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
+    }
+
+    override suspend fun get(id: String): Task? {
+        return dbQuery { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
     }
 
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {
@@ -43,7 +52,8 @@ class TasksDatabaseRepository : TasksRepository {
 
     override suspend fun getLastExecution(taskType: TaskType): Task? {
         return dbQuery {
-            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1).map { resultRowToTask(it) }.firstOrNull()
+            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1)
+                .map { resultRowToTask(it) }.firstOrNull()
         }
     }
 
@@ -54,7 +64,7 @@ class TasksDatabaseRepository : TasksRepository {
     override suspend fun withState(initialState: List<Task>): TasksRepository {
         dbQuery {
             Tasks.batchInsert(initialState) {
-                this[Tasks.id] = UUID.randomUUID().toString()
+                this[Tasks.id] = it.id
                 this[Tasks.type] = it.type.toString()
                 this[Tasks.taskStatus] = it.taskStatus
                 this[Tasks.inserted] = it.inserted.toString()

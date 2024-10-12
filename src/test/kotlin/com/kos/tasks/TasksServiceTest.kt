@@ -72,7 +72,8 @@ class TasksServiceTest {
 
             val now = OffsetDateTime.now()
             val expectedRemainingTask = task(now)
-            val tasksRepository = TasksInMemoryRepository().withState(listOf(expectedRemainingTask, task(now.minusDays(8))))
+            val tasksRepository =
+                TasksInMemoryRepository().withState(listOf(expectedRemainingTask, task(now.minusDays(8))))
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
             service.taskCleanup()
@@ -215,6 +216,48 @@ class TasksServiceTest {
             assertEquals(1, tasksRepository.state().size)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
+        }
+    }
+
+    @Test
+    fun `I can get tasks`() {
+        runBlocking {
+            val now = OffsetDateTime.now()
+            val task = task(now)
+
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+
+            val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+            assertEquals(listOf(task), service.get())
+        }
+    }
+
+    @Test
+    fun `I can get tasks by id`() {
+        runBlocking {
+            val now = OffsetDateTime.now()
+            val knownId = "1"
+            val task = task(now).copy(id = knownId)
+
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+            assertEquals(task, service.get(knownId))
         }
     }
 }

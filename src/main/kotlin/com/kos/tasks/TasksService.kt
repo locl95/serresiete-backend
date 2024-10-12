@@ -7,6 +7,7 @@ import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
 import com.kos.views.Game
 import java.time.OffsetDateTime
+import java.util.*
 
 data class TasksService(
     private val tasksRepository: TasksRepository,
@@ -16,6 +17,10 @@ data class TasksService(
 ) : WithLogger("tasksService") {
 
     private val olderThanDays: Long = 7
+
+    suspend fun get() = tasksRepository.get()
+
+    suspend fun get(id: String) = tasksRepository.get(id)
 
     suspend fun runTask(taskType: TaskType) {
         when (taskType) {
@@ -32,6 +37,7 @@ data class TasksService(
         logger.info("Deleted $deletedTasks old tasks")
         tasksRepository.insertTask(
             Task.apply(
+                UUID.randomUUID().toString(),
                 TaskType.TASK_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTasks old tasks"),
                 OffsetDateTime.now()
@@ -45,6 +51,7 @@ data class TasksService(
         logger.info("Deleted $deletedTokens expired tokens")
         tasksRepository.insertTask(
             Task.apply(
+                UUID.randomUUID().toString(),
                 TaskType.TOKEN_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTokens expired tokens"),
                 OffsetDateTime.now()
@@ -59,6 +66,7 @@ data class TasksService(
         if (errors.isEmpty()) {
             tasksRepository.insertTask(
                 Task.apply(
+                    UUID.randomUUID().toString(),
                     taskType,
                     TaskStatus(Status.SUCCESSFUL, null),
                     OffsetDateTime.now()
@@ -67,6 +75,7 @@ data class TasksService(
         } else {
             tasksRepository.insertTask(
                 Task.apply(
+                    UUID.randomUUID().toString(),
                     taskType,
                     TaskStatus(Status.ERROR, errors.joinToString(",\n") { it.error() }),
                     OffsetDateTime.now()

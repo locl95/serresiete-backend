@@ -33,6 +33,8 @@ object Activities {
     const val login = "login"
     const val logout = "logout"
     const val runTask = "run task"
+    const val getTask = "get task"
+    const val getTasks = "get tasks"
 }
 typealias Activity = String
 

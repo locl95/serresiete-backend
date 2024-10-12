@@ -5,6 +5,7 @@ import com.kos.activities.Activities
 import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
+import com.kos.common.NotFound
 import com.kos.credentials.CredentialsService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,33 @@ class TasksController(private val tasksService: TasksService, private val creden
                     }
                     Either.Right(Unit)
                 } else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
+    suspend fun get(client: String?): Either<ControllerError, List<Task>> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> {
+                if (credentialsService.hasPermissions(client, Activities.getTasks)) {
+                    Either.Right(tasksService.get())
+                } else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
+    suspend fun get(client: String?, id: String): Either<ControllerError, Task> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> {
+                return when (val maybeTask = tasksService.get(id)) {
+                    null -> Either.Left(NotFound(id))
+                    else -> {
+                        if (credentialsService.hasPermissions(client, Activities.getTask)) {
+                            Either.Right(maybeTask)
+                        } else Either.Left(NotEnoughPermissions(client))
+                    }
+                }
             }
         }
     }

@@ -38,6 +38,19 @@ abstract class TasksRepositoryTest {
             assertEquals(expected, task)
         }
     }
+
+    @Test
+    fun `given a repository with tasks I can delete the old ones`() {
+        runBlocking {
+            val now = OffsetDateTime.now()
+            val oldTask = task(now.minusDays(8))
+            val recentlyInsertedTask = task(now)
+            val repositoryWithState = repository.withState(listOf(recentlyInsertedTask, oldTask))
+            val deletedTasks = repositoryWithState.deleteOldTasks(7)
+            assertEquals(1, deletedTasks)
+            assertEquals(repositoryWithState.state(), listOf(recentlyInsertedTask))
+        }
+    }
 }
 
 class TasksInMemoryRepositoryTest : TasksRepositoryTest() {

@@ -14,6 +14,7 @@ import com.kos.datacache.RiotMockHelper
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksInMemoryRepository
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
@@ -55,6 +56,33 @@ class TasksServiceTest {
             assertEquals(1, tasksRepository.state().size)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
+        }
+    }
+
+    @Test
+    fun `tasks cleanup task should cleanup old tasks`() {
+        runBlocking {
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val now = OffsetDateTime.now()
+            val expectedRemainingTask = task(now)
+            val tasksRepository = TasksInMemoryRepository().withState(listOf(expectedRemainingTask, task(now.minusDays(8))))
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+
+            service.taskCleanup()
+
+            val insertedTask = tasksRepository.state().last()
+
+            assertEquals(listOf(expectedRemainingTask, insertedTask), tasksRepository.state())
+            assertEquals(2, tasksRepository.state().size)
+            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(TaskType.TASK_CLEANUP_TASK, insertedTask.type)
         }
     }
 
@@ -118,7 +146,7 @@ class TasksServiceTest {
     }
 
     @Test
-    fun `run task with correct parameters should run token cleanup task`(){
+    fun `run task with correct parameters should run token cleanup task`() {
         runBlocking {
             val dataCacheRepository = DataCacheInMemoryRepository()
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
@@ -142,7 +170,7 @@ class TasksServiceTest {
     }
 
     @Test
-    fun `run task with correct parameters should run wow data cache task`(){
+    fun `run task with correct parameters should run wow data cache task`() {
         runBlocking {
             val dataCacheRepository = DataCacheInMemoryRepository()
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
@@ -167,7 +195,7 @@ class TasksServiceTest {
     }
 
     @Test
-    fun `run task with correct parameters should run lol data cache task`(){
+    fun `run task with correct parameters should run lol data cache task`() {
         runBlocking {
             val dataCacheRepository = DataCacheInMemoryRepository()
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)

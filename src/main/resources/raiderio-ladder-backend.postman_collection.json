@@ -979,6 +979,62 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get tasks",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/tasks",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get task",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/tasks",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1117,6 +1173,10 @@
 		{
 			"key": "activity2",
 			"value": "play ping pong"
+		},
+		{
+			"key": "taskId",
+			"value": "fdbb48d1-b846-4912-849d-2545dfd498a2"
 		}
 	]
 }

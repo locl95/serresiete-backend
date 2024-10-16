@@ -35,7 +35,8 @@ data class MatchParticipant(
     val assists: Int,
     val totalTimeSpentDead: Int,
     val totalMinionsKilled: Int,
-    val goldEarned: Int
+    val goldEarned: Int,
+    val win: Boolean
 )
 
 @Serializable
@@ -87,7 +88,8 @@ data class MatchProfile(
     val enemyMissingPings: Int,
     val wardsPlaced: Int,
     val gameDuration: Int,
-    val totalTimeSpentDead: Int
+    val totalTimeSpentDead: Int,
+    val win: Boolean
 )
 
 @Serializable
@@ -136,7 +138,8 @@ data class RiotData(
                                     it.enemyMissingPings,
                                     it.wardsPlaced,
                                     getMatchResponse.info.gameDuration,
-                                    it.totalTimeSpentDead
+                                    it.totalTimeSpentDead,
+                                    it.win
                                 )
                             }
                         }

@@ -51,7 +51,6 @@ class DataCacheServiceTest {
             )
             val service = DataCacheService(repo, raiderIoClient, riotClient)
             val data = service.getData(listOf(2))
-            println(data)
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(basicLolCharacter.name), data.map {
                 it.map { d ->

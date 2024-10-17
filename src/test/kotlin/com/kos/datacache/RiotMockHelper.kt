@@ -10,7 +10,7 @@ object RiotMockHelper {
         Either.Right(
             listOf(
                 LeagueEntryResponse(
-                    "RANKED_FLEX_SR",
+                    QueueType.FLEX_Q,
                     "GOLD",
                     "I",
                     1,
@@ -19,7 +19,7 @@ object RiotMockHelper {
                     false
                 ),
                 LeagueEntryResponse(
-                    "RANKED_SOLO_5x5",
+                    QueueType.SOLO_Q,
                     "GOLD",
                     "I",
                     1,
@@ -69,7 +69,7 @@ object RiotMockHelper {
             summonerName = "GTP ZeroMVPs",
             leagues = mapOf(
                 Pair(
-                    "RANKED_SOLO_5x5",
+                    QueueType.SOLO_Q,
                     LeagueProfile(
                         mainRole = "SUPPORT",
                         tier = "GOLD",

@@ -2,6 +2,7 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.flatten
 import arrow.core.raise.either
 import arrow.core.sequence
 import com.kos.characters.Character
@@ -73,34 +74,50 @@ data class DataCacheService(
         }
     }
 
-    private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> =
-        coroutineScope {
-            val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> = lolCharacters.map {
+    private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> = coroutineScope {
+        val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> =
+            lolCharacters.map { lolCharacter ->
                 async {
-                    val leagues: Either<HttpError, List<LeagueEntryResponse>> =
-                        retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") { riotClient.getLeagueEntriesBySummonerId(it.summonerId) }
-                    val matches: Either<HttpError, List<GetMatchResponse>> =
-                        retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") { riotClient.getMatchesByPuuid(it.puuid) }.flatMap { m ->
-                            m.map {
-                                async { retryEitherWithFixedDelay(5, 1200L, "getMatchById") { riotClient.getMatchById(it) } }
-                            }.awaitAll().sequence()
-                        }
-                    either {
-                        val leagueEntries = leagues.bind()
-                        val matchEntries = matches.bind()
-                        Pair(it.id, RiotData.apply(it, leagueEntries, matchEntries))
-                    }
+                    cacheLolCharacter(lolCharacter)
+                }
+            }.awaitAll().split()
 
+        errorsAndData.first.forEach { logger.error(it.error()) }
+        val data = errorsAndData.second.map { (id, riotData) ->
+            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+        }
+        dataCacheRepository.insert(data)
+        data.forEach { logger.info("Cached character ${it.characterId}") }
+        errorsAndData.first
+    }
+
+    private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =
+        either {
+            val leagues: List<LeagueEntryResponse> =
+                retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") {
+                    riotClient.getLeagueEntriesBySummonerId(lolCharacter.summonerId)
+                }.bind()
+
+            val leagueWithMatches: List<Pair<LeagueEntryResponse, List<GetMatchResponse>>> =
+                coroutineScope {
+                    leagues.map { leagueEntry ->
+                        async {
+                            val matchIds: List<String> = retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
+                                riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
+                            }.bind()
+
+                            val matchResponses: List<GetMatchResponse> = matchIds.map { matchId ->
+                                retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
+                                    riotClient.getMatchById(matchId)
+                                }.bind()
+                            }
+
+                            leagueEntry to matchResponses
+                        }
+                    }.awaitAll()
                 }
 
-            }.awaitAll().split()
-            errorsAndData.first.forEach { logger.error(it.error()) }
-            val data = errorsAndData.second.map {
-                DataCache(it.first, json.encodeToString<Data>(it.second), OffsetDateTime.now())
-            }
-            dataCacheRepository.insert(data)
-            data.forEach { logger.info("Cached character ${it.characterId}") }
-            errorsAndData.first
+            Pair(lolCharacter.id, RiotData.apply(lolCharacter, leagueWithMatches))
         }
 
 

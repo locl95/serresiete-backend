@@ -47,24 +47,27 @@ data class DataCacheService(
         ignoreUnknownKeys = true
     }
 
-
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)
-    suspend fun getData(characterIds: List<Long>): Either<JsonParseError, List<Data>> {
-        return characterIds.mapNotNull {
-            when (val data = get(it).minByOrNull { dc -> dc.inserted }) {
-                null -> null
-                else -> {
+    suspend fun getData(characterIds: List<Long>, oldFirst: Boolean): Either<JsonParseError, List<Data>> =
+        either {
+            val comparator: (List<DataCache>) -> DataCache? = if (oldFirst) {
+                { it.minByOrNull { dc -> dc.inserted } }
+            } else {
+                { it.maxByOrNull { dc -> dc.inserted } }
+            }
+
+            characterIds.mapNotNull { id ->
+                comparator(get(id))?.let { dataCache ->
                     try {
-                        Either.Right(json.decodeFromString<Data>(data.data))
+                        json.decodeFromString<Data>(dataCache.data)
                     } catch (se: SerializationException) {
-                        Either.Left(JsonParseError(data.data, "", se.stackTraceToString()))
+                        raise(JsonParseError(dataCache.data, "", se.stackTraceToString()))
                     } catch (iae: IllegalArgumentException) {
-                        Either.Left(JsonParseError(data.data, "", iae.stackTraceToString()))
+                        raise(JsonParseError(dataCache.data, "", iae.stackTraceToString()))
                     }
                 }
             }
-        }.sequence()
-    }
+        }
 
     @Suppress("UNCHECKED_CAST")
     suspend fun cache(characters: List<Character>, game: Game): List<HttpError> {

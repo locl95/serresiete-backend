@@ -166,5 +166,12 @@ object RiotMockHelper {
             )
         )
 
+    val anotherRiotData: RiotData = RiotData(
+        summonerIcon = 3582,
+        summonerLevel = 367,
+        summonerName = "sanxei",
+        leagues = mapOf()
+    )
+
 
 }

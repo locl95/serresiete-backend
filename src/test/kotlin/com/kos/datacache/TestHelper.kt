@@ -29,11 +29,11 @@ object TestHelper {
      "type": "com.kos.httpclients.domain.RaiderIoData"
    }"""
 
-    val lolData = """ {
+    val lolData = """{
         "type": "com.kos.httpclients.domain.RiotData",
         "summonerIcon": 1389,
         "summonerLevel": 499,
-        "summonerName": "${basicLolCharacter.name}",
+        "summonerName": "GTP ZeroMVPs",
         "leagues": {
             "RANKED_SOLO_5x5": {
                 "mainRole": "SUPPORT",
@@ -133,8 +133,18 @@ object TestHelper {
         }
     }"""
 
+    val anotherLolData = """{
+          "type": "com.kos.httpclients.domain.RiotData",
+          "leagues": {},
+          "summonerIcon": 3582,
+          "summonerName": "sanxei",
+          "summonerLevel": 367
+        }
+    """
+
     private val now = OffsetDateTime.now()
     val outdatedDataCache = DataCache(1, wowData, now.minusHours(25))
     val wowDataCache = DataCache(1, wowData, now)
     val lolDataCache = DataCache(2, lolData, now)
+    val anotherLolDataCache = DataCache(3, anotherLolData, now)
 }

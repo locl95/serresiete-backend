@@ -85,7 +85,7 @@ class ViewsService(
 
 
     private suspend fun getLolData(view: View): Either<HttpError, List<Data>> {
-        return dataCacheService.getData(view.characters.map { it.id })
+        return dataCacheService.getData(view.characters.map { it.id }, oldFirst = false)
     }
 
     private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
@@ -139,5 +139,5 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds)
+    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds, oldFirst = true)
 }

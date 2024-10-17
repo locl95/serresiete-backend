@@ -2,9 +2,11 @@ package com.kos.datacache
 
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.datacache.TestHelper.anotherLolDataCache
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.httpclients.domain.QueueType
 import com.kos.httpclients.domain.RaiderIoData
 import com.kos.httpclients.domain.RiotData
 import com.kos.httpclients.raiderio.RaiderIoClient
@@ -32,7 +34,7 @@ class DataCacheServiceTest {
                 )
             )
             val service = DataCacheService(repo, raiderIoClient, riotClient)
-            val data = service.getData(listOf(1, 3))
+            val data = service.getData(listOf(1, 3), oldFirst = true)
             assertTrue(data.isRight { it.size == 2 })
             assertEquals(listOf<Long>(1, 3), data.map {
                 it.map { d ->
@@ -50,7 +52,8 @@ class DataCacheServiceTest {
                 listOf(lolDataCache)
             )
             val service = DataCacheService(repo, raiderIoClient, riotClient)
-            val data = service.getData(listOf(2))
+            val data = service.getData(listOf(2), oldFirst = true)
+            println(data)
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(basicLolCharacter.name), data.map {
                 it.map { d ->
@@ -71,7 +74,7 @@ class DataCacheServiceTest {
                 )
             )
             val service = DataCacheService(repo, raiderIoClient, riotClient)
-            val data = service.getData(listOf(1))
+            val data = service.getData(listOf(1), oldFirst = true)
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(0.0), data.map {
                 it.map { d ->
@@ -102,7 +105,12 @@ class DataCacheServiceTest {
     fun `i can cache lol data`() {
         runBlocking {
             `when`(riotClient.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId)).thenReturn(RiotMockHelper.leagueEntries)
-            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid)).thenReturn(RiotMockHelper.matches)
+            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.FLEX_Q.toInt())).thenReturn(
+                RiotMockHelper.matches
+            )
+            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.SOLO_Q.toInt())).thenReturn(
+                RiotMockHelper.matches
+            )
             `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(RiotMockHelper.match)
             val repo = DataCacheInMemoryRepository()
             val service = DataCacheService(repo, raiderIoClient, riotClient)

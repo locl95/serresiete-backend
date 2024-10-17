@@ -1,14 +1,18 @@
 package com.kos.views
 
-import com.kos.characters.WowCharacterRequest
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.datacache.DataCacheService
+import com.kos.datacache.RiotMockHelper.anotherRiotData
+import com.kos.datacache.TestHelper.anotherLolDataCache
+import com.kos.datacache.TestHelper.lolDataCache
+import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
@@ -22,6 +26,7 @@ import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -261,6 +266,37 @@ class ViewsServiceTest {
             ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
+        }
+    }
+
+    @Test
+    fun `lol view data returns newest cached data`() {
+        runBlocking {
+            val simpleView = basicSimpleLolView.copy(characterIds = listOf(1))
+            val view = View(
+                simpleView.id, simpleView.name, simpleView.owner, simpleView.published, listOf(
+                    basicLolCharacter
+                ), simpleView.game
+            )
+            val viewsRepository =
+                ViewsInMemoryRepository().withState(listOf(simpleView))
+            val charactersRepository = CharactersInMemoryRepository().withState(
+                CharactersState(listOf(), listOf(basicLolCharacter))
+            )
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val moreRecentDataCache =
+                anotherLolDataCache.copy(characterId = 1, inserted = OffsetDateTime.now().plusHours(2))
+            val dataCacheRepository = DataCacheInMemoryRepository().withState(
+                listOf(
+                    lolDataCache.copy(characterId = 1),
+                    moreRecentDataCache
+                )
+            )
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
+            service.getData(view)
+                .onLeft { fail(it.error()) }
+                .onRight { assertEquals(listOf(anotherRiotData), it) }
         }
     }
 }

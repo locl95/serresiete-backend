@@ -45,6 +45,7 @@ object TestHelper {
                 "matches": [
                     {
                         "championId": 497,
+                        "championName": "Rakan",
                         "role": "SUPPORT",
                         "individualPosition": "UTILITY",
                         "lane": "BOTTOM",
@@ -61,6 +62,7 @@ object TestHelper {
                     },
                     {
                         "championId": 497,
+                        "championName": "Rakan",
                         "role": "SUPPORT",
                         "individualPosition": "UTILITY",
                         "lane": "NONE",
@@ -77,6 +79,7 @@ object TestHelper {
                     },
                     {
                         "championId": 12,
+                        "championName": "Alistar",
                         "role": "SUPPORT",
                         "individualPosition": "UTILITY",
                         "lane": "NONE",
@@ -93,6 +96,7 @@ object TestHelper {
                     },
                     {
                         "championId": 497,
+                        "championName": "Rakan",
                         "role": "SUPPORT",
                         "individualPosition": "UTILITY",
                         "lane": "BOTTOM",
@@ -109,6 +113,7 @@ object TestHelper {
                     },
                     {
                         "championId": 235,
+                        "championName": "Senna",
                         "role": "SUPPORT",
                         "individualPosition": "UTILITY",
                         "lane": "BOTTOM",

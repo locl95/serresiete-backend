@@ -51,6 +51,7 @@ object RiotMockHelper {
                         1,
                         1,
                         18,
+                        "Tristana",
                         1,
                         25,
                         250,
@@ -80,6 +81,7 @@ object RiotMockHelper {
                         matches = listOf(
                             MatchProfile(
                                 championId = 497,
+                                championName = "Rakan",
                                 role = "SUPPORT",
                                 individualPosition = "UTILITY",
                                 lane = "BOTTOM",
@@ -92,9 +94,10 @@ object RiotMockHelper {
                                 wardsPlaced = 47,
                                 gameDuration = 1883,
                                 totalTimeSpentDead = 174,
-                                true
+                                win = true
                             ), MatchProfile(
                                 championId = 497,
+                                championName = "Rakan",
                                 role = "SUPPORT",
                                 individualPosition = "UTILITY",
                                 lane = "NONE",
@@ -107,9 +110,10 @@ object RiotMockHelper {
                                 wardsPlaced = 20,
                                 gameDuration = 1146,
                                 totalTimeSpentDead = 24,
-                                true
+                                win = true
                             ), MatchProfile(
                                 championId = 12,
+                                championName = "Alistar",
                                 role = "SUPPORT",
                                 individualPosition = "UTILITY",
                                 lane = "NONE",
@@ -122,9 +126,10 @@ object RiotMockHelper {
                                 wardsPlaced = 11,
                                 gameDuration = 917,
                                 totalTimeSpentDead = 36,
-                                true
+                                win = true
                             ), MatchProfile(
                                 championId = 497,
+                                championName = "Rakan",
                                 role = "SUPPORT",
                                 individualPosition = "UTILITY",
                                 lane = "BOTTOM",
@@ -137,9 +142,10 @@ object RiotMockHelper {
                                 wardsPlaced = 51,
                                 gameDuration = 1712,
                                 totalTimeSpentDead = 67,
-                                true
+                                win = true
                             ), MatchProfile(
                                 championId = 235,
+                                championName = "Senna",
                                 role = "SUPPORT",
                                 individualPosition = "UTILITY",
                                 lane = "BOTTOM",
@@ -152,7 +158,7 @@ object RiotMockHelper {
                                 wardsPlaced = 32,
                                 gameDuration = 1856,
                                 totalTimeSpentDead = 73,
-                                true
+                                win = true
                             )
                         )
                     )

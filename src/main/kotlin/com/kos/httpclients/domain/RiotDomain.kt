@@ -38,6 +38,7 @@ data class MatchParticipant(
     val enemyMissingPings: Int,
     val deaths: Int,
     val championId: Int,
+    val championName: String,
     val assists: Int,
     val totalTimeSpentDead: Int,
     val totalMinionsKilled: Int,
@@ -113,6 +114,7 @@ data class RiotError(val status: RiotStatus) : HttpError {
 @Serializable
 data class MatchProfile(
     val championId: Int,
+    val championName: String,
     val role: String,
     val individualPosition: String,
     val lane: String,
@@ -165,6 +167,7 @@ data class RiotData(
                             getMatchResponse.info.participants.filter { it.puuid == lolCharacter.puuid }.map {
                                 MatchProfile(
                                     it.championId,
+                                    it.championName,
                                     it.role,
                                     it.individualPosition,
                                     it.lane,

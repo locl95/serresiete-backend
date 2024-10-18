@@ -12,6 +12,7 @@ import com.kos.datacache.DataCacheService
 import com.kos.datacache.RaiderIoMockHelper
 import com.kos.datacache.RiotMockHelper
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.httpclients.domain.QueueType
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.tasks.TasksTestHelper.task
@@ -132,7 +133,12 @@ class TasksServiceTest {
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
             `when`(riotClient.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId)).thenReturn(RiotMockHelper.leagueEntries)
-            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid)).thenReturn(RiotMockHelper.matches)
+            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.SOLO_Q.toInt())).thenReturn(
+                RiotMockHelper.matches
+            )
+            `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.FLEX_Q.toInt())).thenReturn(
+                RiotMockHelper.matches
+            )
             `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(RiotMockHelper.match)
 
             service.cacheDataTask(Game.LOL, TaskType.CACHE_LOL_DATA_TASK)

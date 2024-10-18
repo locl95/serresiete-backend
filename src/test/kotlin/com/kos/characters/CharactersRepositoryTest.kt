@@ -106,8 +106,8 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given a repository with wow characters, I can insert more`() {
         runBlocking {
-            repository.withState(CharactersState(listOf(basicWowCharacter), listOf()))
-            val inserted = repository.insert(listOf(basicWowRequest2), Game.WOW)
+            val repositoryWithState = repository.withState(CharactersState(listOf(basicWowCharacter), listOf()))
+            val inserted = repositoryWithState.insert(listOf(basicWowRequest2), Game.WOW)
             inserted
                 .onRight { characters -> assertEquals(listOf<Long>(2), characters.map { it.id }) }
                 .onLeft { fail(it.message) }
@@ -117,11 +117,22 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given a repository with lol characters, I can insert more`() {
         runBlocking {
-            repository.withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+            val repositoryWithState = repository.withState(CharactersState(listOf(), listOf(basicLolCharacter)))
             val request = basicLolCharacterEnrichedRequest.copy(puuid = "different-puuid", summonerId = "different-summoner-id")
-            val inserted = repository.insert(listOf(request), Game.LOL)
+            val inserted = repositoryWithState.insert(listOf(request), Game.LOL)
             inserted
                 .onRight { characters -> assertEquals(listOf<Long>(2), characters.map { it.id }) }
+                .onLeft { fail(it.message) }
+        }
+    }
+
+    @Test
+    fun `i can insert a lol character with a tag longer than 3 characters`() {
+        runBlocking {
+            val request = basicLolCharacterEnrichedRequest.copy(tag= "12345")
+            val inserted = repository.insert(listOf(request), Game.LOL)
+            inserted
+                .onRight { characters -> assertEquals(listOf<Long>(1), characters.map { it.id }) }
                 .onLeft { fail(it.message) }
         }
     }

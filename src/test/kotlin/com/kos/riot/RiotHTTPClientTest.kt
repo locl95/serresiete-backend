@@ -1,6 +1,7 @@
 package com.kos.riot
 
 import com.kos.assertTrue
+import com.kos.httpclients.domain.QueueType
 import com.kos.httpclients.riot.RiotHTTPClient
 import com.kos.riot.RiotHTTPClientHelper.client
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,9 @@ class RiotHTTPClientTest {
     @Test
     fun `dummy test to check everything is going under control 3`() {
         runBlocking {
-            val res = riotHTTPClient.getMatchesByPuuid("vJre0esG5sIx3rvCAe-YVsDfqCIMV5b2P-61wrYZ4w-hs9u_Ek8dVlo-KLo-GNA4NumLV1YTNxeCmA")
+            val res = riotHTTPClient.getMatchesByPuuid("vJre0esG5sIx3rvCAe-YVsDfqCIMV5b2P-61wrYZ4w-hs9u_Ek8dVlo-KLo-GNA4NumLV1YTNxeCmA",
+                QueueType.SOLO_Q.toInt()
+            )
             assertTrue(res.isRight())
             println(res)
         }

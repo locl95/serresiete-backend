@@ -944,6 +944,21 @@
 			"item": [
 				{
 					"name": "Run task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const locationHeader = pm.response.headers.get('Location');",
+									"const id = locationHeader.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)[1];",
+									"",
+									"pm.collectionVariables.set(\"taskId\", id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -959,7 +974,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"type\": \"tokenCleanupTask\"\n}",
+							"raw": "{\n    \"type\": \"CACHE_LOL_DATA_TASK\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -967,14 +982,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUri}}/api/tasks/run",
+							"raw": "{{baseUri}}/api/tasks",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"tasks",
-								"run"
+								"tasks"
 							]
 						}
 					},
@@ -1024,13 +1038,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/tasks",
+							"raw": "{{baseUri}}/api/tasks/{{taskId}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"tasks"
+								"tasks",
+								"{{taskId}}"
 							]
 						}
 					},

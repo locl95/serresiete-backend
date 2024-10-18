@@ -10,7 +10,7 @@
 
 - **Endpoint Update**: Changed endpoint from `POST /api/tasks/run` to `POST /api/tasks`.
 
-## [3.0.1] 10-18-2024
+## [3.0.1] 17-10-2024
 
 ### Fixed
 
@@ -155,7 +155,7 @@
 
 - **Edit Password Endpoint**: Introduced a new endpoint `PUT /api/credentials` for users to update their passwords.
 
-## [0.1.3] - 10-18-2024
+## [0.1.3] 04-11-2023
 
 ### Added
 

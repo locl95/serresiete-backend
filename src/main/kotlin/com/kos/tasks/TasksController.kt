@@ -11,19 +11,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.util.*
 
 class TasksController(private val tasksService: TasksService, private val credentialsService: CredentialsService) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    suspend fun runTask(client: String?, taskRequest: TaskRequest): Either<ControllerError, Unit> {
+    suspend fun runTask(client: String?, taskRequest: TaskRequest): Either<ControllerError, String> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.runTask)) {
+                    val taskId = UUID.randomUUID().toString()
                     scope.launch {
-                        tasksService.runTask(taskRequest.type)
+                        tasksService.runTask(taskRequest.type, taskId)
                     }
-                    Either.Right(Unit)
+                    Either.Right(taskId)
                 } else Either.Left(NotEnoughPermissions(client))
             }
         }

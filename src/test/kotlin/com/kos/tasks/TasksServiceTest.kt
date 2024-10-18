@@ -23,6 +23,7 @@ import kotlinx.serialization.json.Json.Default.decodeFromString
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -49,12 +50,15 @@ class TasksServiceTest {
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
-            service.tokenCleanup()
+            val id = UUID.randomUUID().toString()
+
+            service.tokenCleanup(id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(listOf(basicAuthorization), authRepository.state())
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
         }
@@ -77,12 +81,15 @@ class TasksServiceTest {
                 TasksInMemoryRepository().withState(listOf(expectedRemainingTask, task(now.minusDays(8))))
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
-            service.taskCleanup()
+            val id = UUID.randomUUID().toString()
+
+            service.taskCleanup(id)
 
             val insertedTask = tasksRepository.state().last()
 
             assertEquals(listOf(expectedRemainingTask, insertedTask), tasksRepository.state())
             assertEquals(2, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.TASK_CLEANUP_TASK, insertedTask.type)
         }
@@ -106,12 +113,15 @@ class TasksServiceTest {
             `when`(raiderIoClient.get(basicWowCharacter)).thenReturn(RaiderIoMockHelper.get(basicWowCharacter))
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
 
-            service.cacheDataTask(Game.WOW, TaskType.CACHE_WOW_DATA_TASK)
+            val id = UUID.randomUUID().toString()
+
+            service.cacheDataTask(Game.WOW, TaskType.CACHE_WOW_DATA_TASK, id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(1, dataCacheRepository.state().size)
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.CACHE_WOW_DATA_TASK, insertedTask.type)
         }
@@ -141,12 +151,15 @@ class TasksServiceTest {
             )
             `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(RiotMockHelper.match)
 
-            service.cacheDataTask(Game.LOL, TaskType.CACHE_LOL_DATA_TASK)
+            val id = UUID.randomUUID().toString()
+
+            service.cacheDataTask(Game.LOL, TaskType.CACHE_LOL_DATA_TASK, id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(1, dataCacheRepository.state().size)
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
         }
@@ -166,11 +179,14 @@ class TasksServiceTest {
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
-            service.runTask(TaskType.TOKEN_CLEANUP_TASK)
+            val id = UUID.randomUUID().toString()
+
+            service.runTask(TaskType.TOKEN_CLEANUP_TASK, id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
         }
@@ -191,11 +207,15 @@ class TasksServiceTest {
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
-            service.runTask(TaskType.CACHE_WOW_DATA_TASK)
+
+            val id = UUID.randomUUID().toString()
+
+            service.runTask(TaskType.CACHE_WOW_DATA_TASK, id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.CACHE_WOW_DATA_TASK, insertedTask.type)
         }
@@ -215,11 +235,14 @@ class TasksServiceTest {
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
 
-            service.runTask(TaskType.CACHE_LOL_DATA_TASK)
+            val id = UUID.randomUUID().toString()
+
+            service.runTask(TaskType.CACHE_LOL_DATA_TASK, id)
 
             val insertedTask = tasksRepository.state().first()
 
             assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
         }

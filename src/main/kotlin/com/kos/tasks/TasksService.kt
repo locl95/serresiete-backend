@@ -7,7 +7,6 @@ import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
 import com.kos.views.Game
 import java.time.OffsetDateTime
-import java.util.*
 
 data class TasksService(
     private val tasksRepository: TasksRepository,
@@ -22,22 +21,22 @@ data class TasksService(
 
     suspend fun get(id: String) = tasksRepository.get(id)
 
-    suspend fun runTask(taskType: TaskType) {
+    suspend fun runTask(taskType: TaskType, taskId: String) {
         when (taskType) {
-            TaskType.TOKEN_CLEANUP_TASK -> tokenCleanup()
-            TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType)
-            TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType)
-            TaskType.TASK_CLEANUP_TASK -> taskCleanup()
+            TaskType.TOKEN_CLEANUP_TASK -> tokenCleanup(taskId)
+            TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType, taskId)
+            TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType, taskId)
+            TaskType.TASK_CLEANUP_TASK -> taskCleanup(taskId)
         }
     }
 
-    suspend fun taskCleanup() {
+    suspend fun taskCleanup(id: String) {
         logger.info("Running task cleanup task")
         val deletedTasks = tasksRepository.deleteOldTasks(olderThanDays)
         logger.info("Deleted $deletedTasks old tasks")
         tasksRepository.insertTask(
             Task.apply(
-                UUID.randomUUID().toString(),
+                id,
                 TaskType.TASK_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTasks old tasks"),
                 OffsetDateTime.now()
@@ -45,13 +44,13 @@ data class TasksService(
         )
     }
 
-    suspend fun tokenCleanup() {
+    suspend fun tokenCleanup(id: String) {
         logger.info("Running token cleanup task")
         val deletedTokens = authService.deleteExpiredTokens()
         logger.info("Deleted $deletedTokens expired tokens")
         tasksRepository.insertTask(
             Task.apply(
-                UUID.randomUUID().toString(),
+                id,
                 TaskType.TOKEN_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTokens expired tokens"),
                 OffsetDateTime.now()
@@ -59,14 +58,14 @@ data class TasksService(
         )
     }
 
-    suspend fun cacheDataTask(game: Game, taskType: TaskType) {
+    suspend fun cacheDataTask(game: Game, taskType: TaskType, id: String) {
         logger.info("Running $taskType")
         val characters = charactersService.get(game)
         val errors = dataCacheService.cache(characters, game)
         if (errors.isEmpty()) {
             tasksRepository.insertTask(
                 Task.apply(
-                    UUID.randomUUID().toString(),
+                    id,
                     taskType,
                     TaskStatus(Status.SUCCESSFUL, null),
                     OffsetDateTime.now()
@@ -75,7 +74,7 @@ data class TasksService(
         } else {
             tasksRepository.insertTask(
                 Task.apply(
-                    UUID.randomUUID().toString(),
+                    id,
                     taskType,
                     TaskStatus(Status.ERROR, errors.joinToString(",\n") { it.error() }),
                     OffsetDateTime.now()

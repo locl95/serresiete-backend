@@ -11,6 +11,17 @@ import io.ktor.server.routing.*
 fun Route.tasksRouting(tasksController: TasksController) {
     route("/tasks") {
         authenticate("auth-bearer") {
+            post {
+                tasksController.runTask(call.principal<UserIdPrincipal>()?.name, call.receive())
+                    .fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.response.headers.append(HttpHeaders.Location, "/tasks/$it")
+                        call.respond(HttpStatusCode.Created)
+                    })
+            }
+        }
+        authenticate("auth-bearer") {
             get {
                 tasksController.get(call.principal<UserIdPrincipal>()?.name)
                     .fold({
@@ -28,18 +39,6 @@ fun Route.tasksRouting(tasksController: TasksController) {
                             call.respondWithHandledError(it)
                         }, {
                             call.respond(HttpStatusCode.OK, it)
-                        })
-                }
-            }
-        }
-        route("/run") {
-            authenticate("auth-bearer") {
-                post {
-                    tasksController.runTask(call.principal<UserIdPrincipal>()?.name, call.receive())
-                        .fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.NoContent)
                         })
                 }
             }

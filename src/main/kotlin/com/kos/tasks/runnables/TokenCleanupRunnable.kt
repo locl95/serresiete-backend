@@ -4,6 +4,7 @@ import com.kos.tasks.TasksService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
+import java.util.*
 
 
 data class TokenCleanupRunnable(
@@ -12,7 +13,7 @@ data class TokenCleanupRunnable(
 ) : Runnable {
 
     override fun run() {
-        coroutineScope.launch { tasksService.tokenCleanup() }
+        coroutineScope.launch { tasksService.tokenCleanup(UUID.randomUUID().toString()) }
     }
 }
 

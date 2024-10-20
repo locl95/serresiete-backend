@@ -37,7 +37,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     )
 
     override suspend fun getCredentials(): List<Credentials> {
-        return Users.selectAll().map { resultRowToUser(it) }
+        return DatabaseFactory.dbQuery { Users.selectAll().map { resultRowToUser(it) } }
     }
 
     override suspend fun getCredentials(userName: String): Credentials? {

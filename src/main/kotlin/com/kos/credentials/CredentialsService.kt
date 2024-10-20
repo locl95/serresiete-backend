@@ -40,8 +40,14 @@ class CredentialsService(
 
     suspend fun getUserRoles(userName: String): List<Role> = credentialsRepository.getUserRoles(userName)
     suspend fun addRoleToUser(userName: String, role: Role): Unit = credentialsRepository.insertRole(userName, role)
-    suspend fun deleteRoleFromUser(userName: String, role: String): Unit = credentialsRepository.deleteRole(userName, role)
-    suspend fun getCredentials(): List<Credentials> = credentialsRepository.getCredentials()
+    suspend fun deleteRoleFromUser(userName: String, role: String): Unit =
+        credentialsRepository.deleteRole(userName, role)
+
+    suspend fun getCredentials(): List<CredentialsWithRoles> =
+        credentialsRepository.getCredentials().map {
+            CredentialsWithRoles(it.userName, getUserRoles(it.userName))
+        }
+
     suspend fun deleteCredentials(user: String) = credentialsRepository.deleteCredentials(user)
     suspend fun getRoleActivities(role: String) = rolesActivitiesRepository.getActivitiesFromRole(role)
 

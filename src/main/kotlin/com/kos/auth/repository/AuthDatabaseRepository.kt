@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import java.time.OffsetDateTime
-import java.util.*
 
 class AuthDatabaseRepository : AuthRepository {
 
@@ -46,11 +45,11 @@ class AuthDatabaseRepository : AuthRepository {
         row[Authorizations.isAccess]
     )
 
-    override suspend fun insertToken(userName: String, isAccess: Boolean): Authorization? =
+    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Authorization? =
         dbQuery {
             val insertStatement = Authorizations.insert {
                 it[Authorizations.userName] = userName
-                it[token] = UUID.randomUUID().toString()
+                it[this.token] = token
                 it[lastUsed] = OffsetDateTime.now().toString()
                 it[validUntil] = OffsetDateTime.now()
                     .plusDays(if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires).toString()

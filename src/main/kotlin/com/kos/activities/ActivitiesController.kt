@@ -10,7 +10,7 @@ import com.kos.roles.Role
 class ActivitiesController(private val activitiesService: ActivitiesService, private val credentialsService: CredentialsService) {
     suspend fun getActivities(client: String?): Either<ControllerError, List<Activity>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.getAnyActivities)) {
                     Either.Right(activitiesService.getActivities())
@@ -21,7 +21,7 @@ class ActivitiesController(private val activitiesService: ActivitiesService, pri
 
     suspend fun createActivity(client: String?, activityRequest: ActivityRequest): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.createActivities)) {
                     Either.Right(activitiesService.createActivity(activityRequest))
@@ -32,7 +32,7 @@ class ActivitiesController(private val activitiesService: ActivitiesService, pri
 
     suspend fun deleteActivity(client: String?, activity: Activity): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.deleteActivities)) {
                     Either.Right(activitiesService.deleteActivity(activity))
@@ -43,7 +43,7 @@ class ActivitiesController(private val activitiesService: ActivitiesService, pri
 
     suspend fun getActivitiesFromRole(client: String?, role: Role): Either<ControllerError, Set<Activity>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.getAnyActivities)) {
                     Either.Right(credentialsService.getRoleActivities(role))

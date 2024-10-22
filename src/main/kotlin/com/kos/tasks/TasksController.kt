@@ -18,7 +18,7 @@ class TasksController(private val tasksService: TasksService, private val creden
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     suspend fun runTask(client: String?, taskRequest: TaskRequest): Either<ControllerError, String> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.runTask)) {
                     val taskId = UUID.randomUUID().toString()
@@ -33,7 +33,7 @@ class TasksController(private val tasksService: TasksService, private val creden
 
     suspend fun get(client: String?): Either<ControllerError, List<Task>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.getTasks)) {
                     Either.Right(tasksService.get())
@@ -44,7 +44,7 @@ class TasksController(private val tasksService: TasksService, private val creden
 
     suspend fun get(client: String?, id: String): Either<ControllerError, Task> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeTask = tasksService.get(id)) {
                     null -> Either.Left(NotFound(id))

@@ -4,10 +4,9 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
-import kotlin.math.log
 
-interface ControllerError
-class NotAuthorized : ControllerError
+sealed interface ControllerError
+data object NotAuthorized : ControllerError
 data class NotEnoughPermissions(val user: String) : ControllerError
 data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
@@ -34,6 +33,10 @@ class TooMuchViews : ViewsError
 interface DatabaseError : ControllerError
 data class InsertCharacterError(val message: String) : DatabaseError
 
+interface AuthError: ControllerError {
+    val message: String
+}
+
 suspend fun ApplicationCall.respondLogging(error: String) {
     val logger = LoggerFactory.getLogger("ktor.application")
     logger.error(error)
@@ -51,5 +54,9 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
         is InsertCharacterError -> respondLogging(error.message)
+        is AuthError -> respond(HttpStatusCode.Unauthorized, error.message)
+        is DatabaseError -> respondLogging(error.toString()) //TODO: improve
+        is HttpError -> TODO()
+        is ViewsError -> TODO()
     }
 }

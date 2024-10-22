@@ -32,8 +32,8 @@ class AuthControllerTest {
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
         val authRepositoryWithState = authRepository.withState(authState)
 
-        val authService = AuthService(authRepositoryWithState)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val authService = AuthService(authRepositoryWithState, credentialsService)
         return AuthController(authService, credentialsService)
     }
 

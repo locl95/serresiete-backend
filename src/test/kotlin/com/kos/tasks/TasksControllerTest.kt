@@ -6,7 +6,6 @@ import com.kos.auth.AuthService
 import com.kos.auth.Authorization
 import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.characters.CharactersService
-import com.kos.characters.CharactersTestHelper
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
@@ -24,7 +23,6 @@ import com.kos.roles.RolesTestHelper
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksInMemoryRepository
-import com.kos.views.ViewsTestHelper
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito
 import java.time.OffsetDateTime
@@ -56,11 +54,12 @@ class TasksControllerTest {
         val tasksRepositoryWithState = tasksRepository.withState(tasksState)
         val authRepositoryWithState = authRepository.withState(authState)
 
+        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val authService = AuthService(authRepositoryWithState)
+        val authService = AuthService(authRepositoryWithState, credentialsService)
         val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+
         return TasksController(tasksService, credentialsService)
     }
 

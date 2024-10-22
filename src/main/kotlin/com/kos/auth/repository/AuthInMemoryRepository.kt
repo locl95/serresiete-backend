@@ -3,7 +3,6 @@ package com.kos.auth.repository
 import com.kos.auth.Authorization
 import com.kos.common.InMemoryRepository
 import java.time.OffsetDateTime
-import java.util.*
 
 class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
 
@@ -11,9 +10,9 @@ class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
     private val daysBeforeRefreshTokenExpires: Long = 30
     private val authorizations = mutableListOf<Authorization>()
 
-    override suspend fun insertToken(userName: String, isAccess: Boolean): Authorization {
+    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Authorization {
         val authorization = Authorization(
-            userName, UUID.randomUUID().toString(), OffsetDateTime.now(), OffsetDateTime.now().plusDays(
+            userName, token, OffsetDateTime.now(), OffsetDateTime.now().plusDays(
                 if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires
             ), isAccess
         )
@@ -44,7 +43,7 @@ class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
         return this
     }
 
-    override fun clear(): Unit {
+    override fun clear() {
         authorizations.clear()
     }
 

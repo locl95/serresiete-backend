@@ -1,5 +1,6 @@
 package com.kos.auth
 
+import com.kos.common.AuthError
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -40,10 +41,19 @@ data class LoginResponse(
     val refreshToken: Authorization?
 )
 
-interface TokenError {
+interface TokenError : AuthError {
     val token: String
 }
 
-data class TokenNotFound(override val token: String) : TokenError
-data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError
-data class TokenWrongMode(override val token: String, val isAccess: Boolean) : TokenError
+data class TokenNotFound(override val token: String) : TokenError {
+    override val message: String = "$token not found"
+}
+
+data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError {
+    override val message: String = "$token expired"
+}
+data class TokenWrongMode(override val token: String, val isAccess: Boolean) : TokenError {
+    override val message: String = "$token wrong mode"
+}
+
+data class JWTCreationError(override val message: String) : AuthError

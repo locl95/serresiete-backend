@@ -8,6 +8,7 @@ import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.auth.repository.AuthRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -31,9 +32,11 @@ abstract class AuthRepositoryTestCommon {
     @Test
     fun `given an empty repository i can insert an authorization`() {
         runBlocking {
-            val userName = repository.insertToken(user, isAccess = true)?.userName
+            val token = UUID.randomUUID().toString()
+            val userName = repository.insertToken(user, token, isAccess = true)?.userName
             assertEquals(user, userName)
             val finalStateOfAuthorizations = repository.state()
+            assertContains(finalStateOfAuthorizations.map { it.token }, token)
             assertContains(finalStateOfAuthorizations.map { it.userName }, user)
         }
     }

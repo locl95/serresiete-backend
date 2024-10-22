@@ -12,7 +12,7 @@ import com.kos.credentials.CredentialsService
 class RolesController(private val rolesService: RolesService, private val credentialsService: CredentialsService) {
     suspend fun getRoles(client: String?): Either<ControllerError, List<Role>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.getAnyRoles)) {
                     Either.Right(rolesService.getRoles())
@@ -23,7 +23,7 @@ class RolesController(private val rolesService: RolesService, private val creden
 
     suspend fun createRole(client: String?, roleRequest: RoleRequest): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.createRoles)) {
                     Either.Right(rolesService.createRole(roleRequest))
@@ -34,7 +34,7 @@ class RolesController(private val rolesService: RolesService, private val creden
 
     suspend fun deleteRole(client: String?, role: Role): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.deleteRoles)) {
                     Either.Right(rolesService.deleteRole(role))
@@ -49,7 +49,7 @@ class RolesController(private val rolesService: RolesService, private val creden
         role: Role
     ): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.addActivityToRole)) {
                     Either.Right(rolesService.addActivityToRole(activityRequest, role))
@@ -60,7 +60,7 @@ class RolesController(private val rolesService: RolesService, private val creden
 
     suspend fun deleteActivityFromRole(client: String?, role: Role, activity: Activity): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.deleteActivityFromRole)) {
                     Either.Right(rolesService.removeActivityFromRole(activity, role))

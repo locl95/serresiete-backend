@@ -10,7 +10,7 @@ import com.kos.roles.Role
 class CredentialsController(val credentialsService: CredentialsService) {
     suspend fun createCredential(client: String?, credentials: Credentials): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.createCredentials)) {
                     Either.Right(credentialsService.createCredentials(credentials))
@@ -21,7 +21,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
 
     suspend fun editCredential(client: String?, credentials: Credentials): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.editCredentials)) {
                     Either.Right(credentialsService.editCredentials(credentials))
@@ -32,7 +32,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
 
     suspend fun deleteCredential(client: String?, userToDelete: String): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.deleteCredentials)) {
                     Either.Right(credentialsService.deleteCredentials(userToDelete))
@@ -43,7 +43,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
 
     suspend fun getCredentials(client: String?): Either<ControllerError, List<Credentials>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.getAnyCredentials)) {
                     Either.Right(credentialsService.getCredentials())
@@ -54,7 +54,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
 
     suspend fun getUserRoles(client: String?, user: String): Either<ControllerError, List<Role>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if ((user == client && credentialsService.hasPermissions(
                         client,
@@ -71,7 +71,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
     }
     suspend fun addRoleToUser(client: String?, user: String, role: Role): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.addRoleToUser)) {
                     Either.Right(credentialsService.addRoleToUser(user, role))
@@ -81,7 +81,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
     }
     suspend fun deleteRoleFromUser(client: String?, user: String, role: Role): Either<ControllerError, Unit> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.deleteRoleFromUser)) {
                     Either.Right(credentialsService.deleteRoleFromUser(user, role))

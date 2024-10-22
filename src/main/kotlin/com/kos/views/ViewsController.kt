@@ -15,7 +15,7 @@ class ViewsController(
 
     suspend fun getViews(client: String?): Either<ControllerError, List<SimpleView>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(
                         client,
@@ -34,7 +34,7 @@ class ViewsController(
 
     suspend fun getView(client: String?, id: String): Either<ControllerError, View> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
@@ -54,7 +54,7 @@ class ViewsController(
 
     suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<Data>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
@@ -71,7 +71,7 @@ class ViewsController(
 
     suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<Data>> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.getSimple(id)) {
                     null -> Either.Left(NotFound(id))
@@ -92,7 +92,7 @@ class ViewsController(
 
     suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, ViewModified> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> {
                 if (credentialsService.hasPermissions(client, Activities.createViews)) {
                     when (val res = viewsService.create(client, request)) {
@@ -106,7 +106,7 @@ class ViewsController(
 
     suspend fun editView(client: String?, request: ViewRequest, id: String): Either<ControllerError, ViewModified> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
@@ -122,7 +122,7 @@ class ViewsController(
 
     suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewModified> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
@@ -138,7 +138,7 @@ class ViewsController(
 
     suspend fun deleteView(client: String?, id: String): Either<ControllerError, ViewDeleted> {
         return when (client) {
-            null -> Either.Left(NotAuthorized())
+            null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {

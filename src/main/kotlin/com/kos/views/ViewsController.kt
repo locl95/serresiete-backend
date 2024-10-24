@@ -3,30 +3,22 @@ package com.kos.views
 import arrow.core.Either
 import arrow.core.flatten
 import com.kos.activities.Activities
+import com.kos.activities.Activity
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.httpclients.domain.Data
-import com.kos.httpclients.domain.RaiderIoData
 
 class ViewsController(
     private val viewsService: ViewsService,
     private val credentialsService: CredentialsService
 ) {
 
-    suspend fun getViews(client: String?): Either<ControllerError, List<SimpleView>> {
+    suspend fun getViews(client: String?, activities: Set<Activity>): Either<ControllerError, List<SimpleView>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (credentialsService.hasPermissions(
-                        client,
-                        Activities.getAnyViews
-                    )
-                ) Either.Right(viewsService.getViews())
-                else if (credentialsService.hasPermissions(
-                        client,
-                        Activities.getOwnViews
-                    )
-                ) Either.Right(viewsService.getOwnViews(client))
+                if (activities.contains(Activities.getAnyViews)) Either.Right(viewsService.getViews())
+                else if (activities.contains(Activities.getOwnViews)) Either.Right(viewsService.getOwnViews(client))
                 else Either.Left(NotEnoughPermissions(client))
             }
         }

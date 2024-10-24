@@ -3,7 +3,7 @@ package com.kos.characters
 import arrow.core.Either
 import arrow.core.flatMap
 import com.kos.characters.repository.CharactersRepository
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
 import com.kos.common.WithLogger
 import com.kos.common.collect
 import com.kos.common.split
@@ -22,7 +22,7 @@ data class CharactersService(
     suspend fun createAndReturnIds(
         characters: List<CharacterCreateRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Long>> {
+    ): Either<InsertError, List<Long>> {
         fun splitExistentAndNew(
             charactersRequest: List<CharacterCreateRequest>,
             currentCharacters: List<Character>

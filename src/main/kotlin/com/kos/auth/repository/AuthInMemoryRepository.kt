@@ -1,7 +1,9 @@
 package com.kos.auth.repository
 
+import arrow.core.Either
 import com.kos.auth.Authorization
 import com.kos.common.InMemoryRepository
+import com.kos.common.InsertError
 import java.time.OffsetDateTime
 
 class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
@@ -10,14 +12,17 @@ class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
     private val daysBeforeRefreshTokenExpires: Long = 30
     private val authorizations = mutableListOf<Authorization>()
 
-    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Authorization {
-        val authorization = Authorization(
-            userName, token, OffsetDateTime.now(), OffsetDateTime.now().plusDays(
-                if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires
-            ), isAccess
-        )
-        authorizations.add(authorization)
-        return authorization
+    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Either<InsertError, Authorization?> {
+        return if(authorizations.map { it.token }.contains(token)) Either.Left(InsertError("Error inserting token $token"))
+        else {
+            val authorization = Authorization(
+                userName, token, OffsetDateTime.now(), OffsetDateTime.now().plusDays(
+                    if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires
+                ), isAccess
+            )
+            authorizations.add(authorization)
+            Either.Right(authorization)
+        }
     }
 
     override suspend fun deleteTokensFromUser(userName: String) = authorizations.removeIf { it.userName == userName }

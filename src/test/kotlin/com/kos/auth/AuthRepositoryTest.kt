@@ -8,16 +8,16 @@ import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.auth.repository.AuthRepository
 import com.kos.common.DatabaseFactory
 import kotlinx.coroutines.runBlocking
-import java.util.UUID
+import org.junit.Assert.assertTrue
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 abstract class AuthRepositoryTestCommon {
 
     abstract val repository: AuthRepository
+
     @BeforeTest
     abstract fun beforeEach()
 
@@ -32,8 +32,9 @@ abstract class AuthRepositoryTestCommon {
     @Test
     fun `given an empty repository i can insert an authorization`() {
         runBlocking {
-            val token = UUID.randomUUID().toString()
-            val userName = repository.insertToken(user, token, isAccess = true)?.userName
+            val token =
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im9zY2FyIiwiYWN0aXZpdGllcyI6WyJhZGQgYWN0aXZpdHkgdG8gcm9sZSIsImFkZCByb2xlIHRvIHVzZXIiLCJjcmVhdGUgYSB2aWV3IiwiY3JlYXRlIGFjdGl2aXRpZXMiLCJjcmVhdGUgY3JlZGVudGlhbHMiLCJjcmVhdGUgcm9sZXMiLCJkZWxldGUgYWN0aXZpdGllcyIsImRlbGV0ZSBhY3Rpdml0eSBmcm9tIHJvbGUiLCJkZWxldGUgYW55IHZpZXciLCJkZWxldGUgY3JlZGVudGlhbHMiLCJkZWxldGUgb3duIHZpZXciLCJkZWxldGUgcm9sZSBmcm9tIHVzZXIiLCJkZWxldGUgcm9sZXMiLCJlZGl0IGFueSB2aWV3IiwiZWRpdCBjcmVkZW50aWFscyIsImVkaXQgb3duIHZpZXciLCJnZXQgYW55IGFjdGl2aXRpZXMiLCJnZXQgYW55IGNyZWRlbnRpYWxzIiwiZ2V0IGFueSBjcmVkZW50aWFscyByb2xlcyIsImdldCBhbnkgcm9sZXMiLCJnZXQgYW55IHZpZXciLCJnZXQgYW55IHZpZXdzIiwiZ2V0IG93biBjcmVkZW50aWFscyByb2xlcyIsImdldCBvd24gdmlldyIsImdldCBvd24gdmlld3MiLCJnZXQgdGFzayIsImdldCB0YXNrcyIsImdldCB2aWV3IGNhY2hlZCBkYXRhIiwiZ2V0IHZpZXcgZGF0YSIsImxvZ2luIiwibG9nb3V0IiwicnVuIHRhc2siXX0.7FhxhHM0VtRTmWsu4Oy7A_dLroiO0jMFIDq_8ZnDrOQ"
+            val userName = repository.insertToken(user, token, isAccess = true).getOrNull()?.userName
             assertEquals(user, userName)
             val finalStateOfAuthorizations = repository.state()
             assertContains(finalStateOfAuthorizations.map { it.token }, token)
@@ -47,6 +48,18 @@ abstract class AuthRepositoryTestCommon {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
             assertTrue(repositoryWithState.deleteTokensFromUser(basicAuthorization.userName))
             assertTrue(repositoryWithState.state().isEmpty())
+        }
+    }
+
+    @Test
+    fun `given a repository with one authorization i cannot insert the same token`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(listOf(basicAuthorization))
+            val insertToken = repositoryWithState.insertToken("differentUser", token, isAccess = false)
+            println(insertToken)
+            println(repositoryWithState.state().toString())
+            assertTrue(insertToken.isLeft())
+            assertTrue(repositoryWithState.state().size == 1)
         }
     }
 }

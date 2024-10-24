@@ -31,7 +31,7 @@ class NotPublished(val id: String) : ViewsError
 class TooMuchViews : ViewsError
 
 interface DatabaseError : ControllerError
-data class InsertCharacterError(val message: String) : DatabaseError
+data class InsertError(val message: String) : DatabaseError
 
 interface AuthError: ControllerError {
     val message: String
@@ -53,7 +53,7 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is BadRequest -> respond(HttpStatusCode.BadRequest, error.problem)
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
-        is InsertCharacterError -> respondLogging(error.message)
+        is InsertError -> respondLogging(error.message)
         is AuthError -> respond(HttpStatusCode.Unauthorized, error.message)
         is DatabaseError -> respondLogging(error.toString()) //TODO: improve
         is HttpError -> TODO()

@@ -1,10 +1,13 @@
 package com.kos.auth.repository
 
+import arrow.core.Either
 import com.kos.auth.Authorization
 import com.kos.common.DatabaseFactory.dbQuery
+import com.kos.common.InsertError
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import java.sql.SQLException
 import java.time.OffsetDateTime
 
 class AuthDatabaseRepository : AuthRepository {
@@ -27,7 +30,7 @@ class AuthDatabaseRepository : AuthRepository {
 
     object Authorizations : Table() {
         val userName = varchar("user_name", 48)
-        val token = varchar("token", 128)
+        val token = text("token")
         val lastUsed = text("last_used")
         val validUntil = text("valid_until").nullable()
         val isAccess = bool("is_access")
@@ -45,18 +48,22 @@ class AuthDatabaseRepository : AuthRepository {
         row[Authorizations.isAccess]
     )
 
-    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Authorization? =
+    override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Either<InsertError, Authorization?> =
         dbQuery {
-            val insertStatement = Authorizations.insert {
-                it[Authorizations.userName] = userName
-                it[this.token] = token
-                it[lastUsed] = OffsetDateTime.now().toString()
-                it[validUntil] = OffsetDateTime.now()
-                    .plusDays(if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires).toString()
-                it[Authorizations.isAccess] = isAccess
-            }
+            try {
+                val insertStatement = Authorizations.insert {
+                    it[Authorizations.userName] = userName
+                    it[this.token] = token
+                    it[lastUsed] = OffsetDateTime.now().toString()
+                    it[validUntil] = OffsetDateTime.now()
+                        .plusDays(if (isAccess) daysBeforeAccessTokenExpires else daysBeforeRefreshTokenExpires).toString()
+                    it[Authorizations.isAccess] = isAccess
+                }
 
-            insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) }
+                Either.Right(insertStatement.resultedValues?.singleOrNull()?.let { resultRowToAuthorization(it) })
+            } catch (e: SQLException) {
+                Either.Left(InsertError(e.message ?: e.stackTraceToString()))
+            }
         }
 
     override suspend fun deleteTokensFromUser(userName: String): Boolean {

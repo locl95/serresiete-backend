@@ -99,7 +99,7 @@ class AuthServiceTest {
                 assertTrue(authInMemoryRepository.state().contains(it.accessToken))
                 assertTrue(authInMemoryRepository.state().contains(it.refreshToken))
             }.onLeft {
-                fail(it.message)
+                fail(it.toString())
             }
         }
     }

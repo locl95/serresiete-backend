@@ -3,7 +3,7 @@ package com.kos.characters.repository
 import arrow.core.Either
 import com.kos.characters.*
 import com.kos.common.DatabaseFactory.dbQuery
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
 import com.kos.views.Game
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -77,7 +77,7 @@ class CharactersDatabaseRepository : CharactersRepository {
     override suspend fun insert(
         characters: List<CharacterInsertRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Character>> {
+    ): Either<InsertError, List<Character>> {
         return dbQuery {
             val charsToInsert: List<Character> = characters.map {
                 when (it) {
@@ -127,10 +127,10 @@ class CharactersDatabaseRepository : CharactersRepository {
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 } catch (e: IllegalArgumentException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 }
             }
         }

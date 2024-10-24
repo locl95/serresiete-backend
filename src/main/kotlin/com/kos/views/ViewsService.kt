@@ -8,14 +8,14 @@ import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.datacache.DataCacheService
 import com.kos.httpclients.domain.Data
-import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.domain.RaiderIoData
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.views.repository.ViewsRepository
-import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
@@ -60,7 +60,7 @@ class ViewsService(
     }
 
     suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
+        return when (val characters: Either<InsertError, List<Long>>? = request.characters.fold({ null },
             { charactersRequest ->
                 charactersService.createAndReturnIds(
                     charactersRequest,
@@ -139,5 +139,6 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds, oldFirst = true)
+    suspend fun getCachedData(simpleView: SimpleView) =
+        dataCacheService.getData(simpleView.characterIds, oldFirst = true)
 }

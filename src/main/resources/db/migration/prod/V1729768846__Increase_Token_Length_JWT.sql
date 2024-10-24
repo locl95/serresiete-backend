@@ -1,0 +1,3 @@
+ALTER TABLE authorizations DROP CONSTRAINT IF EXISTS authorizations_pk;
+ALTER TABLE authorizations DROP CONSTRAINT IF EXISTS CONSTRAINT_7;
+ALTER TABLE authorizations ALTER COLUMN token SET DATA TYPE text;

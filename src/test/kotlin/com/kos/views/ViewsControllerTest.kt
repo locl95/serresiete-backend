@@ -2,10 +2,17 @@ package com.kos.views
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
+import com.kos.assertTrue
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.CharactersTestHelper.basicWowRequest2
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.common.NotEnoughPermissions
 import com.kos.common.NotFound
+import com.kos.common.TooMuchViews
 import com.kos.common.getLeftOrNull
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
@@ -13,33 +20,24 @@ import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
-import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper.role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
-import com.kos.views.ViewsTestHelper.basicSimpleWowView
-import com.kos.views.repository.ViewsInMemoryRepository
-import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito.mock
-import com.kos.assertTrue
-import com.kos.characters.CharactersTestHelper.basicLolCharacter
-import com.kos.characters.CharactersTestHelper.basicWowCharacter
-import com.kos.characters.CharactersTestHelper.basicWowCharacter2
-import com.kos.characters.CharactersTestHelper.basicWowRequest2
-import com.kos.characters.CharactersTestHelper.emptyCharactersState
-import com.kos.characters.LolCharacterRequest
-import com.kos.characters.repository.CharactersState
-import com.kos.common.TooMuchViews
 import com.kos.datacache.RaiderIoMockHelper
 import com.kos.datacache.RaiderIoMockHelper.raiderIoData
 import com.kos.datacache.RaiderIoMockHelper.raiderioCachedData
 import com.kos.datacache.RiotMockHelper.riotData
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
+import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.Role
+import com.kos.roles.RolesTestHelper.role
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
+import com.kos.views.ViewsTestHelper.basicSimpleWowView
+import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
+import kotlinx.coroutines.runBlocking
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import kotlin.test.*
 
@@ -99,7 +97,10 @@ class ViewsControllerTest {
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getOwnViews)))
             )
-            assertEquals(listOf(basicSimpleWowView), controller.getViews("owner").getOrNull())
+            assertEquals(
+                listOf(basicSimpleWowView),
+                controller.getViews("owner", setOf(Activities.getOwnViews)).getOrNull()
+            )
         }
     }
 
@@ -119,7 +120,10 @@ class ViewsControllerTest {
                 listOf(),
                 mapOf(Pair(role, listOf(Activities.getAnyViews)))
             )
-            assertEquals(listOf(basicSimpleWowView, notOwnerView), controller.getViews("owner").getOrNull())
+            assertEquals(
+                listOf(basicSimpleWowView, notOwnerView),
+                controller.getViews("owner", setOf(Activities.getAnyViews)).getOrNull()
+            )
         }
     }
 

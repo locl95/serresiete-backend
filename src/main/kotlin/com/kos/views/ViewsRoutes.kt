@@ -1,6 +1,7 @@
 package com.kos.views
 
 import com.kos.common.respondWithHandledError
+import com.kos.plugins.UserWithActivities
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -13,9 +14,10 @@ fun Route.viewsRouting(
     viewsController: ViewsController
 ) {
     route("/views") {
-        authenticate("auth-bearer") {
+        authenticate("auth-bearer-jwt") {
             get {
-                viewsController.getViews(call.principal<UserIdPrincipal>()?.name).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.getViews(userWithActivities?.name, userWithActivities?.activities.orEmpty()).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.OK, it)

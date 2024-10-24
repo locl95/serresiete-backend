@@ -30,18 +30,6 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
             }
         }
         authenticate("auth-bearer") {
-            delete("/{user}") {
-                credentialsController.deleteCredential(
-                    call.principal<UserIdPrincipal>()?.name,
-                    call.parameters["user"].orEmpty()
-                ).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.NoContent)
-                })
-            }
-        }
-        authenticate("auth-bearer") {
             get {
                 credentialsController.getCredentials(
                     call.principal<UserIdPrincipal>()?.name,
@@ -53,6 +41,30 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
             }
         }
         route("/{user}") {
+            authenticate("auth-bearer") {
+                delete {
+                    credentialsController.deleteCredential(
+                        call.principal<UserIdPrincipal>()?.name,
+                        call.parameters["user"].orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
+                }
+            }
+            authenticate("auth-bearer") {
+                get {
+                    credentialsController.getCredential(
+                        call.principal<UserIdPrincipal>()?.name,
+                        call.parameters["user"].orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.OK, it)
+                    })
+                }
+            }
             route("/roles") {
                 authenticate("auth-bearer") {
                     get {

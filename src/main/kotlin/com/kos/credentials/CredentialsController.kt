@@ -5,6 +5,7 @@ import com.kos.activities.Activities
 import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
+import com.kos.common.NotFound
 import com.kos.roles.Role
 
 class CredentialsController(val credentialsService: CredentialsService) {
@@ -52,6 +53,20 @@ class CredentialsController(val credentialsService: CredentialsService) {
         }
     }
 
+    suspend fun getCredential(client: String?, user: String): Either<ControllerError, CredentialsWithRoles> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized())
+            else -> {
+                if (credentialsService.hasPermissions(client, Activities.getAnyCredential)) {
+                    when (val credential = credentialsService.getCredential(user)) {
+                        null -> Either.Left(NotFound(user))
+                        else -> Either.Right(credential)
+                    }
+                } else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
     suspend fun getUserRoles(client: String?, user: String): Either<ControllerError, List<Role>> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
@@ -69,6 +84,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
             }
         }
     }
+
     suspend fun addRoleToUser(client: String?, user: String, role: Role): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
@@ -79,6 +95,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
             }
         }
     }
+
     suspend fun deleteRoleFromUser(client: String?, user: String, role: Role): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized())

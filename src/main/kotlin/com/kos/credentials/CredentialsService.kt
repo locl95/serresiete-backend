@@ -50,6 +50,8 @@ class CredentialsService(
 
     suspend fun deleteCredentials(user: String) = credentialsRepository.deleteCredentials(user)
     suspend fun getRoleActivities(role: String) = rolesActivitiesRepository.getActivitiesFromRole(role)
-
-
+    suspend fun getCredential(user: String): CredentialsWithRoles? =
+        credentialsRepository.getCredentials(user)?.let {
+            CredentialsWithRoles(it.userName, getUserRoles(it.userName))
+        }
 }

@@ -7,6 +7,7 @@ object Activities {
     const val addActivityToRole= "add activity to role"
     const val deleteCredentials = "delete credentials"
     const val getAnyCredentials = "get any credentials"
+    const val getAnyCredential = "get any credential"
     const val getAnyView = "get any view"
     const val createViews = "create a view"
     const val getAnyViews = "get any views"

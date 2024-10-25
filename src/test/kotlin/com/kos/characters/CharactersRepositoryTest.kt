@@ -11,17 +11,19 @@ import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.common.DatabaseFactory
 import com.kos.views.Game
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.*
 
 abstract class CharactersRepositoryTestCommon {
 
     abstract val repository: CharactersRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given an empty repository i can insert wow characters`() {
@@ -118,7 +120,8 @@ abstract class CharactersRepositoryTestCommon {
     fun `given a repository with lol characters, I can insert more`() {
         runBlocking {
             val repositoryWithState = repository.withState(CharactersState(listOf(), listOf(basicLolCharacter)))
-            val request = basicLolCharacterEnrichedRequest.copy(puuid = "different-puuid", summonerId = "different-summoner-id")
+            val request =
+                basicLolCharacterEnrichedRequest.copy(puuid = "different-puuid", summonerId = "different-summoner-id")
             val inserted = repositoryWithState.insert(listOf(request), Game.LOL)
             inserted
                 .onRight { characters -> assertEquals(listOf<Long>(2), characters.map { it.id }) }
@@ -129,7 +132,7 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `i can insert a lol character with a tag longer than 3 characters`() {
         runBlocking {
-            val request = basicLolCharacterEnrichedRequest.copy(tag= "12345")
+            val request = basicLolCharacterEnrichedRequest.copy(tag = "12345")
             val inserted = repository.insert(listOf(request), Game.LOL)
             inserted
                 .onRight { characters -> assertEquals(listOf<Long>(1), characters.map { it.id }) }
@@ -142,14 +145,33 @@ abstract class CharactersRepositoryTestCommon {
 
 class CharactersInMemoryRepositoryTest : CharactersRepositoryTestCommon() {
     override val repository = CharactersInMemoryRepository()
-    override fun beforeEach() {
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CharactersDatabaseRepositoryTest : CharactersRepositoryTestCommon() {
-    override val repository = CharactersDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = CharactersDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
     }
 }

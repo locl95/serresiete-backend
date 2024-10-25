@@ -47,7 +47,7 @@ class TasksControllerTest {
         charactersState: CharactersState,
         dataCacheState: List<DataCache>,
         authState: List<Authorization>,
-        rolesActivitiesState: Map<Role, List<Activity>>
+        rolesActivitiesState: Map<Role, Set<Activity>>
     ): TasksController {
         val charactersRepositoryWithState = charactersRepository.withState(charactersState)
         val dataCacheRepositoryWithState = dataCacheRepository.withState(dataCacheState)
@@ -80,7 +80,7 @@ class TasksControllerTest {
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(RolesTestHelper.role, listOf(Activities.getTasks)))
+                mapOf(Pair(RolesTestHelper.role, setOf(Activities.getTasks)))
             )
             assertEquals(listOf(task), controller.get("owner").getOrNull())
         }
@@ -103,7 +103,7 @@ class TasksControllerTest {
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(RolesTestHelper.role, listOf(Activities.getTask)))
+                mapOf(Pair(RolesTestHelper.role, setOf(Activities.getTask)))
             )
             assertEquals(task, controller.get("owner", knownId).getOrNull())
         }

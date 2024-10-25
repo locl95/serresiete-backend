@@ -3,12 +3,14 @@ package com.kos.tasks.repository
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
 import java.util.*
 
-class TasksDatabaseRepository : TasksRepository {
+class TasksDatabaseRepository(private val db: Database) : TasksRepository {
     object Tasks : Table() {
         val id = text("id")
         val type = text("type")
@@ -26,7 +28,7 @@ class TasksDatabaseRepository : TasksRepository {
     )
 
     override suspend fun insertTask(task: Task) {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.insert {
                 it[id] = task.id
                 it[type] = task.type.toString()
@@ -37,32 +39,32 @@ class TasksDatabaseRepository : TasksRepository {
     }
 
     override suspend fun get(): List<Task> {
-        return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.selectAll().map { resultRowToTask(it) } }
     }
 
     override suspend fun get(id: String): Task? {
-        return dbQuery { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
     }
 
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.deleteWhere { inserted.less(OffsetDateTime.now().minusDays(olderThanDays).toString()) }
         }
     }
 
     override suspend fun getLastExecution(taskType: TaskType): Task? {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1)
                 .map { resultRowToTask(it) }.firstOrNull()
         }
     }
 
     override suspend fun state(): List<Task> {
-        return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.selectAll().map { resultRowToTask(it) } }
     }
 
     override suspend fun withState(initialState: List<Task>): TasksRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.batchInsert(initialState) {
                 this[Tasks.id] = it.id
                 this[Tasks.type] = it.type.toString()

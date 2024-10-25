@@ -4,12 +4,14 @@ import com.kos.common.DatabaseFactory
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsRole
 import com.kos.roles.Role
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-class CredentialsDatabaseRepository : CredentialsRepository {
+class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepository {
     override suspend fun withState(initialState: CredentialsRepositoryState): CredentialsDatabaseRepository {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Users.batchInsert(initialState.users) {
                 this[Users.userName] = it.userName
                 this[Users.password] = it.password
@@ -41,13 +43,13 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     }
 
     override suspend fun getCredentials(userName: String): Credentials? {
-        return DatabaseFactory.dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Users.select { Users.userName.eq(userName) }.map { resultRowToUser(it) }.singleOrNull()
         }
     }
 
     override suspend fun insertCredentials(credentials: Credentials): Unit {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Users.insert {
                 it[userName] = credentials.userName
                 it[password] = credentials.password
@@ -68,7 +70,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     )
 
     override suspend fun editCredentials(userName: String, newPassword: String) {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Users.update({ Users.userName.eq(userName) }) {
                 it[password] = newPassword
             }
@@ -76,14 +78,14 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     }
 
     override suspend fun getUserRoles(userName: String): List<Role> {
-        return DatabaseFactory.dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRoles.select { CredentialsRoles.userName.eq(userName) }
                 .map { resultRowToCredentialsRoles(it).role }
         }
     }
 
     override suspend fun insertRole(userName: String, role: Role) {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRoles.insert {
                 it[CredentialsRoles.userName] = userName
                 it[CredentialsRoles.role] = role
@@ -92,7 +94,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     }
 
     override suspend fun deleteRole(userName: String, role: String) {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role) and CredentialsRoles.userName.eq(userName) }
         }
     }
@@ -104,7 +106,7 @@ class CredentialsDatabaseRepository : CredentialsRepository {
     }
 
     override suspend fun state(): CredentialsRepositoryState {
-        return DatabaseFactory.dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRepositoryState(
                 Users.selectAll().map { resultRowToUser(it) },
                 CredentialsRoles.selectAll().map { resultRowToCredentialsRoles(it) }.groupBy { it.userName }

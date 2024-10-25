@@ -15,7 +15,7 @@ object DatabaseFactory {
     private val password = System.getenv("POSTGRES_PASSWORD") ?: ""
     private val driver = System.getenv("POSTGRES_DRIVER") ?: "org.h2.Driver"
 
-    fun init(mustClean: Boolean) {
+    fun init(mustClean: Boolean): Database {
 
         fun hikari(): DataSource {
             val config = HikariConfig()
@@ -44,9 +44,10 @@ object DatabaseFactory {
             .load()
 
 
-        Database.connect(hikari())
+        val db = Database.connect(hikari())
         if (mustClean) flyway.clean()
         flyway.migrate()
+        return db
     }
 
     suspend fun <T> dbQuery(block: suspend () -> T): T =

@@ -5,15 +5,18 @@ import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.activities.repository.ActivitiesDatabaseRepository
 import com.kos.activities.repository.ActivitiesInMemoryRepository
 import com.kos.activities.repository.ActivitiesRepository
-import com.kos.common.DatabaseFactory
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.*
 
 abstract class ActivitiesRepositoryTestCommon {
 
     abstract val repository: ActivitiesRepository
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given a repository with activities i can retrieve them`() {
@@ -35,7 +38,7 @@ abstract class ActivitiesRepositoryTestCommon {
     @Test
     fun `given a repository with one activity i can delete it`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(basicActivity))
+            val repositoryWithState = repository.withState(setOf(basicActivity))
             repositoryWithState.deleteActivity(basicActivity)
             assertTrue(repositoryWithState.state().isEmpty())
         }
@@ -44,14 +47,36 @@ abstract class ActivitiesRepositoryTestCommon {
 
 class ActivitiesInMemoryRepositoryTest : ActivitiesRepositoryTestCommon() {
     override val repository = ActivitiesInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ActivitiesDatabaseRepositoryTest : ActivitiesRepositoryTestCommon() {
-    override val repository: ActivitiesRepository = ActivitiesDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository: ActivitiesRepository =
+        ActivitiesDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        println("ASDGDSGDSGDSGDGDSGDSGDS")
+        embeddedPostgres.close()
     }
 }

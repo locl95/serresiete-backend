@@ -49,41 +49,42 @@ fun Application.module() {
 
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    DatabaseFactory.init(mustClean = false)
+    val db = DatabaseFactory.init(mustClean = false)
+
 
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
 
-    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository()
+    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
 
-    val credentialsRepository = CredentialsDatabaseRepository()
+    val credentialsRepository = CredentialsDatabaseRepository(db)
     val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
     val credentialsController = CredentialsController(credentialsService)
 
-    val authRepository = AuthDatabaseRepository()
+    val authRepository = AuthDatabaseRepository(db)
     val authService = AuthService(authRepository)
     val authController = AuthController(authService, credentialsService)
 
-    val activitiesRepository = ActivitiesDatabaseRepository()
+    val activitiesRepository = ActivitiesDatabaseRepository(db)
     val activitiesService = ActivitiesService(activitiesRepository)
     val activitiesController = ActivitiesController(activitiesService, credentialsService)
 
-    val rolesRepository = RolesDatabaseRepository()
+    val rolesRepository = RolesDatabaseRepository(db)
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
     val rolesController = RolesController(rolesService, credentialsService)
 
-    val charactersRepository = CharactersDatabaseRepository()
+    val charactersRepository = CharactersDatabaseRepository(db)
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
 
-    val viewsRepository = ViewsDatabaseRepository()
-    val dataCacheRepository = DataCacheDatabaseRepository()
+    val viewsRepository = ViewsDatabaseRepository(db)
+    val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
     val viewsController = ViewsController(viewsService, credentialsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-    val tasksRepository = TasksDatabaseRepository()
+    val tasksRepository = TasksDatabaseRepository(db)
     val tasksService =
         TasksService(tasksRepository, dataCacheService, charactersService, authService)
     val tasksLauncher =
@@ -93,7 +94,14 @@ fun Application.module() {
     coroutineScope.launch { tasksLauncher.launchTasks() }
     configureAuthentication(authService, credentialsService)
     configureCors()
-    configureRouting(activitiesController, authController, credentialsController, rolesController, viewsController, tasksController)
+    configureRouting(
+        activitiesController,
+        authController,
+        credentialsController,
+        rolesController,
+        viewsController,
+        tasksController
+    )
     configureSerialization()
     configureLogging()
 }

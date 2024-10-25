@@ -2,14 +2,16 @@ package com.kos.datacache.repository
 
 import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
 
-class DataCacheDatabaseRepository : DataCacheRepository {
+class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepository {
 
     override suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db)  {
             DataCaches.batchInsert(initialState) {
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
@@ -35,7 +37,7 @@ class DataCacheDatabaseRepository : DataCacheRepository {
     )
 
     override suspend fun insert(data: List<DataCache>): Boolean {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             DataCaches.batchInsert(data) {
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
@@ -46,15 +48,15 @@ class DataCacheDatabaseRepository : DataCacheRepository {
     }
 
     override suspend fun get(characterId: Long): List<DataCache> =
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             DataCaches.select { DataCaches.characterId.eq(characterId) }.map { resultRowToDataCache(it) }
         }
 
     override suspend fun deleteExpiredRecord(ttl: Long): Int {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             DataCaches.deleteWhere { inserted.less(OffsetDateTime.now().minusHours(ttl).toString()) }
         }
     }
 
-    override suspend fun state(): List<DataCache> = dbQuery { DataCaches.selectAll().map { resultRowToDataCache(it) } }
+    override suspend fun state(): List<DataCache> = newSuspendedTransaction(Dispatchers.IO, db) { DataCaches.selectAll().map { resultRowToDataCache(it) } }
 }

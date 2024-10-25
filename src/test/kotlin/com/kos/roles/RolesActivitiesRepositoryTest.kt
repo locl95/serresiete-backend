@@ -59,6 +59,7 @@ abstract class RolesActivitiesRepositoryTest {
 
 class RolesActivitiesInMemoryRepositoryTest : RolesActivitiesRepositoryTest() {
     override val repository = RolesActivitiesInMemoryRepository()
+
     @BeforeEach
     fun beforeEach() {
         repository.clear()
@@ -83,8 +84,9 @@ class RolesActivitiesDatabaseRepositoryTest : RolesActivitiesRepositoryTest() {
         flyway.clean()
         flyway.migrate()
     }
+
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close()
     }
 }

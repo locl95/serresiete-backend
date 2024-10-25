@@ -145,6 +145,7 @@ abstract class CharactersRepositoryTestCommon {
 
 class CharactersInMemoryRepositoryTest : CharactersRepositoryTestCommon() {
     override val repository = CharactersInMemoryRepository()
+
     @BeforeEach
     fun beforeEach() {
         repository.clear()
@@ -172,6 +173,6 @@ class CharactersDatabaseRepositoryTest : CharactersRepositoryTestCommon() {
 
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close()
     }
 }

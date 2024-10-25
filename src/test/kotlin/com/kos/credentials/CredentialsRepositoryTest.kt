@@ -48,26 +48,6 @@ abstract class CredentialsRepositoryTest {
         }
     }
 
-    /*@Test
-    open fun `given a repository with credentials, roles and activities i can retrieve the activities that an user is allowed to perform`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(
-                basicCredentialsInitialState.copy(
-                    users = basicCredentialsInitialState.users + Credentials("user2", "password"),
-                    credentialsRoles = mapOf(user to listOf("role1"), "user2" to listOf("role2")),
-                    rolesActivities = mapOf(
-                        "role1" to listOf("login", "logout", "create a view"),
-                        "role2" to listOf("get view data", "get view cached data")
-                    )
-                )
-            )
-            val userActivities = repositoryWithState.getActivities(user)
-            val serviceActivities = repositoryWithState.getActivities("user2")
-            assertEquals(setOf("login", "logout", "create a view"), userActivities.toSet())
-            assertEquals(setOf("get view data", "get view cached data"), serviceActivities.toSet())
-        }
-    } */
-
     @Test
     open fun `given a repository and a user with roles i can retrieve it's roles`() {
         runBlocking {
@@ -156,6 +136,6 @@ class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest() {
 
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close() 
     }
 }

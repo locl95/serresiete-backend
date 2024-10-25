@@ -76,7 +76,6 @@ class ActivitiesDatabaseRepositoryTest : ActivitiesRepositoryTestCommon() {
 
     @AfterAll
     fun afterAll() {
-        println("ASDGDSGDSGDSGDGDSGDSGDS")
         embeddedPostgres.close()
     }
 }

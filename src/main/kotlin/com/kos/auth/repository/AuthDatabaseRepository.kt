@@ -1,7 +1,6 @@
 package com.kos.auth.repository
 
 import com.kos.auth.Authorization
-import com.kos.common.DatabaseFactory.dbQuery
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

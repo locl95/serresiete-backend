@@ -2,7 +2,6 @@ package com.kos.characters.repository
 
 import arrow.core.Either
 import com.kos.characters.*
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.common.InsertCharacterError
 import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers

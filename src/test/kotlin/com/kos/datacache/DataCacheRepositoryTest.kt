@@ -56,6 +56,7 @@ abstract class DataCacheRepositoryTestCommon {
 
 class DataCacheInMemoryRepositoryTest : DataCacheRepositoryTestCommon() {
     override val repository = DataCacheInMemoryRepository()
+
     @BeforeEach
     fun beforeEach() {
         repository.clear()
@@ -74,6 +75,7 @@ class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTestCommon() {
         .load()
 
     override val repository = DataCacheDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
     @BeforeEach
     fun beforeEach() {
         flyway.clean()
@@ -82,6 +84,6 @@ class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTestCommon() {
 
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close()
     }
 }

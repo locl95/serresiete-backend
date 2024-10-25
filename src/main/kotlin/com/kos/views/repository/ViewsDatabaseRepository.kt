@@ -1,6 +1,5 @@
 package com.kos.views.repository
 
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.views.Game
 import com.kos.views.SimpleView
 import com.kos.views.ViewDeleted

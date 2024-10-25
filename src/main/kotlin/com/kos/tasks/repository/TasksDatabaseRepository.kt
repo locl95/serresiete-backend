@@ -1,6 +1,5 @@
 package com.kos.tasks.repository
 
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
@@ -8,7 +7,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
-import java.util.*
 
 class TasksDatabaseRepository(private val db: Database) : TasksRepository {
     object Tasks : Table() {

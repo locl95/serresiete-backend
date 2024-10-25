@@ -49,8 +49,7 @@ fun Application.module() {
 
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    val db = DatabaseFactory.init(mustClean = false)
-
+    val db = DatabaseFactory.pooledDatabase()
 
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)

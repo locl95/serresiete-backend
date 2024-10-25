@@ -104,6 +104,6 @@ class TasksDatabaseRepositoryTest : TasksRepositoryTest() {
 
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close() 
     }
 }

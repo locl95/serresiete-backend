@@ -46,11 +46,13 @@ abstract class RolesRepositoryTestCommon {
 
 class RolesInMemoryRepositoryTest : RolesRepositoryTestCommon() {
     override val repository = RolesInMemoryRepository()
+
     @BeforeEach
     fun beforeEach() {
         repository.clear()
     }
 }
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RolesDatabaseRepositoryTest : RolesRepositoryTestCommon() {
     private val embeddedPostgres = EmbeddedPostgres.start()
@@ -72,6 +74,6 @@ class RolesDatabaseRepositoryTest : RolesRepositoryTestCommon() {
 
     @AfterAll
     fun afterAll() {
-        embeddedPostgres.close() // Shut down the embedded PostgreSQL instance after all tests
+        embeddedPostgres.close()
     }
 }

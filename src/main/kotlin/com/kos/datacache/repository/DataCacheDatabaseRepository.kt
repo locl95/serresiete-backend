@@ -1,6 +1,5 @@
 package com.kos.datacache.repository
 
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.datacache.DataCache
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*

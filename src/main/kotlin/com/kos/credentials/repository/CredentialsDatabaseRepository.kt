@@ -1,6 +1,5 @@
 package com.kos.credentials.repository
 
-import com.kos.common.DatabaseFactory
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsRole
 import com.kos.roles.Role
@@ -100,7 +99,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
     }
 
     override suspend fun deleteCredentials(user: String) {
-        DatabaseFactory.dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Users.deleteWhere { userName.eq(user) }
         }
     }

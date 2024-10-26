@@ -26,12 +26,13 @@ jobs:
           environment_checkbox_checked="- [x] I have tested this feature in an environment (e.g., production, development, local)"
           environment_checkbox_unchecked="- [ ] I have tested this feature in an environment (e.g., production, development, local)"
 
-          # Use printf to avoid issues with line breaks and pass the PR body to grep
+          # Function to check for checkboxes
           check_checkbox() {
-            printf "%s" "$pr_body" | grep -Fq "$1" || printf "%s" "$pr_body" | grep -Fq "$2" || {
+            # Use printf to output and grep for required strings
+            if ! printf "%s\n" "$pr_body" | grep -Fxq "$1" && ! printf "%s\n" "$pr_body" | grep -Fxq "$2"; then
               echo "::error::$3"
               exit 1
-            }
+            fi
           }
 
           # Check each required checkbox
@@ -45,5 +46,7 @@ jobs:
             "Please check the box to confirm the feature was tested in an environment."
 
           # Changelog update verification if the checkbox is unchecked
-          if printf "%s" "$pr_body" | grep -Fq "$changelog_checkbox_unchecked" && ! git diff --name-only origin/main | grep -q "changelog.md"; then
-          
+          if printf "%s\n" "$pr_body" | grep -Fxq "$changelog_checkbox_unchecked" && ! git diff --name-only origin/main | grep -q "changelog.md"; then
+            echo "::error::Changelog entry required. Please add a change in changelog.md or check the box."
+            exit 1
+          fi

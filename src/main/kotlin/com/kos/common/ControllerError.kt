@@ -4,7 +4,6 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
-import kotlin.math.log
 
 interface ControllerError
 class NotAuthorized : ControllerError
@@ -29,7 +28,8 @@ data class RaiderIoError(
 
 interface ViewsError : ControllerError
 class NotPublished(val id: String) : ViewsError
-class TooMuchViews : ViewsError
+data object TooMuchViews : ViewsError
+data object UserWithoutRoles: ViewsError
 
 interface DatabaseError : ControllerError
 data class InsertCharacterError(val message: String) : DatabaseError

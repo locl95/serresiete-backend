@@ -1,6 +1,8 @@
 package com.kos.views
 
 import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import arrow.core.sequence
 import arrow.core.traverse
 import com.kos.characters.CharactersService
@@ -9,15 +11,14 @@ import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.httpclients.domain.Data
-import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.domain.RaiderIoData
-import com.kos.roles.Role
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.views.repository.ViewsRepository
-import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
@@ -26,12 +27,6 @@ class ViewsService(
     private val raiderIoClient: RaiderIoClient,
     private val credentialsService: CredentialsService
 ) {
-
-    private val roleMaxViewsMapping: Map<Role, Int> = mapOf(
-        "user" to 2,
-        "admin" to Int.MAX_VALUE,
-        "service" to 0
-    )
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
     suspend fun getViews(): List<SimpleView> = viewsRepository.getViews()
@@ -55,10 +50,13 @@ class ViewsService(
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        if (viewsRepository.getOwnViews(owner).size >= getMaxNumberOfViewsByRole(owner)) return Either.Left(TooMuchViews())
-        val characterIds = charactersService.createAndReturnIds(request.characters, request.game)
-        return characterIds.map { viewsRepository.create(request.name, owner, it, request.game) }
+    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, SimpleView> {
+        return either {
+            val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
+            ensure (viewsRepository.getOwnViews(owner).size < ownerMaxViews)  { TooMuchViews }
+            val characterIds = charactersService.createAndReturnIds(request.characters, request.game).bind()
+            viewsRepository.create(request.name, owner, characterIds, request.game)
+        }
     }
 
     suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
@@ -66,7 +64,7 @@ class ViewsService(
         return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
     }
 
-    suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewModified> {
+    suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewPatched> {
         return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
             { charactersRequest ->
                 charactersService.createAndReturnIds(
@@ -149,8 +147,9 @@ class ViewsService(
     suspend fun getCachedData(simpleView: SimpleView) =
         dataCacheService.getData(simpleView.characterIds, oldFirst = true)
 
-    private suspend fun getMaxNumberOfViewsByRole(owner: String) = credentialsService.getUserRoles(owner)
-        .mapNotNull {
-            roleMaxViewsMapping[it]
-        }.maxOrNull() ?: 0
+    private suspend fun getMaxNumberOfViewsByRole(owner: String): Either<UserWithoutRoles, Int> =
+        when (val maxNumberOfViews = credentialsService.getUserRoles(owner).maxOfOrNull { it.maxNumberOfViews }) {
+            null -> Either.Left(UserWithoutRoles)
+            else -> Either.Right(maxNumberOfViews)
+        }
 }

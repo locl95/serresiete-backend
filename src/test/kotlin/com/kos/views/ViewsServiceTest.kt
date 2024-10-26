@@ -9,8 +9,12 @@ import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.TooMuchViews
+import com.kos.common.UserWithoutRoles
+import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.emptyCredentialsInitialState
+import com.kos.credentials.CredentialsTestHelper.password
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
@@ -30,8 +34,9 @@ import com.kos.views.ViewsTestHelper.name
 import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsInMemoryRepository
-import junit.framework.TestCase.assertTrue
+import io.mockk.InternalPlatformDsl.toStr
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
@@ -81,45 +86,53 @@ class ViewsServiceTest {
     @Test
     fun `i can create views`() {
         runBlocking {
-            val (viewsRepository, viewsService) = createService(
+            val (_, viewsService) = createService(
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isRight())
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.game == Game.WOW })
+            val request = ViewRequest(name, published, listOf(), Game.WOW)
+            viewsService.create(owner, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+                assertEquals(request.game, it.game)
+            }.onLeft {
+                fail(it.toStr())
+            }
         }
     }
 
     @Test
     fun `i can create a lol view`() {
         runBlocking {
-            val (viewsRepository, viewsService) = createService(
+            val (_, viewsService) = createService(
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().isEmpty())
+            val request = ViewRequest(name, published, listOf(), Game.LOL)
+            viewsService.create(owner, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+                assertEquals(request.game, it.game)
+            }.onLeft {
+                fail(it.toStr())
+            }
+
             assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.game == Game.LOL })
         }
     }
 
     @Test
     fun `i can edit a lol view`() {
         runBlocking {
-            val (viewsRepository, viewsService) = createService(
+            val (_, viewsService) = createService(
                 listOf(basicSimpleLolView),
                 emptyCharactersState,
                 listOf(),
@@ -128,36 +141,80 @@ class ViewsServiceTest {
             )
 
             val newName = "new-name"
-            assertTrue(
-                viewsService.edit(basicSimpleLolView.id, ViewRequest(newName, published, listOf(), Game.LOL)).isRight()
-            )
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.name == newName })
-            assertTrue(viewsRepository.state().all { it.game == Game.LOL })
+            val request = ViewRequest(newName, published, listOf(), Game.LOL)
+            viewsService.edit(basicSimpleLolView.id, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+            }.onLeft {
+                fail(it.toStr())
+            }
         }
     }
 
     @Test
-    fun `i cant create more than maximum views`() {
+    fun `users cant create more than maximum views`() {
         runBlocking {
-            val (viewsRepository, viewsService) = createService(
-                listOf(basicSimpleLolView),
+            val (_, viewsService) = createService(
+                listOf(basicSimpleLolView, basicSimpleLolView),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().size == 2)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isLeft())
-            assertTrue(viewsRepository.state().size == 2)
+            val request = ViewRequest(name, published, listOf(), Game.WOW)
+            viewsService.create(owner, request).onRight {
+                fail()
+            }.onLeft {
+                assertTrue(it is TooMuchViews)
+            }
         }
     }
 
     @Test
-    fun `i can edit a view modifying more than one character`(): Unit {
+    fun `admins can create a huge amount of views`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                (1..100).map { SimpleView(it.toStr(), it.toStr(), owner, true, listOf(), Game.WOW) },
+                emptyCharactersState,
+                listOf(),
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.ADMIN))),
+                mapOf()
+            )
+
+            val request = ViewRequest(name, published, listOf(), Game.WOW)
+            viewsService.create(owner, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+                assertEquals(request.game, it.game)
+            }.onLeft {
+                fail(it.toStr())
+            }
+        }
+    }
+
+    @Test
+    fun `user without role can't create a view`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                listOf(),
+                emptyCharactersState,
+                listOf(),
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf())),
+                mapOf()
+            )
+
+            val request = ViewRequest(name, published, listOf(), Game.WOW)
+            viewsService.create(owner, request).onRight {
+                fail()
+            }.onLeft {
+                assertTrue(it is UserWithoutRoles)
+            }
+        }
+    }
+
+    @Test
+    fun `i can edit a view modifying more than one character`() {
         runBlocking {
 
             val request1 = WowCharacterRequest("a", "r", "r")
@@ -182,7 +239,14 @@ class ViewsServiceTest {
 
             viewsService.edit(
                 id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+            ).onRight {
+                assertEquals(id, it.viewId)
+                assertEquals(listOf<Long>(1, 2, 3, 4), it.characters)
+                assertEquals(name, it.name)
+                assertEquals(published, it.published)
+            }.onLeft {
+                fail(it.toStr())
+            }
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }
@@ -216,14 +280,21 @@ class ViewsServiceTest {
 
             viewsService.edit(
                 id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(3, 4, 5, 6)), it) }
+            ).onRight {
+                assertEquals(listOf<Long>(3, 4, 5, 6), it.characters)
+                assertEquals(name, it.name)
+                assertEquals(id, it.viewId)
+                assertEquals(published, it.published)
+            }.onLeft {
+                fail(it.toStr())
+            }
 
             assertEquals(listOf<Long>(3, 4, 5, 6), viewsRepository.state().first().characterIds)
         }
     }
 
     @Test
-    fun `i can delete a view`(): Unit {
+    fun `i can delete a view`() {
         runBlocking {
 
             val (viewsRepository, viewsService) = createService(
@@ -245,7 +316,7 @@ class ViewsServiceTest {
         runBlocking {
             val patchedName = "new-name"
 
-            val (viewsRepository, viewsService) = createService(
+            val (_, viewsService) = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -253,16 +324,20 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().size == 1)
             val patch = viewsService.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null, Game.WOW))
-            val patchedView = viewsRepository.state().first()
-            assertEquals(patchedName, patchedView.name)
-            assertEquals(patch.getOrNull(), ViewModified(basicSimpleWowView.id, basicSimpleWowView.characterIds))
+            patch.onRight {
+                assertEquals(basicSimpleWowView.id, it.viewId)
+                assertEquals(null, it.published)
+                assertEquals(null, it.characters)
+                assertEquals(patchedName, it.name)
+            }.onLeft {
+                fail(it.toStr())
+            }
         }
     }
 
     @Test
-    fun `i can patch a view modifying more than one character`(): Unit {
+    fun `i can patch a view modifying more than one character`() {
         runBlocking {
 
             val request1 = WowCharacterRequest("a", "r", "r")
@@ -287,7 +362,14 @@ class ViewsServiceTest {
 
             viewsService.patch(
                 id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
+            ).onRight {
+                assertEquals(basicSimpleWowView.id, it.viewId)
+                assertEquals(null, it.published)
+                assertEquals(listOf<Long>(1, 2, 3, 4), it.characters)
+                assertEquals(null, it.name)
+            }.onLeft {
+                fail(it.toStr())
+            }
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }

@@ -6,7 +6,6 @@ import com.kos.activities.Activities
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.httpclients.domain.Data
-import com.kos.httpclients.domain.RaiderIoData
 
 class ViewsController(
     private val viewsService: ViewsService,
@@ -90,7 +89,7 @@ class ViewsController(
         }
     }
 
-    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, ViewModified> {
+    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, SimpleView> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
@@ -120,7 +119,8 @@ class ViewsController(
         }
     }
 
-    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewModified> {
+    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewPatched> {
+        //TODO: We can propagate view fields to those who are optional from patch, or we can keep it like this to display which fields we modified
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> when (val maybeView = viewsService.get(id)) {

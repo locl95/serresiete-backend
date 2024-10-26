@@ -18,29 +18,32 @@ jobs:
           # Load PR description into a variable
           pr_body=$(jq -r .pull_request.body "$GITHUB_EVENT_PATH")
 
-          # Define required checkboxes
-          changelog_checkbox="- \[x\] This PR doesn't need to update changelog"
-          unit_test_checkbox="- \[x\] I have either added unit tests for this feature or confirmed it doesn't need unit tests"
-          environment_checkbox="- \[x\] I have tested this feature in an environment (e.g., production, development, local)"
+          # Define required checkboxes in both checked and unchecked formats
+          changelog_checkbox_checked="- \[x\] This PR doesn't need to update changelog"
+          changelog_checkbox_unchecked="- \[ \] This PR doesn't need to update changelog"
+          unit_test_checkbox_checked="- \[x\] I have either added unit tests for this feature or confirmed it doesn't need unit tests"
+          unit_test_checkbox_unchecked="- \[ \] I have either added unit tests for this feature or confirmed it doesn't need unit tests"
+          environment_checkbox_checked="- \[x\] I have tested this feature in an environment (e.g., production, development, local)"
+          environment_checkbox_unchecked="- \[ \] I have tested this feature in an environment (e.g., production, development, local)"
 
-          # Check each box
-          if ! echo "$pr_body" | grep -q "$changelog_checkbox"; then
+          # Check each box (either checked or unchecked states)
+          if ! echo "$pr_body" | grep -qE "$changelog_checkbox_checked|$changelog_checkbox_unchecked"; then
             echo "::error ::Please check the box to indicate if this PR doesn't need to update changelog."
             changelog_needed=true
           fi
 
-          if ! echo "$pr_body" | grep -q "$unit_test_checkbox"; then
+          if ! echo "$pr_body" | grep -qE "$unit_test_checkbox_checked|$unit_test_checkbox_unchecked"; then
             echo "::error ::Please check the box to confirm if unit tests were added or if they're not needed."
             exit 1
           fi
 
-          if ! echo "$pr_body" | grep -q "$environment_checkbox"; then
+          if ! echo "$pr_body" | grep -qE "$environment_checkbox_checked|$environment_checkbox_unchecked"; then
             echo "::error ::Please check the box to confirm the feature was tested in an environment."
             exit 1
           fi
 
           # If changelog box is unchecked, check if changelog.md was modified
-          if [ "$changelog_needed" = true ] && ! git diff --name-only origin/main | grep -q "changelog.md"; then
+          if echo "$pr_body" | grep -q "$changelog_checkbox_unchecked" && ! git diff --name-only origin/main | grep -q "changelog.md"; then
             echo "::error ::Changelog entry required. Please add a change in changelog.md or check the box."
             exit 1
           fi

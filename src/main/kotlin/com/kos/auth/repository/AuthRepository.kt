@@ -5,6 +5,7 @@ import com.kos.auth.Authorization
 import com.kos.common.InsertError
 import com.kos.common.WithState
 
+//TODO: This should disappear at some point. We should self-contain auth in jwt token.
 interface AuthRepository : WithState<List<Authorization>, AuthRepository> {
     suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Either<InsertError, Authorization?>
     suspend fun deleteTokensFromUser(userName: String): Boolean

@@ -1,23 +1,24 @@
 package com.kos.roles
 
 import com.kos.activities.ActivitiesTestHelper.basicActivity
-import com.kos.common.DatabaseFactory
 import com.kos.roles.RolesTestHelper.basicRolesActivities
 import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesActivitiesRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class RolesActivitiesRepositoryTest {
 
     abstract val repository: RolesActivitiesRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given a repository with roles and activities i can retrieve activities from a given role`() {
@@ -41,7 +42,8 @@ abstract class RolesActivitiesRepositoryTest {
         runBlocking {
             repository.insertActivityToRole(basicActivity, role)
             repository.insertActivityToRole(anotherActivity, role)
-            assertEquals(repository.state(), mapOf(Pair(role, listOf(anotherActivity, basicActivity))))
+            val expected = mapOf(Pair(role, setOf(basicActivity, anotherActivity)))
+            assertEquals(expected, repository.state())
         }
     }
 
@@ -50,21 +52,41 @@ abstract class RolesActivitiesRepositoryTest {
         runBlocking {
             val repositoryWithState = repository.withState(basicRolesActivities)
             repositoryWithState.deleteActivityFromRole(basicActivity, role)
-            assertEquals(listOf(), repositoryWithState.state()[role].orEmpty())
+            assertEquals(setOf(), repositoryWithState.state()[role].orEmpty())
         }
     }
 }
 
 class RolesActivitiesInMemoryRepositoryTest : RolesActivitiesRepositoryTest() {
     override val repository = RolesActivitiesInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RolesActivitiesDatabaseRepositoryTest : RolesActivitiesRepositoryTest() {
-    override val repository: RolesActivitiesRepository = RolesActivitiesDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = RolesActivitiesDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

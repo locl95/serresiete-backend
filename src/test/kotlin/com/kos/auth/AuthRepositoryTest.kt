@@ -7,7 +7,13 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.auth.repository.AuthRepository
 import com.kos.common.DatabaseFactory
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import org.junit.Assert.assertTrue
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -17,9 +23,6 @@ import kotlin.test.assertEquals
 abstract class AuthRepositoryTestCommon {
 
     abstract val repository: AuthRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given a repository with one authorization i can retrieve it`() {
@@ -56,8 +59,8 @@ abstract class AuthRepositoryTestCommon {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
             val insertToken = repositoryWithState.insertToken("differentUser", token, isAccess = false)
-            println(insertToken)
-            println(repositoryWithState.state().toString())
+            (insertToken)
+            (repositoryWithState.state().toString())
             assertTrue(insertToken.isLeft())
             assertTrue(repositoryWithState.state().size == 1)
         }
@@ -66,14 +69,36 @@ abstract class AuthRepositoryTestCommon {
 
 class AuthInMemoryRepositoryTest : AuthRepositoryTestCommon() {
     override val repository = AuthInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuthDatabaseRepositoryTest : AuthRepositoryTestCommon() {
-    override val repository: AuthRepository = AuthDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository: AuthRepository =
+        AuthDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

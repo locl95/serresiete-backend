@@ -1,14 +1,18 @@
 package com.kos.credentials
 
-import com.kos.common.DatabaseFactory
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
 import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -16,9 +20,6 @@ import kotlin.test.assertTrue
 abstract class CredentialsRepositoryTest {
 
     abstract val repository: CredentialsRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     open fun `given a repository with credentials i can retrieve them`() {
@@ -46,26 +47,6 @@ abstract class CredentialsRepositoryTest {
             assertTrue(repositoryWithState.state().users.contains(Credentials(user, "newPassword")))
         }
     }
-
-    /*@Test
-    open fun `given a repository with credentials, roles and activities i can retrieve the activities that an user is allowed to perform`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(
-                basicCredentialsInitialState.copy(
-                    users = basicCredentialsInitialState.users + Credentials("user2", "password"),
-                    credentialsRoles = mapOf(user to listOf("role1"), "user2" to listOf("role2")),
-                    rolesActivities = mapOf(
-                        "role1" to listOf("login", "logout", "create a view"),
-                        "role2" to listOf("get view data", "get view cached data")
-                    )
-                )
-            )
-            val userActivities = repositoryWithState.getActivities(user)
-            val serviceActivities = repositoryWithState.getActivities("user2")
-            assertEquals(setOf("login", "logout", "create a view"), userActivities.toSet())
-            assertEquals(setOf("get view data", "get view cached data"), serviceActivities.toSet())
-        }
-    } */
 
     @Test
     open fun `given a repository and a user with roles i can retrieve it's roles`() {
@@ -106,9 +87,11 @@ abstract class CredentialsRepositoryTest {
     @Test
     open fun `given a repository with users and roles i can delete a role`() {
         runBlocking {
-            val repositoryWithState = repository.withState(basicCredentialsInitialState.copy(
-                credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
-            ))
+            val repositoryWithState = repository.withState(
+                basicCredentialsInitialState.copy(
+                    credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
+                )
+            )
             val initialRolesUser = repositoryWithState.state().credentialsRoles[user]
             val initialRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
             repositoryWithState.deleteRole(user, "role2")
@@ -124,14 +107,35 @@ abstract class CredentialsRepositoryTest {
 
 class CredentialsInMemoryRepositoryTest : CredentialsRepositoryTest() {
     override val repository = CredentialsInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CredentialsDatabaseRepositoryTest : CredentialsRepositoryTest() {
-    override val repository: CredentialsRepository = CredentialsDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository: CredentialsRepository =
+        CredentialsDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close() 
     }
 }

@@ -5,24 +5,24 @@ import com.kos.common.InMemoryRepository
 import com.kos.roles.Role
 
 class RolesActivitiesInMemoryRepository : RolesActivitiesRepository, InMemoryRepository {
-    private val rolesActivities = mutableMapOf<Role, List<Activity>>()
+    private val rolesActivities = mutableMapOf<Role, Set<Activity>>()
 
-    override suspend fun state(): Map<Role, List<Activity>> {
-        return rolesActivities.mapValues { it.value.reversed() }
+    override suspend fun state(): Map<Role, Set<Activity>> {
+        return rolesActivities
     }
 
-    override suspend fun withState(initialState: Map<Role, List<Activity>>): RolesActivitiesRepository {
+    override suspend fun withState(initialState: Map<Role, Set<Activity>>): RolesActivitiesRepository {
         rolesActivities.putAll(initialState)
         return this
     }
 
     override suspend fun insertActivityToRole(activity: Activity, role: Role): Unit {
-        rolesActivities.compute(role) { _, currentActivities -> (currentActivities ?: mutableListOf()) + activity }
+        rolesActivities.compute(role) { _, currentActivities -> (currentActivities ?: mutableSetOf()) + activity }
     }
 
     override suspend fun deleteActivityFromRole(activity: Activity, role: Role): Unit {
         rolesActivities.computeIfPresent(role) { _, currentActivities ->
-            currentActivities.toMutableList().apply { remove(activity) }
+            currentActivities.toMutableSet().apply { remove(activity) }
         }
     }
 

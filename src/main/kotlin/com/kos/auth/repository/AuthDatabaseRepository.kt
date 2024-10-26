@@ -2,21 +2,22 @@ package com.kos.auth.repository
 
 import arrow.core.Either
 import com.kos.auth.Authorization
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.common.InsertError
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import java.sql.SQLException
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
 
-class AuthDatabaseRepository : AuthRepository {
+class AuthDatabaseRepository(private val db: Database) : AuthRepository {
 
     private val daysBeforeAccessTokenExpires: Long = 1
     private val daysBeforeRefreshTokenExpires: Long = 30
 
     override suspend fun withState(initialState: List<Authorization>): AuthDatabaseRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Authorizations.batchInsert(initialState) {
                 this[Authorizations.userName] = it.userName
                 this[Authorizations.token] = it.token
@@ -49,7 +50,7 @@ class AuthDatabaseRepository : AuthRepository {
     )
 
     override suspend fun insertToken(userName: String, token: String, isAccess: Boolean): Either<InsertError, Authorization?> =
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             try {
                 val insertStatement = Authorizations.insert {
                     it[Authorizations.userName] = userName
@@ -66,27 +67,27 @@ class AuthDatabaseRepository : AuthRepository {
             }
         }
 
-    override suspend fun deleteTokensFromUser(userName: String): Boolean {
-        dbQuery {
+    override suspend fun deleteTokensFromUser(userName: String): Boolean { //TODO: Suspicious return type
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Authorizations.deleteWhere { this.userName.eq(userName) }
         }
         return true
     }
 
     override suspend fun getAuthorization(token: String): Authorization? {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Authorizations.select { Authorizations.token eq token }.map { resultRowToAuthorization(it) }.singleOrNull()
         }
     }
 
     override suspend fun deleteExpiredTokens(): Int {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Authorizations.deleteWhere { validUntil.less(OffsetDateTime.now().toString()) }
         }
     }
 
     override suspend fun state(): List<Authorization> {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Authorizations.selectAll().map { resultRowToAuthorization(it) }
         }
     }

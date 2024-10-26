@@ -9,10 +9,11 @@ import com.auth0.jwt.exceptions.JWTCreationException
 import com.kos.activities.Activity
 import com.kos.auth.repository.AuthRepository
 import com.kos.common.ControllerError
+import com.kos.common.validate
 import com.kos.credentials.CredentialsService
 import java.time.OffsetDateTime
 
-private const val secretKey: String = "toalhitasWasHere"
+private const val secretKey: String = "toalhitasWasHere" //TODO: Secure secret key in environment
 
 class AuthService(private val authRepository: AuthRepository, private val credentialsService: CredentialsService) {
 
@@ -20,9 +21,9 @@ class AuthService(private val authRepository: AuthRepository, private val creden
         return either {
             //TODO: check if refresh token has to bring all the activities
             val jwtAccess = generateToken(userName).bind()
-            val jwtRefresh = generateToken(userName).bind()
-            val refreshToken = authRepository.insertToken(userName, jwtAccess, isAccess = false).bind()
-            val accessToken = authRepository.insertToken(userName, jwtRefresh, isAccess = true).bind()
+            val jwtRefresh = generateRefreshToken(userName).bind()
+            val refreshToken = authRepository.insertToken(userName, jwtRefresh, isAccess = false).bind()
+            val accessToken = authRepository.insertToken(userName, jwtAccess, isAccess = true).bind()
             LoginResponse(accessToken, refreshToken)
         }
     }
@@ -53,7 +54,13 @@ class AuthService(private val authRepository: AuthRepository, private val creden
             }
         }
 
-    suspend fun validateTokenAndReturnUsernameWithActivities(token: String, isAccessRequest: Boolean): Either<TokenError, Pair<String, Set<Activity>>> =
+
+    //TODO: Implement the extension method over JWT class in com.kos.common.JWTExtension.kt.
+    //TODO: We need to validate with the token itself. We should not need to work with a repo.
+    suspend fun validateTokenAndReturnUsernameWithActivities(
+        token: String,
+        isAccessRequest: Boolean
+    ): Either<TokenError, Pair<String, Set<Activity>>> =
         when (val maybeAuthorization = authRepository.getAuthorization(token)) {
             null -> Either.Left(TokenNotFound(token))
             else -> {
@@ -77,6 +84,7 @@ class AuthService(private val authRepository: AuthRepository, private val creden
             }
         }
 
+    //TODO: Fix this function also, we need to check refresh from claim
     suspend fun refresh(refreshToken: String): Either<ControllerError, Authorization?> {
         return when (val maybeAuthorization = authRepository.getAuthorization(refreshToken)) {
             null -> Either.Left(TokenNotFound(refreshToken))
@@ -85,7 +93,13 @@ class AuthService(private val authRepository: AuthRepository, private val creden
                 else {
                     maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
                         Either.Left(TokenExpired(maybeAuthorization.token, it))
-                    } ?: generateToken(maybeAuthorization.userName).flatMap { authRepository.insertToken(maybeAuthorization.userName, it, isAccess = true) }
+                    } ?: generateToken(maybeAuthorization.userName).flatMap {
+                        authRepository.insertToken(
+                            maybeAuthorization.userName,
+                            it,
+                            isAccess = true
+                        )
+                    }
                 }
             }
         }
@@ -99,12 +113,36 @@ class AuthService(private val authRepository: AuthRepository, private val creden
         val userActivities: List<Activity> =
             credentialsService.getUserRoles(userName).flatMap { credentialsService.getRoleActivities(it) }
         return try {
+            //TODO: Add way more information so we end up selfcontaining everything we need in jwt
+            //TODO: is access token or refresh token?
+            //TODO: has token expired?
+            //TODO: who the fuck issued the token?
             Either.Right(
                 JWT.create()
                     .withClaim("username", userName)
                     .withClaim("activities", userActivities)
                     .withClaim("issuedAt", OffsetDateTime.now().toInstant()) //TODO: somos guarrisimos
-                    .sign(Algorithm.HMAC256(secretKey))
+                    .sign(Algorithm.HMAC256(secretKey)) //TODO: Think about using a better encryption algorithm (public + private key)
+            )
+        } catch (e: IllegalArgumentException) {
+            Either.Left(JWTCreationError(e.message ?: e.stackTraceToString()))
+        } catch (e: JWTCreationException) {
+            Either.Left(JWTCreationError(e.message ?: e.stackTraceToString()))
+        }
+    }
+
+    //TODO: Refactor this 2 functions to not duplicate code
+    private fun generateRefreshToken(userName: String): Either<JWTCreationError, String> {
+        //TODO: Add way more information so we end up selfcontaining everything we need in jwt
+        //TODO: is access token or refresh token?
+        //TODO: has token expired?
+        //TODO: who the fuck issued the token?
+        return try {
+            Either.Right(
+                JWT.create()
+                    .withClaim("username", userName)
+                    .withClaim("issuedAt", OffsetDateTime.now().toInstant()) //TODO: somos guarrisimos
+                    .sign(Algorithm.HMAC256(secretKey)) //TODO: Think about using a better encryption algorithm (public + private key)
             )
         } catch (e: IllegalArgumentException) {
             Either.Left(JWTCreationError(e.message ?: e.stackTraceToString()))

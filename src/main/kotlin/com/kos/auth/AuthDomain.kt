@@ -57,3 +57,12 @@ data class TokenWrongMode(override val token: String, val isAccess: Boolean) : T
 }
 
 data class JWTCreationError(override val message: String) : AuthError
+
+enum class TokenMode {
+    ACCESS {
+        override fun toString(): String = "access"
+    },
+    REFRESH {
+        override fun toString(): String = "refresh"
+    };
+}

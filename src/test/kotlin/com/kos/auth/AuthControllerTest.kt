@@ -25,7 +25,7 @@ class AuthControllerTest {
 
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
-        rolesActivitiesState: Map<Role, List<Activity>>,
+        rolesActivitiesState: Map<Role, Set<Activity>>,
         authState: List<Authorization>
     ): AuthController {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
@@ -55,7 +55,7 @@ class AuthControllerTest {
 
             val controller = createController(
                 credentialsState,
-                mapOf(Pair(role, listOf(Activities.login))),
+                mapOf(Pair(role, setOf(Activities.login))),
                 listOf()
             )
             val res = controller.login("owner").getOrNull()
@@ -78,7 +78,7 @@ class AuthControllerTest {
 
             val controller = createController(
                 credentialsState,
-                mapOf(Pair(role, listOf(Activities.logout))),
+                mapOf(Pair(role, setOf(Activities.logout))),
                 listOf(basicAuthorization.copy(userName = "owner"))
             )
             assertTrue(controller.logout("owner").getOrNull())

@@ -23,8 +23,8 @@ class ActivitiesControllerTest {
 
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
-        activitiesState: List<Activity>,
-        rolesActivitiesState: Map<Role, List<Activity>>
+        activitiesState: Set<Activity>,
+        rolesActivitiesState: Map<Role, Set<Activity>>
     ): ActivitiesController {
         val activitiesRepositoryWithState = activitiesRepository.withState(activitiesState)
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
@@ -53,10 +53,10 @@ class ActivitiesControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf("do this", "do that"),
-                mapOf(Pair(role, listOf(Activities.getAnyActivities)))
+                setOf("do this", "do that"),
+                mapOf(Pair(role, setOf(Activities.getAnyActivities)))
             )
-            assertEquals(listOf("do this", "do that"), controller.getActivities("owner").getOrNull())
+            assertEquals(setOf("do this", "do that"), controller.getActivities("owner").getOrNull())
         }
     }
 
@@ -70,11 +70,11 @@ class ActivitiesControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf(),
-                mapOf(Pair(role, listOf(Activities.createActivities)))
+                setOf(),
+                mapOf(Pair(role, setOf(Activities.createActivities)))
             )
             assertTrue(controller.createActivity("owner", ActivityRequest("do this")).isRight())
-            assertEquals(listOf("do this"), activitiesRepository.state())
+            assertEquals(setOf("do this"), activitiesRepository.state())
         }
     }
 
@@ -88,11 +88,11 @@ class ActivitiesControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf("do this"),
-                mapOf(Pair(role, listOf(Activities.deleteActivities)))
+                setOf("do this"),
+                mapOf(Pair(role, setOf(Activities.deleteActivities)))
             )
             assertTrue(controller.deleteActivity("owner", "do this").isRight())
-            assertEquals(listOf(), activitiesRepository.state())
+            assertEquals(setOf(), activitiesRepository.state())
         }
     }
 
@@ -106,8 +106,8 @@ class ActivitiesControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf("do this"),
-                mapOf(Pair(role, listOf(Activities.getAnyActivities)), Pair("other-role", listOf("do this")))
+                setOf("do this"),
+                mapOf(Pair(role, setOf(Activities.getAnyActivities)), Pair("other-role", setOf("do this")))
             )
             assertEquals(setOf("do this"), controller.getActivitiesFromRole("owner", "other-role").getOrNull())
         }

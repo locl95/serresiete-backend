@@ -8,7 +8,7 @@ import com.kos.credentials.CredentialsService
 import com.kos.roles.Role
 
 class ActivitiesController(private val activitiesService: ActivitiesService, private val credentialsService: CredentialsService) {
-    suspend fun getActivities(client: String?): Either<ControllerError, List<Activity>> {
+    suspend fun getActivities(client: String?): Either<ControllerError, Set<Activity>> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {

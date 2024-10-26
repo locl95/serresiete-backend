@@ -2,18 +2,19 @@ package com.kos.characters.repository
 
 import arrow.core.Either
 import com.kos.characters.*
-import com.kos.common.DatabaseFactory.dbQuery
 import com.kos.common.InsertCharacterError
 import com.kos.views.Game
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
 
-class CharactersDatabaseRepository : CharactersRepository {
+class CharactersDatabaseRepository(private val db: Database) : CharactersRepository {
 
     override suspend fun withState(initialState: CharactersState): CharactersDatabaseRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             WowCharacters.batchInsert(initialState.wowCharacters) {
                 this[WowCharacters.id] = it.id
                 this[WowCharacters.name] = it.name
@@ -78,7 +79,7 @@ class CharactersDatabaseRepository : CharactersRepository {
         characters: List<CharacterInsertRequest>,
         game: Game
     ): Either<InsertCharacterError, List<Character>> {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             val charsToInsert: List<Character> = characters.map {
                 when (it) {
                     is WowCharacterRequest -> WowCharacter(selectNextId(), it.name, it.region, it.realm)
@@ -137,7 +138,7 @@ class CharactersDatabaseRepository : CharactersRepository {
     }
 
     override suspend fun get(id: Long, game: Game): Character? {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.WOW -> WowCharacters.select { WowCharacters.id.eq(id) }.singleOrNull()?.let {
                     resultRowToWowCharacter(it)
@@ -151,7 +152,7 @@ class CharactersDatabaseRepository : CharactersRepository {
     }
 
     override suspend fun get(game: Game): List<Character> =
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
@@ -160,7 +161,7 @@ class CharactersDatabaseRepository : CharactersRepository {
 
 
     override suspend fun state(): CharactersState {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             CharactersState(
                 WowCharacters.selectAll().map { resultRowToWowCharacter(it) },
                 LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
@@ -168,8 +169,8 @@ class CharactersDatabaseRepository : CharactersRepository {
         }
     }
 
-    suspend fun selectNextId(): Long =
-        dbQuery {
+    private suspend fun selectNextId(): Long =
+        newSuspendedTransaction(Dispatchers.IO, db) {
             TransactionManager.current().exec("""select nextval('characters_ids') as id""") { rs ->
                 if (rs.next()) rs.getLong("id")
                 else -1

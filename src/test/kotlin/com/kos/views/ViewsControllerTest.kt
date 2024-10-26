@@ -59,7 +59,7 @@ class ViewsControllerTest {
         viewsState: List<SimpleView>,
         charactersState: CharactersState,
         dataCacheState: List<DataCache>,
-        rolesActivitiesState: Map<Role, List<Activity>>
+        rolesActivitiesState: Map<Role, Set<Activity>>
     ): ViewsController {
         val viewsRepositoryWithState = viewsRepository.withState(viewsState)
         val charactersRepositoryWithState = charactersRepository.withState(charactersState)
@@ -97,7 +97,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, basicSimpleWowView.copy(owner = "not-owner")),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.getOwnViews)))
+                mapOf(Pair(role, setOf(Activities.getOwnViews)))
             )
             assertEquals(listOf(basicSimpleWowView), controller.getViews("owner").getOrNull())
         }
@@ -117,7 +117,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.getAnyViews)))
+                mapOf(Pair(role, setOf(Activities.getAnyViews)))
             )
             assertEquals(listOf(basicSimpleWowView, notOwnerView), controller.getViews("owner").getOrNull())
         }
@@ -137,7 +137,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.getOwnView)))
+                mapOf(Pair(role, setOf(Activities.getOwnView)))
             )
             assertEquals(basicSimpleWowView, controller.getView("owner", basicSimpleWowView.id).getOrNull()?.toSimple())
             assertEquals(NotEnoughPermissions("owner"), controller.getView("owner", notOwnerView.id).getLeftOrNull())
@@ -157,7 +157,7 @@ class ViewsControllerTest {
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.getOwnView)))
+                mapOf(Pair(role, setOf(Activities.getOwnView)))
             )
             assertEquals(
                 NotFound(basicSimpleWowView.id),
@@ -179,7 +179,7 @@ class ViewsControllerTest {
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.createViews)))
+                mapOf(Pair(role, setOf(Activities.createViews)))
             )
             val res =
                 controller.createView("owner", ViewRequest(basicSimpleWowView.name, true, listOf(), Game.WOW))
@@ -203,7 +203,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.createViews)))
+                mapOf(Pair(role, setOf(Activities.createViews)))
             )
 
             assertIs<TooMuchViews>(
@@ -228,7 +228,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
                 listOf(),
-                mapOf(Pair(role, listOf(Activities.getViewData)))
+                mapOf(Pair(role, setOf(Activities.getViewData)))
             )
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
@@ -255,7 +255,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter.copy(id = 2))),
                 listOf(lolDataCache),
-                mapOf(Pair(role, listOf(Activities.getViewData)))
+                mapOf(Pair(role, setOf(Activities.getViewData)))
             )
 
             controller.getViewData("owner", basicSimpleLolView.id)
@@ -279,7 +279,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
                 listOf(wowDataCache),
-                mapOf(Pair(role, listOf(Activities.getViewCachedData)))
+                mapOf(Pair(role, setOf(Activities.getViewCachedData)))
             )
 
             controller.getViewCachedData("owner", basicSimpleWowView.id)
@@ -303,7 +303,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
-                mapOf(Pair(role, listOf(Activities.getViewCachedData)))
+                mapOf(Pair(role, setOf(Activities.getViewCachedData)))
             )
 
             controller.getViewCachedData("owner", basicSimpleLolView.id)
@@ -327,7 +327,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView),
                 CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
-                mapOf(Pair(role, listOf(Activities.editAnyView)))
+                mapOf(Pair(role, setOf(Activities.editAnyView)))
             )
 
             `when`(raiderIoClient.exists(basicWowRequest2)).thenReturn(true)

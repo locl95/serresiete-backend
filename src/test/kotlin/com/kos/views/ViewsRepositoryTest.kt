@@ -1,6 +1,5 @@
 package com.kos.views
 
-import com.kos.common.DatabaseFactory
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
@@ -9,16 +8,18 @@ import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsDatabaseRepository
 import com.kos.views.repository.ViewsInMemoryRepository
 import com.kos.views.repository.ViewsRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class ViewsRepositoryTest {
     abstract val repository: ViewsRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given a repository with views i can retrieve them`() {
@@ -121,14 +122,34 @@ abstract class ViewsRepositoryTest {
 
 class ViewsInMemoryRepositoryTest : ViewsRepositoryTest() {
     override val repository = ViewsInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ViewsDatabaseRepositoryTest : ViewsRepositoryTest() {
-    override val repository = ViewsDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = ViewsDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

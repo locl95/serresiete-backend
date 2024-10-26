@@ -6,10 +6,12 @@ import arrow.core.traverse
 import com.kos.characters.CharactersService
 import com.kos.characters.WowCharacter
 import com.kos.common.*
+import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.domain.RaiderIoData
+import com.kos.roles.Role
 import com.kos.views.repository.ViewsRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -21,10 +23,15 @@ class ViewsService(
     private val viewsRepository: ViewsRepository,
     private val charactersService: CharactersService,
     private val dataCacheService: DataCacheService,
-    private val raiderIoClient: RaiderIoClient
+    private val raiderIoClient: RaiderIoClient,
+    private val credentialsService: CredentialsService
 ) {
 
-    private val maxNumberOfViews: Int = 2
+    private val roleMaxViewsMapping: Map<Role, Int> = mapOf(
+        "user" to 2,
+        "admin" to Int.MAX_VALUE,
+        "service" to 0
+    )
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
     suspend fun getViews(): List<SimpleView> = viewsRepository.getViews()
@@ -49,7 +56,7 @@ class ViewsService(
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        if (viewsRepository.getOwnViews(owner).size >= maxNumberOfViews) return Either.Left(TooMuchViews())
+        if (viewsRepository.getOwnViews(owner).size >= getMaxNumberOfViewsByRole(owner)) return Either.Left(TooMuchViews())
         val characterIds = charactersService.createAndReturnIds(request.characters, request.game)
         return characterIds.map { viewsRepository.create(request.name, owner, it, request.game) }
     }
@@ -139,5 +146,11 @@ class ViewsService(
         eitherJsonErrorOrData
     }
 
-    suspend fun getCachedData(simpleView: SimpleView) = dataCacheService.getData(simpleView.characterIds, oldFirst = true)
+    suspend fun getCachedData(simpleView: SimpleView) =
+        dataCacheService.getData(simpleView.characterIds, oldFirst = true)
+
+    private suspend fun getMaxNumberOfViewsByRole(owner: String) = credentialsService.getUserRoles(owner)
+        .mapNotNull {
+            roleMaxViewsMapping[it]
+        }.maxOrNull() ?: 0
 }

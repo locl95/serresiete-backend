@@ -16,9 +16,9 @@ jobs:
         id: checklist
         run: |
           # Load PR description into a variable
-          pr_body=$(jq -r .pull_request.body "$GITHUB_EVENT_PATH")
+          pr_body=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")
 
-          # Define required checkboxes with both checked and unchecked states
+          # Define required checkboxes (both checked and unchecked states)
           changelog_checkbox_checked="- [x] This PR doesn't need to update changelog"
           changelog_checkbox_unchecked="- [ ] This PR doesn't need to update changelog"
           unit_test_checkbox_checked="- [x] I have either added unit tests for this feature or confirmed it doesn't need unit tests"
@@ -26,24 +26,26 @@ jobs:
           environment_checkbox_checked="- [x] I have tested this feature in an environment (e.g., production, development, local)"
           environment_checkbox_unchecked="- [ ] I have tested this feature in an environment (e.g., production, development, local)"
 
-          # Check each box (in either checked or unchecked state)
-          if ! echo "$pr_body" | grep -Fq "$changelog_checkbox_checked" && ! echo "$pr_body" | grep -Fq "$changelog_checkbox_unchecked"; then
-            echo "::error ::Please check the box to indicate if this PR doesn't need to update changelog."
-            changelog_needed=true
-          fi
+          # Helper function to check presence of each checkbox in PR body
+          check_checkbox() {
+            if ! echo "$pr_body" | grep -Fq "$1" && ! echo "$pr_body" | grep -Fq "$2"; then
+              echo "::error::$3"
+              exit 1
+            fi
+          }
 
-          if ! echo "$pr_body" | grep -Fq "$unit_test_checkbox_checked" && ! echo "$pr_body" | grep -Fq "$unit_test_checkbox_unchecked"; then
-            echo "::error ::Please check the box to confirm if unit tests were added or if they're not needed."
-            exit 1
-          fi
+          # Check each required checkbox
+          check_checkbox "$changelog_checkbox_checked" "$changelog_checkbox_unchecked" \
+            "Please check the box to indicate if this PR doesn't need to update changelog."
 
-          if ! echo "$pr_body" | grep -Fq "$environment_checkbox_checked" && ! echo "$pr_body" | grep -Fq "$environment_checkbox_unchecked"; then
-            echo "::error ::Please check the box to confirm the feature was tested in an environment."
-            exit 1
-          fi
+          check_checkbox "$unit_test_checkbox_checked" "$unit_test_checkbox_unchecked" \
+            "Please check the box to confirm if unit tests were added or if they're not needed."
 
-          # If changelog checkbox is unchecked, verify if changelog.md is modified
+          check_checkbox "$environment_checkbox_checked" "$environment_checkbox_unchecked" \
+            "Please check the box to confirm the feature was tested in an environment."
+
+          # Changelog update verification
           if echo "$pr_body" | grep -Fq "$changelog_checkbox_unchecked" && ! git diff --name-only origin/main | grep -q "changelog.md"; then
-            echo "::error ::Changelog entry required. Please add a change in changelog.md or check the box."
+            echo "::error::Changelog entry required. Please add a change in changelog.md or check the box."
             exit 1
           fi

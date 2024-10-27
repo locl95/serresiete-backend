@@ -1,8 +1,7 @@
 package com.kos.datacache
 
-import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
-import com.kos.datacache.TestHelper.anotherLolDataCache
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
@@ -53,7 +52,7 @@ class DataCacheServiceTest {
             )
             val service = DataCacheService(repo, raiderIoClient, riotClient)
             val data = service.getData(listOf(2), oldFirst = true)
-            println(data)
+
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(basicLolCharacter.name), data.map {
                 it.map { d ->

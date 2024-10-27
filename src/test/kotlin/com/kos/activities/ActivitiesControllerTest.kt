@@ -6,7 +6,6 @@ import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
@@ -48,13 +47,13 @@ class ActivitiesControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
                 credentialsState,
                 setOf("do this", "do that"),
-                mapOf(Pair(role, setOf(Activities.getAnyActivities)))
+                mapOf(Pair(Role.USER, setOf(Activities.getAnyActivities)))
             )
             assertEquals(setOf("do this", "do that"), controller.getActivities("owner").getOrNull())
         }
@@ -65,13 +64,13 @@ class ActivitiesControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
                 credentialsState,
                 setOf(),
-                mapOf(Pair(role, setOf(Activities.createActivities)))
+                mapOf(Pair(Role.USER, setOf(Activities.createActivities)))
             )
             assertTrue(controller.createActivity("owner", ActivityRequest("do this")).isRight())
             assertEquals(setOf("do this"), activitiesRepository.state())
@@ -83,13 +82,13 @@ class ActivitiesControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
                 credentialsState,
                 setOf("do this"),
-                mapOf(Pair(role, setOf(Activities.deleteActivities)))
+                mapOf(Pair(Role.USER, setOf(Activities.deleteActivities)))
             )
             assertTrue(controller.deleteActivity("owner", "do this").isRight())
             assertEquals(setOf(), activitiesRepository.state())
@@ -101,15 +100,15 @@ class ActivitiesControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
                 credentialsState,
                 setOf("do this"),
-                mapOf(Pair(role, setOf(Activities.getAnyActivities)), Pair("other-role", setOf("do this")))
+                mapOf(Pair(Role.USER, setOf(Activities.getAnyActivities)), Pair(Role.ADMIN, setOf("do this")))
             )
-            assertEquals(setOf("do this"), controller.getActivitiesFromRole("owner", "other-role").getOrNull())
+            assertEquals(setOf("do this"), controller.getActivitiesFromRole("owner", Role.ADMIN).getOrNull())
         }
     }
 

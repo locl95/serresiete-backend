@@ -1,9 +1,6 @@
 package com.kos.views.repository
 
-import com.kos.views.Game
-import com.kos.views.SimpleView
-import com.kos.views.ViewDeleted
-import com.kos.views.ViewModified
+import com.kos.views.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -77,14 +74,14 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): ViewModified {
+    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
         val id = UUID.randomUUID().toString()
         newSuspendedTransaction(Dispatchers.IO, db) {
             Views.insert {
                 it[Views.id] = id
                 it[Views.name] = name
                 it[Views.owner] = owner
-                it[Views.published] = true
+                it[published] = true
                 it[Views.game] = game.toString()
             }
             CharactersView.batchInsert(characterIds) {
@@ -92,7 +89,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewModified(id, characterIds)
+        return SimpleView(id, name, owner, true, characterIds, game)
     }
 
     override suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>): ViewModified {
@@ -107,10 +104,10 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewModified(id, characters)
+        return ViewModified(id, name, published, characters)
     }
 
-    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewModified {
+    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewPatched {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Views.update({ Views.id.eq(id) }) { statement ->
                 name?.let { statement[Views.name] = it }
@@ -124,7 +121,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
                 }
             }
         }
-        return ViewModified(id, characters.orEmpty()) //TODO: Fix this
+        return ViewPatched(id, name, published, characters)
     }
 
     override suspend fun delete(id: String): ViewDeleted {

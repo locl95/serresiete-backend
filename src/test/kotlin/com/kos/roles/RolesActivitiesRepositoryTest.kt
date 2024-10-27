@@ -2,7 +2,6 @@ package com.kos.roles
 
 import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.roles.RolesTestHelper.basicRolesActivities
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesActivitiesRepository
@@ -24,14 +23,14 @@ abstract class RolesActivitiesRepositoryTest {
     fun `given a repository with roles and activities i can retrieve activities from a given role`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicRolesActivities)
-            assertEquals(repositoryWithState.getActivitiesFromRole(role), setOf(basicActivity))
+            assertEquals(repositoryWithState.getActivitiesFromRole(Role.USER), setOf(basicActivity))
         }
     }
 
     @Test
     fun `given a repository i can insert an activity to it`() {
         runBlocking {
-            repository.insertActivityToRole(basicActivity, role)
+            repository.insertActivityToRole(basicActivity, Role.USER)
             assertEquals(repository.state(), basicRolesActivities)
         }
     }
@@ -40,9 +39,9 @@ abstract class RolesActivitiesRepositoryTest {
     fun `given a repository i can insert activities to it`() {
         val anotherActivity = "another activity"
         runBlocking {
-            repository.insertActivityToRole(basicActivity, role)
-            repository.insertActivityToRole(anotherActivity, role)
-            val expected = mapOf(Pair(role, setOf(basicActivity, anotherActivity)))
+            repository.insertActivityToRole(basicActivity, Role.USER)
+            repository.insertActivityToRole(anotherActivity, Role.USER)
+            val expected = mapOf(Pair(Role.USER, setOf(basicActivity, anotherActivity)))
             assertEquals(expected, repository.state())
         }
     }
@@ -51,8 +50,8 @@ abstract class RolesActivitiesRepositoryTest {
     fun `given a repository with one role and 1 activity i can delete it`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicRolesActivities)
-            repositoryWithState.deleteActivityFromRole(basicActivity, role)
-            assertEquals(setOf(), repositoryWithState.state()[role].orEmpty())
+            repositoryWithState.deleteActivityFromRole(basicActivity, Role.USER)
+            assertEquals(setOf(), repositoryWithState.state()[Role.USER].orEmpty())
         }
     }
 }

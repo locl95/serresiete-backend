@@ -1,6 +1,7 @@
 package com.kos.credentials
 
 import com.kos.common.respondWithHandledError
+import com.kos.roles.Role
 import com.kos.roles.RoleRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -84,7 +85,7 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                         credentialsController.deleteRoleFromUser(
                             call.principal<UserIdPrincipal>()?.name,
                             call.parameters["user"].orEmpty(),
-                            call.parameters["role"].orEmpty()
+                            Role.fromString(call.parameters["role"].orEmpty())
                         ).fold({
                             call.respondWithHandledError(it)
                         }, {

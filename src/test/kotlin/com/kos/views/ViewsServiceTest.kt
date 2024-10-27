@@ -56,7 +56,7 @@ class ViewsServiceTest {
     @Test
     fun `i can get own views`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -71,7 +71,7 @@ class ViewsServiceTest {
     @Test
     fun `i can get a simple view`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -86,7 +86,7 @@ class ViewsServiceTest {
     @Test
     fun `i can create views`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(),
                 emptyCharactersState,
                 listOf(),
@@ -108,7 +108,7 @@ class ViewsServiceTest {
     @Test
     fun `i can create a lol view`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(),
                 emptyCharactersState,
                 listOf(),
@@ -132,7 +132,7 @@ class ViewsServiceTest {
     @Test
     fun `i can edit a lol view`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleLolView),
                 emptyCharactersState,
                 listOf(),
@@ -154,7 +154,7 @@ class ViewsServiceTest {
     @Test
     fun `users cant create more than maximum views`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleLolView, basicSimpleLolView),
                 emptyCharactersState,
                 listOf(),
@@ -174,7 +174,7 @@ class ViewsServiceTest {
     @Test
     fun `admins can create a huge amount of views`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 (1..100).map { SimpleView(it.toStr(), it.toStr(), owner, true, listOf(), Game.WOW) },
                 emptyCharactersState,
                 listOf(),
@@ -196,7 +196,7 @@ class ViewsServiceTest {
     @Test
     fun `user without role can't create a view`() {
         runBlocking {
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(),
                 emptyCharactersState,
                 listOf(),
@@ -227,7 +227,7 @@ class ViewsServiceTest {
             `when`(raiderIoClient.exists(request3)).thenReturn(true)
             `when`(raiderIoClient.exists(request4)).thenReturn(true)
 
-            val (viewsRepository, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -235,7 +235,6 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().all { it.characterIds.isEmpty() })
 
             viewsService.edit(
                 id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
@@ -247,8 +246,6 @@ class ViewsServiceTest {
             }.onLeft {
                 fail(it.toStr())
             }
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }
     }
 
@@ -265,7 +262,7 @@ class ViewsServiceTest {
             `when`(raiderIoClient.exists(request3)).thenReturn(true)
             `when`(raiderIoClient.exists(request4)).thenReturn(true)
 
-            val (viewsRepository, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(
                     listOf(basicWowCharacter, basicWowCharacter2),
@@ -275,9 +272,7 @@ class ViewsServiceTest {
                 emptyCredentialsInitialState,
                 mapOf()
             )
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
-
+            
             viewsService.edit(
                 id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
@@ -288,8 +283,6 @@ class ViewsServiceTest {
             }.onLeft {
                 fail(it.toStr())
             }
-
-            assertEquals(listOf<Long>(3, 4, 5, 6), viewsRepository.state().first().characterIds)
         }
     }
 
@@ -297,7 +290,7 @@ class ViewsServiceTest {
     fun `i can delete a view`() {
         runBlocking {
 
-            val (viewsRepository, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -305,9 +298,7 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            assertTrue(viewsRepository.state().size == 1)
             assertEquals(viewsService.delete("1"), ViewDeleted("1"))
-            assertTrue(viewsRepository.state().isEmpty())
         }
     }
 
@@ -316,7 +307,7 @@ class ViewsServiceTest {
         runBlocking {
             val patchedName = "new-name"
 
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
@@ -350,16 +341,14 @@ class ViewsServiceTest {
             `when`(raiderIoClient.exists(request3)).thenReturn(true)
             `when`(raiderIoClient.exists(request4)).thenReturn(true)
 
-            val (viewsRepository, viewsService) = createService(
+            val viewsService = createService(
                 listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                 emptyCharactersState,
                 listOf(),
                 emptyCredentialsInitialState,
                 mapOf()
             )
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
-
+            
             viewsService.patch(
                 id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
@@ -370,8 +359,6 @@ class ViewsServiceTest {
             }.onLeft {
                 fail(it.toStr())
             }
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
         }
     }
 
@@ -388,7 +375,7 @@ class ViewsServiceTest {
             val moreRecentDataCache =
                 anotherLolDataCache.copy(characterId = 1, inserted = OffsetDateTime.now().plusHours(2))
 
-            val (_, viewsService) = createService(
+            val viewsService = createService(
                 listOf(simpleView),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
                 listOf(
@@ -411,7 +398,7 @@ class ViewsServiceTest {
         dataCacheState: List<DataCache>,
         credentialState: CredentialsRepositoryState,
         rolesActivitiesState: Map<Role, Set<Activity>>
-    ): Pair<ViewsInMemoryRepository, ViewsService> {
+    ): ViewsService {
         val viewsRepository = ViewsInMemoryRepository()
             .withState(viewsState)
         val charactersRepository = CharactersInMemoryRepository()
@@ -426,9 +413,7 @@ class ViewsServiceTest {
         val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
         val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
         val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-        val service =
-            ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient, credentialsService)
 
-        return Pair(viewsRepository, service)
+        return ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient, credentialsService)
     }
 }

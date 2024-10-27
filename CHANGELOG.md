@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.2.0] 28-10-2024
+
+### Changed
+
+- **View Limit by Role**: Updated the view creation limit to be role-based instead of a fixed number:
+    - **Admin** now have no limit on the number of views they can create.
+    - **User** remain limited to a maximum of **2** views.
+
+  This enhancement provides greater flexibility and control, especially for administrators managing multiple views.
+
+
 ## [3.1.0] 18-10-2024
 
 ### Added

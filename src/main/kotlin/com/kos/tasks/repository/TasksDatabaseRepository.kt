@@ -4,6 +4,7 @@ import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
@@ -36,12 +37,19 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
         }
     }
 
-    override suspend fun get(): List<Task> {
-        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.selectAll().map { resultRowToTask(it) } }
+    override suspend fun getTasks(taskType: String?): List<Task> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (taskType) {
+                null -> Tasks.selectAll()
+                else -> Tasks.select(Tasks.type eq taskType)
+            }.map { resultRowToTask(it) }
+        }
     }
 
-    override suspend fun get(id: String): Task? {
-        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
+    override suspend fun getTask(id: String): Task? {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull()
+        }
     }
 
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {

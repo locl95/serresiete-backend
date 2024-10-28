@@ -2,6 +2,8 @@ package com.kos.tasks
 
 import com.kos.common.respondWithHandledError
 import io.ktor.http.*
+import io.ktor.http.HttpHeaders.Location
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -16,18 +18,21 @@ fun Route.tasksRouting(tasksController: TasksController) {
                     .fold({
                         call.respondWithHandledError(it)
                     }, {
-                        call.response.headers.append(HttpHeaders.Location, "/tasks/$it")
+                        call.response.headers.append(Location, "/tasks/$it")
                         call.respond(HttpStatusCode.Created)
                     })
             }
         }
         authenticate("auth-bearer") {
             get {
-                tasksController.get(call.principal<UserIdPrincipal>()?.name)
+                val client = call.principal<UserIdPrincipal>()?.name
+                val taskType = call.request.queryParameters["taskType"]
+
+                tasksController.get(client, taskType)
                     .fold({
                         call.respondWithHandledError(it)
                     }, {
-                        call.respond(HttpStatusCode.OK, it)
+                        call.respond(OK, it)
                     })
             }
         }
@@ -38,7 +43,7 @@ fun Route.tasksRouting(tasksController: TasksController) {
                         .fold({
                             call.respondWithHandledError(it)
                         }, {
-                            call.respond(HttpStatusCode.OK, it)
+                            call.respond(OK, it)
                         })
                 }
             }

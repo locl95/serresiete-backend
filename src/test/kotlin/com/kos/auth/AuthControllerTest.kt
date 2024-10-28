@@ -11,11 +11,10 @@ import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
-import kotlin.test.Test
 import com.kos.assertTrue
 import com.kos.auth.AuthTestHelper.basicAuthorization
-import kotlin.test.assertEquals
+import com.kos.views.ViewsTestHelper.owner
+import kotlin.test.*
 
 class AuthControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
@@ -57,13 +56,17 @@ class AuthControllerTest {
                 mapOf(Pair(Role.USER, setOf(Activities.login))),
                 listOf()
             )
-            val res = controller.login("owner").getOrNull()
-            assertTrue(res?.accessToken?.isAccess)
-            assertFalse(res?.refreshToken?.isAccess)
-            assertTrue(res?.accessToken?.userName == "owner")
-            assertTrue(res?.refreshToken?.userName == "owner")
-            assertTrue(res?.accessToken?.token?.isNotEmpty())
-            assertTrue(res?.refreshToken?.token?.isNotEmpty())
+            controller.login("owner").onRight {
+                assertTrue(it.accessToken?.isAccess)
+                assertFalse(it.refreshToken?.isAccess)
+                assertEquals(owner, it.accessToken?.userName)
+                assertEquals(owner, it.refreshToken?.userName)
+                assertTrue(it.accessToken?.token?.isNotEmpty())
+                assertTrue(it.refreshToken?.token?.isNotEmpty())
+            }.onLeft {
+                fail(it.toString())
+            }
+
         }
     }
 
@@ -80,7 +83,11 @@ class AuthControllerTest {
                 mapOf(Pair(Role.USER, setOf(Activities.logout))),
                 listOf(basicAuthorization.copy(userName = "owner"))
             )
-            assertTrue(controller.logout("owner").getOrNull())
+            controller.logout("owner").onRight {
+                assertTrue(it)
+            }.onLeft {
+                fail(it.toString())
+            }
         }
     }
 
@@ -98,10 +105,13 @@ class AuthControllerTest {
                 listOf(basicAuthorization.copy(userName = "owner").copy(isAccess = false))
             )
 
-            val res = controller.refresh(basicAuthorization.token).getOrNull()
-            assertTrue(res?.isAccess)
-            assertEquals("owner", res?.userName)
-            assertTrue(res?.token?.isNotEmpty())
+            controller.refresh(basicAuthorization.token)
+                .onRight {
+                    assertTrue(it?.isAccess)
+                    assertEquals(owner, it?.userName)
+                    assertTrue(it?.token?.isNotEmpty())
+                }
+                .onLeft { fail(it.toString()) }
         }
     }
 

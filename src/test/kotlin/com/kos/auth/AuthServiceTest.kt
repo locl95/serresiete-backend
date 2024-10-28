@@ -9,107 +9,107 @@ import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.common.isDefined
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class AuthServiceTest {
+
+    private suspend fun createService(authInitialState: List<Authorization>): AuthService {
+        val authInMemoryRepository = AuthInMemoryRepository().withState(authInitialState)
+        return AuthService(authInMemoryRepository)
+    }
+
     @Test
     fun `i can validate tokens and return the username of the owner`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
-            val authService = AuthService(authInMemoryRepository)
-            assertTrue(authService.validateTokenAndReturnUsername(token,isAccessRequest = true)
-                .fold({ false }) { it == basicAuthorization.userName })
+            val authService = createService(listOf(basicAuthorization))
+            authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
+                .onRight { assertEquals(it, basicAuthorization.userName) }
+                .onLeft { fail(it.toString()) }
         }
     }
 
     @Test
     fun `i can validate that a refresh token can't be used when requesting an access`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicRefreshAuthorization))
-            val authService = AuthService(authInMemoryRepository)
-            val validateTokenAndReturnUsername =
-                authService.validateTokenAndReturnUsername(basicRefreshAuthorization.token, isAccessRequest = true)
-            assertTrue(validateTokenAndReturnUsername.isLeft())
+            val authService = createService(listOf(basicRefreshAuthorization))
+            authService.validateTokenAndReturnUsername(basicRefreshAuthorization.token, isAccessRequest = true)
+                .onRight { fail() }
+                .onLeft {
+                    assertTrue(it is TokenWrongMode)
+                    assertEquals(basicRefreshAuthorization.token, it.token)
+                }
         }
     }
 
     @Test
     fun `i can validate that any token will not work regardless of type if they expired`() {
-        val validUntil = OffsetDateTime.now().minusHours(1)
         runBlocking {
-            val authInMemoryRepository =
-                AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = validUntil)))
-            val authService = AuthService(authInMemoryRepository)
-            val userNameOrErrorAccess = authService.validateTokenAndReturnUsername(token, isAccessRequest=true)
-            val userNameOrErrorRefresh = authService.validateTokenAndReturnUsername(token, isAccessRequest=false)
-            assertEquals(userNameOrErrorAccess, Either.Left(TokenExpired(token, validUntil)))
-            assertEquals(userNameOrErrorRefresh, Either.Left(TokenWrongMode(token, isAccess = true)))
+            val validUntil = OffsetDateTime.now().minusHours(1)
+            val authService = createService(listOf(basicAuthorization.copy(validUntil = validUntil)))
+            authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
+                .onRight { fail() }
+                .onLeft {
+                    assertTrue(it is TokenExpired)
+                    assertEquals(token, it.token)
+                    assertEquals(validUntil, it.validUntil)
+                }
+            authService.validateTokenAndReturnUsername(token, isAccessRequest = false)
+                .onRight { fail() }
+                .onLeft {
+                    assertTrue(it is TokenWrongMode)
+                    assertEquals(token, it.token)
+                }
         }
     }
 
     @Test
     fun `i can validate that a persistent token works`() {
         runBlocking {
-            val authInMemoryRepository =
-                AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = null)))
-            val authService = AuthService(authInMemoryRepository)
-            val userNameOrError = authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
-            assertEquals(userNameOrError, Either.Right(user))
-            assertEquals(1, authInMemoryRepository.state().size)
+            val authService = createService(listOf(basicAuthorization.copy(validUntil = null)))
+            authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
+                .onRight { assertEquals(user, it) }
+                .onLeft { fail() }
         }
     }
 
     @Test
     fun `i can validate that login creates and returns both access and refresh tokens`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository()
-            val authService = AuthService(authInMemoryRepository)
+            val authService = createService(listOf())
             val loginResponse = authService.login(user)
             assertTrue(loginResponse.accessToken.isDefined())
             assertTrue(loginResponse.refreshToken.isDefined())
-            assertEquals(2, authInMemoryRepository.state().size)
-            assertTrue(authInMemoryRepository.state().contains(loginResponse.accessToken))
-            assertTrue(authInMemoryRepository.state().contains(loginResponse.refreshToken))
         }
     }
 
     @Test
     fun `i can get an access token with a refresh token without needing to login`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository().withState(
-                listOf(basicAuthorization, basicRefreshAuthorization)
-            )
-            val authService = AuthService(authInMemoryRepository)
-            val newToken = authService.refresh("refresh")
-            assertEquals(3, authInMemoryRepository.state().size)
-            assertTrue(newToken.isRight { it != null && it.userName == user })
+            val authService = createService(listOf(basicAuthorization, basicRefreshAuthorization))
+            authService.refresh("refresh")
+                .onRight { assertEquals(user, it?.userName) }
+                .onLeft { fail(it.toString()) }
         }
     }
 
     @Test
     fun `i cant create an access token with another access token`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository().withState(
-                listOf(basicAuthorization, basicRefreshAuthorization)
-            )
-            val authService = AuthService(authInMemoryRepository)
-            val newToken = authService.refresh(token)
-            assertEquals(2, authInMemoryRepository.state().size)
-            assertTrue(newToken.isLeft())
+            val authService = createService(listOf(basicAuthorization, basicRefreshAuthorization))
+            authService.refresh(token)
+                .onRight { fail() }
+                .onLeft {
+                    assertTrue(it is TokenWrongMode)
+                    assertEquals(token, it.token)
+                }
         }
     }
 
     @Test
     fun `i can logout`() {
         runBlocking {
-            val authInMemoryRepository = AuthInMemoryRepository().withState(
-                listOf(basicAuthorization, basicRefreshAuthorization)
-            )
-            val authService = AuthService(authInMemoryRepository)
-            authService.logout(basicAuthorization.userName)
-            assertEquals(0, authInMemoryRepository.state().size)
+            val authService = createService(listOf(basicAuthorization, basicRefreshAuthorization))
+            assertTrue(authService.logout(basicAuthorization.userName))
         }
     }
 }

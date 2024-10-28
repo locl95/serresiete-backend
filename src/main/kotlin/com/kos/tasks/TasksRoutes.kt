@@ -1,9 +1,8 @@
 package com.kos.tasks
 
-import arrow.core.Either
 import arrow.core.raise.either
 import com.kos.common.InvalidQueryParameter
-import com.kos.common.fold
+import com.kos.common.recoverToEither
 import com.kos.common.respondWithHandledError
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
@@ -30,55 +29,20 @@ fun Route.tasksRouting(tasksController: TasksController) {
         }
         authenticate("auth-bearer") {
             get {
-                val taskTypeParameter = "taskType"
+                either {
+                    val taskTypeParameter = "type"
+                    val taskType: TaskType? =
+                        call.request.queryParameters[taskTypeParameter].recoverToEither(
+                            { InvalidQueryParameter(taskTypeParameter, it, TaskType.entries.map { taskTypes -> taskTypes.toString() }) },
+                            { TaskType.fromString(it) }
+                        ).bind()
 
-                call.request.queryParameters[taskTypeParameter]?.let { TaskType.fromString(it) }.fold(
-                    {
-                        tasksController.getTasks(
-                            call.principal<UserIdPrincipal>()?.name,
-                            null
-                        )
-                    },
-                    { providedTaskTypeParameter ->
-                        providedTaskTypeParameter.fold({
-                            Either.Left(
-                                InvalidQueryParameter(
-                                    taskTypeParameter,
-                                    it.type
-                                )
-                            )
-                        },
-                            {
-                                tasksController.getTasks(
-                                    call.principal<UserIdPrincipal>()?.name,
-                                    it
-                                )
-                            })
-                    }
-                )
-                    .fold({
-                        call.respondWithHandledError(it)
-                    }, {
-                        call.respond(OK, it)
-                    })
-
-
-                // Collect authentication and query parameter errors in an Either
-                val result = either {
-                    val taskType = call.request.queryParameters[taskTypeParameter]?.let {
-                        TaskType.fromString(it)
-                    }
-                    client to taskType // Successful case as a pair (clientName, taskType)
-                }
-
-                // Now we can call `getTasks` and fold on the overall result
-                result.flatMap { (client, taskType) ->
-                    tasksController.getTasks(client, taskType)
-                }.fold(
-                    { error -> call.respondWithHandledError(error) },
-                    { tasks -> call.respond(OK, tasks) }
-                )
-            }
+                    tasksController.getTasks(call.principal<UserIdPrincipal>()?.name, taskType).bind()
+                }.fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(OK, it)
+                })
             }
         }
         route("/{id}") {
@@ -87,12 +51,11 @@ fun Route.tasksRouting(tasksController: TasksController) {
                     tasksController.getTask(
                         call.principal<UserIdPrincipal>()?.name,
                         call.parameters["id"].orEmpty()
-                    )
-                        .fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(OK, it)
-                        })
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(OK, it)
+                    })
                 }
             }
         }

@@ -3,6 +3,7 @@ package com.kos.common
 import arrow.core.Either
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class EitherExtensionTest {
     @Test
@@ -61,5 +62,24 @@ class EitherExtensionTest {
         val either: Either<String, Int> = Either.Right(42)
         val result = either.getLeftOrNull()
         assertEquals(null, result)
+    }
+
+    @Test
+    fun `getOrThrow should return right's value if it's right`() {
+        val either: Either<String, Int> = Either.Right(42)
+        val result = either.getOrThrow(RuntimeException("Should not throw"))
+        assertEquals(42, result)
+    }
+
+    @Test
+    fun `getOrThrow should throw an exception if it's left`() {
+        val either: Either<String, Int> = Either.Left("Error")
+        val exception = RuntimeException("Expected exception")
+
+        val thrown = assertFailsWith<Throwable> {
+            either.getOrThrow(exception)
+        }
+
+        assertEquals(exception.message, thrown.message)
     }
 }

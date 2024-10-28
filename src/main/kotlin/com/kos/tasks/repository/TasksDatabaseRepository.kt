@@ -1,6 +1,7 @@
 package com.kos.tasks.repository
 
 import com.kos.common.fold
+import com.kos.common.getOrThrow
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,7 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
 
     private fun resultRowToTask(row: ResultRow) = Task(
         row[Tasks.id],
-        TaskType.fromString(row[Tasks.type]),
+        TaskType.fromString(row[Tasks.type]).getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
         row[Tasks.taskStatus],
         OffsetDateTime.parse(row[Tasks.inserted])
     )

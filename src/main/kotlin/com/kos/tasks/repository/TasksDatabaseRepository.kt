@@ -1,5 +1,6 @@
 package com.kos.tasks.repository
 
+import com.kos.common.fold
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
@@ -37,12 +38,15 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
         }
     }
 
-    override suspend fun getTasks(taskType: String?): List<Task> {
+    override suspend fun getTasks(taskType: TaskType?): List<Task> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
-            when (taskType) {
-                null -> Tasks.selectAll()
-                else -> Tasks.select(Tasks.type eq taskType)
-            }.map { resultRowToTask(it) }
+            val baseQuery = Tasks.selectAll()
+            val filteredQuery = taskType.fold(
+                { baseQuery },
+                { baseQuery.adjustWhere { Tasks.type eq it.toString() } }
+            )
+
+            filteredQuery.map { resultRowToTask(it) }
         }
     }
 
@@ -60,7 +64,9 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
 
     override suspend fun getLastExecution(taskType: TaskType): Task? {
         return newSuspendedTransaction(Dispatchers.IO, db) {
-            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1)
+            Tasks.select { Tasks.type.eq(taskType.toString()) }
+                .orderBy(Tasks.inserted, SortOrder.DESC)
+                .limit(1)
                 .map { resultRowToTask(it) }.firstOrNull()
         }
     }

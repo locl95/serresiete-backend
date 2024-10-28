@@ -31,7 +31,7 @@ class TasksController(private val tasksService: TasksService, private val creden
         }
     }
 
-    suspend fun get(client: String?, taskType: String?): Either<ControllerError, List<Task>> {
+    suspend fun getTasks(client: String?, taskType: TaskType?): Either<ControllerError, List<Task>> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
@@ -42,7 +42,7 @@ class TasksController(private val tasksService: TasksService, private val creden
         }
     }
 
-    suspend fun get(client: String?, id: String): Either<ControllerError, Task> {
+    suspend fun getTask(client: String?, id: String): Either<ControllerError, Task> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {

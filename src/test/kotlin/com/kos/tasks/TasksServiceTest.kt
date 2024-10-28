@@ -265,7 +265,7 @@ class TasksServiceTest {
 
             val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
-            assertEquals(listOf(task), service.get())
+            assertEquals(listOf(task), service.getTasks(null))
         }
     }
 
@@ -286,7 +286,7 @@ class TasksServiceTest {
 
             val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
-            assertEquals(task, service.get(knownId))
+            assertEquals(task, service.getTask(knownId))
         }
     }
 }

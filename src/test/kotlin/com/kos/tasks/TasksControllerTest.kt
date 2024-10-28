@@ -79,7 +79,7 @@ class TasksControllerTest {
                 listOf(),
                 mapOf(Pair(Role.USER, setOf(Activities.getTasks)))
             )
-            assertEquals(listOf(task), controller.get("owner").getOrNull())
+            assertEquals(listOf(task), controller.getTasks("owner", null).getOrNull())
         }
     }
 
@@ -102,7 +102,7 @@ class TasksControllerTest {
                 listOf(),
                 mapOf(Pair(Role.USER, setOf(Activities.getTask)))
             )
-            assertEquals(task, controller.get("owner", knownId).getOrNull())
+            assertEquals(task, controller.getTask("owner", knownId).getOrNull())
         }
     }
 }

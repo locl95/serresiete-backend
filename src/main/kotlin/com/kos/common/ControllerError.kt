@@ -10,6 +10,8 @@ class NotAuthorized : ControllerError
 data class NotEnoughPermissions(val user: String) : ControllerError
 data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
+class InvalidQueryParameter(val param: String, val value: String) : ControllerError
+class InvalidTaskType(val type: String)
 interface HttpError : ControllerError {
     fun error(): String
 }

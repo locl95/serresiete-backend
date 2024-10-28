@@ -17,7 +17,7 @@ data class TasksService(
 
     private val olderThanDays: Long = 7
 
-    suspend fun getTasks(taskType: String?) = tasksRepository.getTasks(taskType)
+    suspend fun getTasks(taskType: TaskType?) = tasksRepository.getTasks(taskType)
 
     suspend fun getTask(id: String) = tasksRepository.getTask(id)
 

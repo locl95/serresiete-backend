@@ -1,11 +1,13 @@
 package com.kos.tasks
 
+import arrow.core.Either
 import com.kos.auth.OffsetDateTimeSerializer
-import kotlinx.serialization.json.Json
-import java.time.OffsetDateTime
+import com.kos.common.ControllerError
+import com.kos.common.InvalidTaskType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import java.util.*
+import kotlinx.serialization.json.Json
+import java.time.OffsetDateTime
 
 @Serializable
 data class TaskStatus(val status: Status, val message: String?)
@@ -64,12 +66,12 @@ enum class TaskType {
     };
 
     companion object {
-        fun fromString(value: String): TaskType = when (value) {
-            "cacheWowDataTask" -> CACHE_WOW_DATA_TASK
-            "cacheLolDataTask" -> CACHE_LOL_DATA_TASK
-            "tokenCleanupTask" -> TOKEN_CLEANUP_TASK
-            "taskCleanupTask" -> TASK_CLEANUP_TASK
-            else -> throw IllegalArgumentException("Unknown task: $value")
+        fun fromString(value: String): Either<InvalidTaskType, TaskType> = when (value) {
+            "cacheWowDataTask" -> Either.Right(CACHE_WOW_DATA_TASK)
+            "cacheLolDataTask" -> Either.Right(CACHE_LOL_DATA_TASK)
+            "tokenCleanupTask" -> Either.Right(TOKEN_CLEANUP_TASK)
+            "taskCleanupTask" -> Either.Right(TASK_CLEANUP_TASK)
+            else -> Either.Left(InvalidTaskType(value))
         }
     }
 }

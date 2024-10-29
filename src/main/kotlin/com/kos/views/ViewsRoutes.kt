@@ -14,7 +14,7 @@ fun Route.viewsRouting(
     viewsController: ViewsController
 ) {
     route("/views") {
-        authenticate("auth-bearer-jwt") {
+        authenticate("auth-jwt") {
             get {
                 val userWithActivities = call.principal<UserWithActivities>()
                 viewsController.getViews(userWithActivities?.name, userWithActivities?.activities.orEmpty()).fold({

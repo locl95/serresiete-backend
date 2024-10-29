@@ -5,12 +5,10 @@ import arrow.core.flatten
 import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.common.*
-import com.kos.credentials.CredentialsService
 import com.kos.httpclients.domain.Data
 
 class ViewsController(
     private val viewsService: ViewsService,
-    private val credentialsService: CredentialsService
 ) {
 
     suspend fun getViews(client: String?, activities: Set<Activity>): Either<ControllerError, List<SimpleView>> {
@@ -24,18 +22,15 @@ class ViewsController(
         }
     }
 
-    suspend fun getView(client: String?, id: String): Either<ControllerError, View> {
+    suspend fun getView(client: String?, id: String, activities: Set<Activity>): Either<ControllerError, View> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if ((maybeView.owner == client && credentialsService.hasPermissions(
-                                client,
-                                Activities.getOwnView
-                            ))
-                            || credentialsService.hasPermissions(client, Activities.getAnyView)
+                        if ((maybeView.owner == client && activities.contains(Activities.getOwnView))
+                            || activities.contains(Activities.getAnyView)
                         ) Either.Right(maybeView)
                         else Either.Left(NotEnoughPermissions(client))
                     }
@@ -44,15 +39,20 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<Data>> {
+    suspend fun getViewData(
+        client: String?,
+        id: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, List<Data>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if (credentialsService.hasPermissions(client, Activities.getViewData) && maybeView.published)
-                            Either.Right(viewsService.getData(maybeView)).flatten()
+                        if (activities.contains(Activities.getViewData) && maybeView.published) Either.Right(
+                            viewsService.getData(maybeView)
+                        ).flatten()
                         else if (!maybeView.published) Either.Left(NotPublished(id))
                         else Either.Left(NotEnoughPermissions(client))
                     }
@@ -61,18 +61,18 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<Data>> {
+    suspend fun getViewCachedData(
+        client: String?,
+        id: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, List<Data>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
                 return when (val maybeView = viewsService.getSimple(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if (credentialsService.hasPermissions(
-                                client,
-                                Activities.getViewCachedData
-                            ) && maybeView.published
-                        )
+                        if (activities.contains(Activities.getViewCachedData) && maybeView.published)
                             Either.Right(viewsService.getCachedData(maybeView)).flatten()
                         else if (!maybeView.published) Either.Left(NotPublished(id))
                         else Either.Left(NotEnoughPermissions(client))
@@ -82,11 +82,15 @@ class ViewsController(
         }
     }
 
-    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, ViewModified> {
+    suspend fun createView(
+        client: String?,
+        request: ViewRequest,
+        activities: Set<Activity>
+    ): Either<ControllerError, ViewModified> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (credentialsService.hasPermissions(client, Activities.createViews)) {
+                if (activities.contains(Activities.createViews)) {
                     when (val res = viewsService.create(client, request)) {
                         is Either.Right -> Either.Right(res.value)
                         is Either.Left -> res
@@ -96,14 +100,19 @@ class ViewsController(
         }
     }
 
-    suspend fun editView(client: String?, request: ViewRequest, id: String): Either<ControllerError, ViewModified> {
+    suspend fun editView(
+        client: String?,
+        request: ViewRequest,
+        id: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, ViewModified> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
-                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
-                        || credentialsService.hasPermissions(client, Activities.editAnyView)
+                    if ((maybeView.owner == client && activities.contains(Activities.editOwnView))
+                        || activities.contains(Activities.editAnyView)
                     ) {
                         viewsService.edit(maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
@@ -112,14 +121,19 @@ class ViewsController(
         }
     }
 
-    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewModified> {
+    suspend fun patchView(
+        client: String?,
+        request: ViewPatchRequest,
+        id: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, ViewModified> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
-                    if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
-                        || credentialsService.hasPermissions(client, Activities.editAnyView)
+                    if ((maybeView.owner == client && activities.contains(Activities.editOwnView))
+                        || activities.contains(Activities.editAnyView)
                     ) {
                         viewsService.patch(maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
@@ -128,17 +142,18 @@ class ViewsController(
         }
     }
 
-    suspend fun deleteView(client: String?, id: String): Either<ControllerError, ViewDeleted> {
+    suspend fun deleteView(
+        client: String?,
+        id: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, ViewDeleted> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
                 null -> Either.Left(NotFound(id))
                 else -> {
-                    if ((maybeView.owner == client && credentialsService.hasPermissions(
-                            client,
-                            Activities.deleteOwnView
-                        ))
-                        || credentialsService.hasPermissions(client, Activities.deleteAnyView)
+                    if ((maybeView.owner == client && activities.contains(Activities.deleteOwnView))
+                        || activities.contains(Activities.deleteAnyView)
                     ) {
                         Either.Right(viewsService.delete(maybeView.id))
                     } else Either.Left(NotEnoughPermissions(client))

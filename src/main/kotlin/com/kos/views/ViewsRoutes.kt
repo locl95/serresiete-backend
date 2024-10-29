@@ -24,16 +24,21 @@ fun Route.viewsRouting(
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get("/{id}") {
-                viewsController.getView(call.principal<UserIdPrincipal>()?.name, call.parameters["id"].orEmpty()).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.getView(
+                    userWithActivities?.name,
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
+                ).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get("/{id}/data") {
                 viewsController.getViewData(call.principal<UserIdPrincipal>()?.name, call.parameters["id"].orEmpty())
                     .fold({

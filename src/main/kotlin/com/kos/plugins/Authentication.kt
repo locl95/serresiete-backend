@@ -5,6 +5,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.kos.activities.Activity
 import com.kos.auth.AuthService
+import com.kos.auth.TokenMode
 import com.kos.common.toCredentials
 import com.kos.credentials.CredentialsService
 import io.ktor.server.application.*
@@ -75,7 +76,11 @@ fun Application.configureAuthentication(authService: AuthService, credentialsSer
             )
 
             validate { token ->
-                if (token.payload.expiresAtAsInstant.isBefore(OffsetDateTime.now().toInstant())) null
+                //TODO: Would be nice to provide why validation went wrong
+                if (TokenMode.fromString(token.payload.getClaim("mode").asString()) != TokenMode.ACCESS) null
+                //TODO: What happens with persistent tokens? How will we generate persistent tokens for services?
+                //TODO: WE CANT MERGE WITHOUT SOLVING THIS ISSUE!!!!!!
+                else if (token.payload.expiresAtAsInstant.isBefore(OffsetDateTime.now().toInstant())) null
                 else {
                     val username = token.payload.getClaim("username").asString()
                     val activities = token.payload.getClaim("activities").asList(String::class.java).toSet()

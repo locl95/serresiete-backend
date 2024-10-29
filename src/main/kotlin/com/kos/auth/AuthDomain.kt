@@ -52,6 +52,7 @@ data class TokenNotFound(override val token: String) : TokenError {
 data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError {
     override val message: String = "$token expired"
 }
+
 data class TokenWrongMode(override val token: String, val isAccess: Boolean) : TokenError {
     override val message: String = "$token wrong mode"
 }
@@ -65,4 +66,13 @@ enum class TokenMode {
     REFRESH {
         override fun toString(): String = "refresh"
     };
+
+    companion object {
+        fun fromString(str: String): TokenMode =
+            when (str) {
+                "access" -> ACCESS
+                "refresh" -> REFRESH
+                else -> throw IllegalArgumentException("Illegal tokenMode: $str")
+            }
+    }
 }

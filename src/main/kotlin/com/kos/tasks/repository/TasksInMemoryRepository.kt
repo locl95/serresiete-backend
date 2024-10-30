@@ -1,6 +1,7 @@
 package com.kos.tasks.repository
 
 import com.kos.common.InMemoryRepository
+import com.kos.common.fold
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import java.time.OffsetDateTime
@@ -12,11 +13,16 @@ class TasksInMemoryRepository : TasksRepository, InMemoryRepository {
         tasks.add(task)
     }
 
-    override suspend fun get(): List<Task> {
-        return tasks.toList()
+    override suspend fun getTasks(taskType: TaskType?): List<Task> {
+        val allTasks = tasks.toList()
+
+        return taskType.fold(
+            { allTasks },
+            { providedTaskType -> allTasks.filter { it.type == providedTaskType } }
+        )
     }
 
-    override suspend fun get(id: String): Task? {
+    override suspend fun getTask(id: String): Task? {
         return tasks.find { it.id == id }
     }
 

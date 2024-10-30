@@ -1,9 +1,12 @@
 package com.kos.tasks.repository
 
+import com.kos.common.fold
+import com.kos.common.getOrThrow
 import com.kos.tasks.Task
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
@@ -20,7 +23,7 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
 
     private fun resultRowToTask(row: ResultRow) = Task(
         row[Tasks.id],
-        TaskType.fromString(row[Tasks.type]),
+        TaskType.fromString(row[Tasks.type]).getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
         row[Tasks.taskStatus],
         OffsetDateTime.parse(row[Tasks.inserted])
     )
@@ -36,12 +39,22 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
         }
     }
 
-    override suspend fun get(): List<Task> {
-        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.selectAll().map { resultRowToTask(it) } }
+    override suspend fun getTasks(taskType: TaskType?): List<Task> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            val baseQuery = Tasks.selectAll()
+            val filteredQuery = taskType.fold(
+                { baseQuery },
+                { baseQuery.adjustWhere { Tasks.type eq it.toString() } }
+            )
+
+            filteredQuery.map { resultRowToTask(it) }
+        }
     }
 
-    override suspend fun get(id: String): Task? {
-        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
+    override suspend fun getTask(id: String): Task? {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull()
+        }
     }
 
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {
@@ -52,7 +65,9 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
 
     override suspend fun getLastExecution(taskType: TaskType): Task? {
         return newSuspendedTransaction(Dispatchers.IO, db) {
-            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1)
+            Tasks.select { Tasks.type.eq(taskType.toString()) }
+                .orderBy(Tasks.inserted, SortOrder.DESC)
+                .limit(1)
                 .map { resultRowToTask(it) }.firstOrNull()
         }
     }

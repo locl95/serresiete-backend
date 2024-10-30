@@ -13,4 +13,15 @@ object TasksTestHelper {
             now
         )
     }
+
+    val taskWithType: (OffsetDateTime, TaskType) -> Task = { now, taskType ->
+        Task(
+            UUID.randomUUID().toString(),
+            taskType,
+            TaskStatus(Status.SUCCESSFUL, "message").toString(),
+            now
+        )
+    }
 }
+
+

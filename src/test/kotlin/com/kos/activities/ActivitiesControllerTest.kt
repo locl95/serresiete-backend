@@ -56,7 +56,7 @@ class ActivitiesControllerTest {
                 setOf("do this", "do that"),
                 mapOf(Pair(role, setOf(Activities.getAnyActivities)))
             )
-            assertEquals(setOf("do this", "do that"), controller.getActivities("owner").getOrNull())
+            assertEquals(setOf("do this", "do that"), controller.getActivities("owner", setOf(Activities.getAnyActivities)).getOrNull())
         }
     }
 
@@ -73,7 +73,7 @@ class ActivitiesControllerTest {
                 setOf(),
                 mapOf(Pair(role, setOf(Activities.createActivities)))
             )
-            assertTrue(controller.createActivity("owner", ActivityRequest("do this")).isRight())
+            assertTrue(controller.createActivity("owner", ActivityRequest("do this"), setOf(Activities.createActivities)).isRight())
             assertEquals(setOf("do this"), activitiesRepository.state())
         }
     }
@@ -91,7 +91,7 @@ class ActivitiesControllerTest {
                 setOf("do this"),
                 mapOf(Pair(role, setOf(Activities.deleteActivities)))
             )
-            assertTrue(controller.deleteActivity("owner", "do this").isRight())
+            assertTrue(controller.deleteActivity("owner", "do this", setOf(Activities.deleteActivities)).isRight())
             assertEquals(setOf(), activitiesRepository.state())
         }
     }
@@ -109,7 +109,7 @@ class ActivitiesControllerTest {
                 setOf("do this"),
                 mapOf(Pair(role, setOf(Activities.getAnyActivities)), Pair("other-role", setOf("do this")))
             )
-            assertEquals(setOf("do this"), controller.getActivitiesFromRole("owner", "other-role").getOrNull())
+            assertEquals(setOf("do this"), controller.getActivitiesFromRole("owner", "other-role", setOf(Activities.getAnyActivities)).getOrNull())
         }
     }
 

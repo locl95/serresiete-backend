@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.0] 30-10-2024
+
+### Added
+
+- **Task Filtering by Type**: Introduced a new feature allowing tasks to be filtered by `taskType`.
+    - This enhancement improves user control and efficiency by enabling targeted task retrieval.
+
+- **Query Parameter Validation**: Added validation for query parameters to ensure data integrity and prevent potential errors.
+
 ## [3.2.0] 28-10-2024
 
 ### Changed

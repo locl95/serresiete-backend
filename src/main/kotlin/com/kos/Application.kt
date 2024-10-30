@@ -71,7 +71,7 @@ fun Application.module() {
 
     val rolesRepository = RolesDatabaseRepository(db)
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
-    val rolesController = RolesController(rolesService, credentialsService)
+    val rolesController = RolesController(rolesService)
 
     val charactersRepository = CharactersDatabaseRepository(db)
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)

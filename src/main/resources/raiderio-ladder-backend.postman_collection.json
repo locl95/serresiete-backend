@@ -785,11 +785,11 @@
 								}
 							]
 						},
-						"method": "POST",
+						"method": "DELETE",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"role\": \"nefertiti\"}",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -797,13 +797,16 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUri}}/api/roles",
+							"raw": "{{baseUri}}/api/roles/{{role}}/activities/{{activity2}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"roles"
+								"roles",
+								"{{role}}",
+								"activities",
+								"{{activity2}}"
 							]
 						}
 					},

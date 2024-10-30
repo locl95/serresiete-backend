@@ -1,6 +1,7 @@
 package com.kos.tasks
 
 import com.kos.common.respondWithHandledError
+import com.kos.plugins.UserWithActivities
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -10,20 +11,25 @@ import io.ktor.server.routing.*
 
 fun Route.tasksRouting(tasksController: TasksController) {
     route("/tasks") {
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             post {
-                tasksController.runTask(call.principal<UserIdPrincipal>()?.name, call.receive())
-                    .fold({
-                        call.respondWithHandledError(it)
-                    }, {
-                        call.response.headers.append(HttpHeaders.Location, "/tasks/$it")
-                        call.respond(HttpStatusCode.Created)
-                    })
+                val userWithActivities = call.principal<UserWithActivities>()
+                tasksController.runTask(
+                    userWithActivities?.name,
+                    call.receive(),
+                    userWithActivities?.activities.orEmpty()
+                ).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.response.headers.append(HttpHeaders.Location, "/tasks/$it")
+                    call.respond(HttpStatusCode.Created)
+                })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get {
-                tasksController.get(call.principal<UserIdPrincipal>()?.name)
+                val userWithActivities = call.principal<UserWithActivities>()
+                tasksController.get(userWithActivities?.name, userWithActivities?.activities.orEmpty())
                     .fold({
                         call.respondWithHandledError(it)
                     }, {
@@ -32,14 +38,18 @@ fun Route.tasksRouting(tasksController: TasksController) {
             }
         }
         route("/{id}") {
-            authenticate("auth-bearer") {
+            authenticate("auth-jwt") {
                 get {
-                    tasksController.get(call.principal<UserIdPrincipal>()?.name, call.parameters["id"].orEmpty())
-                        .fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.OK, it)
-                        })
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    tasksController.get(
+                        userWithActivities?.name,
+                        call.parameters["id"].orEmpty(),
+                        userWithActivities?.activities.orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.OK, it)
+                    })
                 }
             }
         }

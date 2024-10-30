@@ -88,7 +88,7 @@ fun Application.module() {
         TasksService(tasksRepository, dataCacheService, charactersService, authService)
     val tasksLauncher =
         TasksLauncher(tasksService, tasksRepository, executorService, authService, dataCacheService, coroutineScope)
-    val tasksController = TasksController(tasksService, credentialsService)
+    val tasksController = TasksController(tasksService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
     configureAuthentication(authService, credentialsService)

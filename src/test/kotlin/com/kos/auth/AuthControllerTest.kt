@@ -17,6 +17,7 @@ import kotlin.test.Test
 import com.kos.assertTrue
 import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
 import kotlin.test.assertEquals
 
 class AuthControllerTest {
@@ -73,7 +74,7 @@ class AuthControllerTest {
     fun `i can logout`() {
         runBlocking {
             val controller = createController(
-                basicCredentialsInitialState,
+                emptyCredentialsState,
                 mapOf(),
                 listOf(basicAuthorization.copy(userName = "owner"))
             )

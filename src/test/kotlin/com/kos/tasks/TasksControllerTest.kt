@@ -11,6 +11,7 @@ import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
@@ -60,28 +61,24 @@ class TasksControllerTest {
         val authService = AuthService(authRepositoryWithState, credentialsService)
         val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)
 
-        return TasksController(tasksService, credentialsService)
+        return TasksController(tasksService)
     }
 
     @Test
     fun `i can get tasks`() {
         runBlocking {
             val now = OffsetDateTime.now()
-            val credentialsState = CredentialsRepositoryState(
-                listOf(CredentialsTestHelper.basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(RolesTestHelper.role)))
-            )
 
             val task = task(now)
             val controller = createController(
-                credentialsState,
+                emptyCredentialsState,
                 listOf(task),
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(RolesTestHelper.role, setOf(Activities.getTasks)))
+                mapOf()
             )
-            assertEquals(listOf(task), controller.get("owner").getOrNull())
+            assertEquals(listOf(task), controller.get("owner", setOf(Activities.getTasks)).getOrNull())
         }
     }
 
@@ -102,9 +99,9 @@ class TasksControllerTest {
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(RolesTestHelper.role, setOf(Activities.getTask)))
+                mapOf()
             )
-            assertEquals(task, controller.get("owner", knownId).getOrNull())
+            assertEquals(task, controller.get("owner", knownId, setOf(Activities.getTask)).getOrNull())
         }
     }
 }

@@ -63,7 +63,7 @@ fun Application.module() {
 
     val authRepository = AuthDatabaseRepository(db)
     val authService = AuthService(authRepository, credentialsService)
-    val authController = AuthController(authService, credentialsService)
+    val authController = AuthController(authService)
 
     val activitiesRepository = ActivitiesDatabaseRepository(db)
     val activitiesService = ActivitiesService(activitiesRepository)

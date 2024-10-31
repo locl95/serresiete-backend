@@ -107,7 +107,7 @@ data class DataCacheService(
                     ifLeft = { error -> errorsChannel.send(error) },
                     ifRight = { (id, riotData) ->
                         dataChannel.send(
-                            DataCache(id, json.encodeToString(riotData), OffsetDateTime.now())
+                            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
                         )
                     }
                 )

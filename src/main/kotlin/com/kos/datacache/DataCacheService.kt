@@ -79,11 +79,13 @@ data class DataCacheService(
 
     private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> = coroutineScope {
         val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> =
+            /* TODO: This could be done async but we break the rate limits.
+               Maybe we can limit the number of corutines running in the scope.
+               https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/
+            */
             lolCharacters.map { lolCharacter ->
-                async {
                     cacheLolCharacter(lolCharacter)
-                }
-            }.awaitAll().split()
+                }.split()
 
         errorsAndData.first.forEach { logger.error(it.error()) }
         val data = errorsAndData.second.map { (id, riotData) ->

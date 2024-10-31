@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.4.0] 31-10-2024
+
+### Improved
+- Enhanced caching service for League characters, allowing for larger views with a greater number of matches per character.
+
 ## [3.3.0] 30-10-2024
 
 ### Added

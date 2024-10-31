@@ -4,6 +4,7 @@
 
 ### Improved
 - Enhanced caching service for League characters, allowing for larger views with a greater number of matches per character.
+- Integrated `Flow` and `Channels` to optimize memory usage, ensuring more efficient handling of concurrent data streams.
 
 ## [3.3.0] 30-10-2024
 

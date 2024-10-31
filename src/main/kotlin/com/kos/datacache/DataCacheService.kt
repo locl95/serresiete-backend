@@ -20,7 +20,10 @@ import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -78,22 +81,46 @@ data class DataCacheService(
     }
 
     private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> = coroutineScope {
-        val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> =
-            /* TODO: This could be done async but we break the rate limits.
-               Maybe we can limit the number of corutines running in the scope.
-               https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/
-            */
-            lolCharacters.map { lolCharacter ->
-                    cacheLolCharacter(lolCharacter)
-                }.split()
+        val errorsChannel = Channel<HttpError>()
+        val dataChannel = Channel<DataCache>()
 
-        errorsAndData.first.forEach { logger.error(it.error()) }
-        val data = errorsAndData.second.map { (id, riotData) ->
-            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+        val errorsCollector = launch {
+            errorsChannel.consumeAsFlow().collect { error ->
+                logger.error(error.error())
+            }
         }
-        dataCacheRepository.insert(data)
-        data.forEach { logger.info("Cached character ${it.characterId}") }
-        errorsAndData.first
+
+        val dataCollector = launch {
+            dataChannel.consumeAsFlow()
+                .buffer(50)
+                .collect { data ->
+                    dataCacheRepository.insert(listOf(data))
+                    logger.info("Cached character ${data.characterId}")
+                }
+        }
+
+        lolCharacters.asFlow()
+            .buffer(10)
+            .collect { lolCharacter ->
+                val result = cacheLolCharacter(lolCharacter)
+                result.fold(
+                    ifLeft = { error -> errorsChannel.send(error) },
+                    ifRight = { (id, riotData) ->
+                        dataChannel.send(
+                            DataCache(id, json.encodeToString(riotData), OffsetDateTime.now())
+                        )
+                    }
+                )
+            }
+
+        errorsChannel.close()
+        dataChannel.close()
+
+        errorsCollector.join()
+        dataCollector.join()
+
+        logger.info("Finished Caching Lol characters")
+        errorsChannel.receiveAsFlow().toList()
     }
 
     private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =

@@ -1,5 +1,6 @@
 package com.kos.tasks
 
+import arrow.core.Either
 import com.kos.auth.AuthService
 import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.repository.AuthInMemoryRepository
@@ -148,7 +149,7 @@ class TasksServiceTest {
             `when`(riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.FLEX_Q.toInt())).thenReturn(
                 RiotMockHelper.matches
             )
-            `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(RiotMockHelper.match)
+            `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(Either.Right(RiotMockHelper.match))
 
             val id = UUID.randomUUID().toString()
 

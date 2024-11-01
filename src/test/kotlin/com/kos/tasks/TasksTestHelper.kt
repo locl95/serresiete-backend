@@ -6,7 +6,7 @@ import java.util.*
 
 object TasksTestHelper {
     val task: (OffsetDateTime) -> Task = { now ->
-        Task.apply(
+        Task(
             UUID.randomUUID().toString(),
             TaskType.CACHE_WOW_DATA_TASK,
             TaskStatus(Status.SUCCESSFUL, "message"),
@@ -18,7 +18,7 @@ object TasksTestHelper {
         Task(
             UUID.randomUUID().toString(),
             taskType,
-            TaskStatus(Status.SUCCESSFUL, "message").toString(),
+            TaskStatus(Status.SUCCESSFUL, "message"),
             now
         )
     }

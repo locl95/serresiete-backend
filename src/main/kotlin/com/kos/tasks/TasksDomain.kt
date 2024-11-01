@@ -2,35 +2,21 @@ package com.kos.tasks
 
 import arrow.core.Either
 import com.kos.auth.OffsetDateTimeSerializer
-import com.kos.common.ControllerError
 import com.kos.common.InvalidTaskType
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.time.OffsetDateTime
-
-@Serializable
-data class TaskStatus(val status: Status, val message: String?)
 
 @Serializable
 data class Task(
     val id: String,
     val type: TaskType,
-    val taskStatus: String,
+    val taskStatus: TaskStatus,
     @Serializable(with = OffsetDateTimeSerializer::class)
     val inserted: OffsetDateTime
-) {
-    companion object {
-        private val json = Json {
-            ignoreUnknownKeys = true
-        }
+)
 
-        fun apply(id: String, type: TaskType, taskStatus: TaskStatus, inserted: OffsetDateTime): Task {
-            return Task(id, type, json.encodeToString(taskStatus), inserted)
-        }
-    }
-}
-
+@Serializable
+data class TaskStatus(val status: Status, val message: String?)
 
 @Serializable
 enum class Status {

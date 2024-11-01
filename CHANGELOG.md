@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.4.1] 01-11-2024
+
+### Improved
+- Implemented a mechanism to reuse cached matches, significantly reducing unnecessary API calls and improving League caching time.
+
 ## [3.4.0] 31-10-2024
 
 ### Improved

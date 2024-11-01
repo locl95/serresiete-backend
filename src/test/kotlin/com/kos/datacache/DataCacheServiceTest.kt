@@ -1,19 +1,20 @@
 package com.kos.datacache
 
+import arrow.core.Either
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.datacache.RiotMockHelper.flexQEntryResponse
 import com.kos.datacache.TestHelper.lolDataCache
+import com.kos.datacache.TestHelper.smartSyncDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.httpclients.domain.QueueType
-import com.kos.httpclients.domain.RaiderIoData
-import com.kos.httpclients.domain.RiotData
+import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
+import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -115,6 +116,37 @@ class DataCacheServiceTest {
             val service = DataCacheService(repo, raiderIoClient, riotClient)
             service.cache(listOf(basicLolCharacter), Game.LOL)
             assertEquals(1, repo.state().size)
+        }
+    }
+
+    @Test
+    fun `caching lol data behaves smart and does not attempt to retrieve matches that are present on newest cached record`() {
+        runBlocking {
+
+            val newMatchIds = listOf("match1", "match2", "match3", "match4", "match5")
+            val dataCache = DataCache(1, smartSyncDataCache, OffsetDateTime.now().minusHours(5))
+
+            `when`(riotClient.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
+                .thenReturn(Either.Right(listOf(flexQEntryResponse)))
+            `when`(
+                riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.FLEX_Q.toInt())
+            ).thenReturn(Either.Right(newMatchIds))
+
+            `when`(riotClient.getMatchById(anyString())).thenReturn(RiotMockHelper.match)
+
+            val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
+            val service = DataCacheService(repo, raiderIoClient, riotClient)
+
+            val errors = service.cache(listOf(basicLolCharacter), Game.LOL)
+
+            verify(riotClient, times(0)).getMatchById("match1")
+            verify(riotClient, times(0)).getMatchById("match2")
+            verify(riotClient, times(0)).getMatchById("match3")
+
+            verify(riotClient, times(1)).getMatchById("match4")
+            verify(riotClient, times(1)).getMatchById("match5")
+
+            assertEquals(listOf(), errors)
         }
     }
 }

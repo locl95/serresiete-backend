@@ -54,7 +54,6 @@ data class Metadata(
 @Serializable
 data class MatchInfo(
     val gameDuration: Int,
-    val endOfGameResult: String,
     val mapId: Int,
     val participants: List<MatchParticipant>
 )

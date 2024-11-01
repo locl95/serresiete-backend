@@ -3,6 +3,8 @@ package com.kos.datacache
 import arrow.core.Either
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.common.HttpError
+import com.kos.common.JsonParseError
 import com.kos.datacache.RiotMockHelper.flexQEntryResponse
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.smartSyncDataCache
@@ -149,4 +151,22 @@ class DataCacheServiceTest {
             assertEquals(listOf(), errors)
         }
     }
+
+    @Test
+    fun `caching lol data returns an error when retrieving match data fails`() {
+        runBlocking {
+
+            val jsonParseError = Either.Left(JsonParseError("{}", ""))
+            `when`(riotClient.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
+                .thenReturn(jsonParseError)
+
+            val repo = DataCacheInMemoryRepository()
+            val service = DataCacheService(repo, raiderIoClient, riotClient)
+
+            val errors = service.cache(listOf(basicLolCharacter), Game.LOL)
+
+            assertEquals(listOf(jsonParseError.value), errors)
+        }
+    }
+
 }

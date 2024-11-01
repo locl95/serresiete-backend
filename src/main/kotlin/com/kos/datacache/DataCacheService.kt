@@ -167,6 +167,7 @@ data class DataCacheService(
                                 leagueEntry,
                                 matchResponses,
                                 newestCharacterDataCacheEntry?.leagues?.get(leagueEntry.queueType)?.matches.orEmpty()
+                                    .filter { lastMatchesForLeague.contains(it.id) }
                             )
                         }
                     }.awaitAll()

@@ -32,7 +32,7 @@ object RiotMockHelper {
         )
     val matchId = "EUW1_232424252"
     val matches = Either.Right(listOf(matchId))
-    val match: Either<HttpError, GetMatchResponse> = Either.Right(
+    val match: GetMatchResponse =
         GetMatchResponse(
             metadata = Metadata(matchId),
             info = MatchInfo(
@@ -62,7 +62,6 @@ object RiotMockHelper {
                 )
             )
         )
-    )
 
     val riotData: RiotData =
         RiotData(

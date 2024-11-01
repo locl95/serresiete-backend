@@ -19,7 +19,6 @@ import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksInMemoryRepository
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json.Default.decodeFromString
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
@@ -59,7 +58,7 @@ class TasksServiceTest {
             assertEquals(listOf(basicAuthorization), authRepository.state())
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
         }
     }
@@ -90,7 +89,7 @@ class TasksServiceTest {
             assertEquals(listOf(expectedRemainingTask, insertedTask), tasksRepository.state())
             assertEquals(2, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.TASK_CLEANUP_TASK, insertedTask.type)
         }
     }
@@ -122,7 +121,7 @@ class TasksServiceTest {
             assertEquals(1, dataCacheRepository.state().size)
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.CACHE_WOW_DATA_TASK, insertedTask.type)
         }
     }
@@ -160,7 +159,7 @@ class TasksServiceTest {
             assertEquals(1, dataCacheRepository.state().size)
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
         }
     }
@@ -187,7 +186,7 @@ class TasksServiceTest {
 
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.TOKEN_CLEANUP_TASK, insertedTask.type)
         }
     }
@@ -216,7 +215,7 @@ class TasksServiceTest {
 
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.CACHE_WOW_DATA_TASK, insertedTask.type)
         }
     }
@@ -243,7 +242,7 @@ class TasksServiceTest {
 
             assertEquals(1, tasksRepository.state().size)
             assertEquals(id, insertedTask.id)
-            assertEquals(Status.SUCCESSFUL, decodeFromString<TaskStatus>(insertedTask.taskStatus).status)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
         }
     }

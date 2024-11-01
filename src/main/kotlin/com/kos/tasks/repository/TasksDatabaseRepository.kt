@@ -3,8 +3,11 @@ package com.kos.tasks.repository
 import com.kos.common.fold
 import com.kos.common.getOrThrow
 import com.kos.tasks.Task
+import com.kos.tasks.TaskStatus
 import com.kos.tasks.TaskType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -12,6 +15,10 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import java.time.OffsetDateTime
 
 class TasksDatabaseRepository(private val db: Database) : TasksRepository {
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
+
     object Tasks : Table() {
         val id = text("id")
         val type = text("type")
@@ -23,8 +30,9 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
 
     private fun resultRowToTask(row: ResultRow) = Task(
         row[Tasks.id],
-        TaskType.fromString(row[Tasks.type]).getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
-        row[Tasks.taskStatus],
+        TaskType.fromString(row[Tasks.type])
+            .getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
+        json.decodeFromString(row[Tasks.taskStatus]),
         OffsetDateTime.parse(row[Tasks.inserted])
     )
 
@@ -33,7 +41,7 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
             Tasks.insert {
                 it[id] = task.id
                 it[type] = task.type.toString()
-                it[taskStatus] = task.taskStatus
+                it[taskStatus] = json.encodeToString(task.taskStatus)
                 it[inserted] = task.inserted.toString()
             }
         }
@@ -81,7 +89,7 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
             Tasks.batchInsert(initialState) {
                 this[Tasks.id] = it.id
                 this[Tasks.type] = it.type.toString()
-                this[Tasks.taskStatus] = it.taskStatus
+                this[Tasks.taskStatus] = json.encodeToString(it.taskStatus)
                 this[Tasks.inserted] = it.inserted.toString()
             }
         }

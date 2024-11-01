@@ -35,7 +35,7 @@ data class TasksService(
         val deletedTasks = tasksRepository.deleteOldTasks(olderThanDays)
         logger.info("Deleted $deletedTasks old tasks")
         tasksRepository.insertTask(
-            Task.apply(
+            Task(
                 id,
                 TaskType.TASK_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTasks old tasks"),
@@ -49,7 +49,7 @@ data class TasksService(
         val deletedTokens = authService.deleteExpiredTokens()
         logger.info("Deleted $deletedTokens expired tokens")
         tasksRepository.insertTask(
-            Task.apply(
+            Task(
                 id,
                 TaskType.TOKEN_CLEANUP_TASK,
                 TaskStatus(Status.SUCCESSFUL, "Deleted $deletedTokens expired tokens"),
@@ -64,7 +64,7 @@ data class TasksService(
         val errors = dataCacheService.cache(characters, game)
         if (errors.isEmpty()) {
             tasksRepository.insertTask(
-                Task.apply(
+                Task(
                     id,
                     taskType,
                     TaskStatus(Status.SUCCESSFUL, null),
@@ -73,7 +73,7 @@ data class TasksService(
             )
         } else {
             tasksRepository.insertTask(
-                Task.apply(
+                Task(
                     id,
                     taskType,
                     TaskStatus(Status.ERROR, errors.joinToString(",\n") { it.error() }),

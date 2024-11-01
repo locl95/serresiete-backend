@@ -37,7 +37,6 @@ object RiotMockHelper {
             metadata = Metadata(matchId),
             info = MatchInfo(
                 1,
-                "COMPLETED",
                 1,
                 listOf(
                     MatchParticipant(

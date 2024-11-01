@@ -77,10 +77,12 @@ data class DataCacheService(
     private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> = coroutineScope {
         val errorsChannel = Channel<HttpError>()
         val dataChannel = Channel<DataCache>()
+        val errorsList = mutableListOf<HttpError>()
 
         val errorsCollector = launch {
             errorsChannel.consumeAsFlow().collect { error ->
                 logger.error(error.error())
+                errorsList.add(error)
             }
         }
 
@@ -107,14 +109,14 @@ data class DataCacheService(
                 )
             }
 
-        errorsChannel.close()
         dataChannel.close()
+        errorsChannel.cancel()
 
         errorsCollector.join()
         dataCollector.join()
 
         logger.info("Finished Caching Lol characters")
-        errorsChannel.receiveAsFlow().toList()
+        errorsList
     }
 
     private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =

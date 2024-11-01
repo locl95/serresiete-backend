@@ -32,13 +32,9 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
         row[Tasks.id],
         TaskType.fromString(row[Tasks.type])
             .getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
-        fromJson<TaskStatus>(row, Tasks.taskStatus),
+        json.decodeFromString(row[Tasks.taskStatus]),
         OffsetDateTime.parse(row[Tasks.inserted])
     )
-
-    private inline fun <reified T> fromJson(row: ResultRow, column: Column<String>): T {
-        return json.decodeFromString<T>(row[column])
-    }
 
     override suspend fun insertTask(task: Task) {
         newSuspendedTransaction(Dispatchers.IO, db) {

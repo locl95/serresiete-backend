@@ -1,17 +1,11 @@
 package com.kos.datacache
 
 import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.flatten
 import arrow.core.raise.either
-import arrow.core.sequence
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
-import com.kos.common.HttpError
-import com.kos.common.JsonParseError
-import com.kos.common.WithLogger
-import com.kos.common.split
+import com.kos.common.*
 import com.kos.datacache.repository.DataCacheRepository
 import com.kos.httpclients.HttpUtils.retryEitherWithFixedDelay
 import com.kos.httpclients.domain.*
@@ -125,26 +119,53 @@ data class DataCacheService(
 
     private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =
         either {
+
+            val newestCharacterDataCacheEntry: RiotData? =
+                dataCacheRepository.get(lolCharacter.id).maxByOrNull { it.inserted }?.let {
+                    try {
+                        json.decodeFromString<RiotData>(it.data)
+                    } catch (e: Throwable) {
+                        logger.debug("Couldn't deserialize character ${lolCharacter.id} while trying to obtain newest cached record.\n${e.message}")
+                        null
+                    }
+                }
+
             val leagues: List<LeagueEntryResponse> =
                 retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") {
                     riotClient.getLeagueEntriesBySummonerId(lolCharacter.summonerId)
                 }.bind()
 
-            val leagueWithMatches: List<Pair<LeagueEntryResponse, List<GetMatchResponse>>> =
+            val leagueWithMatches: List<LeagueMatchData> =
                 coroutineScope {
                     leagues.map { leagueEntry ->
                         async {
-                            val matchIds: List<String> = retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
-                                riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
-                            }.bind()
+                            val lastMatchesForLeague: List<String> =
+                                retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
+                                    riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
+                                }.bind()
 
-                            val matchResponses: List<GetMatchResponse> = matchIds.map { matchId ->
+                            val matchesToRequest = newestCharacterDataCacheEntry._fold(
+                                left = { lastMatchesForLeague },
+                                right = { record ->
+                                    lastMatchesForLeague
+                                        .filterNot { id ->
+                                            record.leagues[leagueEntry.queueType]?.matches?.map { it.id }
+                                                ?.contains(id)._fold({ false }, { it })
+                                        }
+                                }
+                            )
+
+                            val matchResponses: List<GetMatchResponse> = matchesToRequest.map { matchId ->
                                 retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
                                     riotClient.getMatchById(matchId)
                                 }.bind()
                             }
 
-                            leagueEntry to matchResponses
+                            LeagueMatchData(
+                                leagueEntry,
+                                matchResponses,
+                                newestCharacterDataCacheEntry?.leagues?.get(leagueEntry.queueType)?.matches.orEmpty()
+                            )
                         }
                     }.awaitAll()
                 }

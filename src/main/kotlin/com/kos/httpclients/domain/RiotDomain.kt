@@ -47,6 +47,11 @@ data class MatchParticipant(
 )
 
 @Serializable
+data class Metadata(
+    val matchId: String
+)
+
+@Serializable
 data class MatchInfo(
     val gameDuration: Int,
     val endOfGameResult: String,
@@ -56,7 +61,8 @@ data class MatchInfo(
 
 @Serializable
 data class GetMatchResponse(
-    val info: MatchInfo
+    val info: MatchInfo,
+    val metadata: Metadata
 )
 
 @Serializable(with = QueueTypeSerializer::class)
@@ -111,8 +117,15 @@ data class RiotError(val status: RiotStatus) : HttpError {
     override fun error(): String = "${status.statusCode} ${status.message}"
 }
 
+data class LeagueMatchData(
+    val leagueEntry: LeagueEntryResponse,
+    val matchResponses: List<GetMatchResponse>,
+    val matchProfiles: List<MatchProfile>
+)
+
 @Serializable
 data class MatchProfile(
+    val id: String,
     val championId: Int,
     val championName: String,
     val role: String,
@@ -152,20 +165,22 @@ data class RiotData(
 
         fun apply(
             lolCharacter: LolCharacter,
-            leagues: List<Pair<LeagueEntryResponse, List<GetMatchResponse>>>
+            leagues: List<LeagueMatchData>
         ): RiotData =
             RiotData(
                 lolCharacter.summonerIcon,
                 lolCharacter.summonerLevel,
                 lolCharacter.name,
-                leagues.associate { leagueEntryResponseAndMatches ->
-                    val leagueEntryResponse = leagueEntryResponseAndMatches.first
-                    val matches = leagueEntryResponseAndMatches.second
+                leagues.associate { leagueMatchData ->
+                    val leagueEntryResponse = leagueMatchData.leagueEntry
+                    val retrievedMatches = leagueMatchData.matchResponses
+                    val alreadyCachedMatches = leagueMatchData.matchProfiles
                     val gamesPlayed = leagueEntryResponse.wins + leagueEntryResponse.losses
                     val playerMatches: List<MatchProfile> =
-                        matches.flatMap { getMatchResponse ->
+                        retrievedMatches.flatMap { getMatchResponse ->
                             getMatchResponse.info.participants.filter { it.puuid == lolCharacter.puuid }.map {
                                 MatchProfile(
+                                    getMatchResponse.metadata.matchId,
                                     it.championId,
                                     it.championName,
                                     it.role,
@@ -183,7 +198,7 @@ data class RiotData(
                                     it.win
                                 )
                             }
-                        }
+                        } + alreadyCachedMatches
                     leagueEntryResponse.queueType to LeagueProfile(
                         playerMatches.groupBy { it.role }.mapValues { it.value.size }.maxBy { it.value }.key,
                         leagueEntryResponse.tier,

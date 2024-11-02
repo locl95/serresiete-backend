@@ -138,9 +138,8 @@ class CharactersServiceTest {
             `when`(riotClient.getSummonerByPuuid(basicLolCharacter.puuid)).thenReturn(Either.Right(basicGetSummonerResponse))
             `when`(riotClient.getAccountByPUUID(basicLolCharacter.puuid)).thenReturn(Either.Right(basicGetAccountResponse))
 
-            val res = charactersService.updateLolCharacters(listOf(basicLolCharacter)).split()
-            assertEquals(listOf(), res.first)
-            assertEquals(listOf(1), res.second)
+            val res = charactersService.updateLolCharacters(listOf(basicLolCharacter))
+            assertEquals(listOf(), res)
         }
     }
 }

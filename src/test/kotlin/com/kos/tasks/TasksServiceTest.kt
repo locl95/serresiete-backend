@@ -5,6 +5,7 @@ import com.kos.auth.AuthService
 import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.repository.CharactersInMemoryRepository
@@ -162,6 +163,37 @@ class TasksServiceTest {
             assertEquals(id, insertedTask.id)
             assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
             assertEquals(TaskType.CACHE_LOL_DATA_TASK, insertedTask.type)
+        }
+    }
+
+    @Test
+    fun `update lol characters task should update lol characters correctly`() {
+        runBlocking {
+            val dataCacheRepository = DataCacheInMemoryRepository()
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+            val charactersRepository =
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            val authRepository = AuthInMemoryRepository()
+            val authService = AuthService(authRepository)
+
+            val tasksRepository = TasksInMemoryRepository()
+            val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
+
+            `when`(riotClient.getSummonerByPuuid(basicLolCharacter.puuid)).thenReturn(Either.Right(CharactersTestHelper.basicGetSummonerResponse))
+            `when`(riotClient.getAccountByPUUID(basicLolCharacter.puuid)).thenReturn(Either.Right(CharactersTestHelper.basicGetAccountResponse))
+
+            val id = UUID.randomUUID().toString()
+
+            service.updateLolCharacters(id)
+
+            val insertedTask = tasksRepository.state().first()
+
+            assertEquals(1, tasksRepository.state().size)
+            assertEquals(id, insertedTask.id)
+            assertEquals(Status.SUCCESSFUL, insertedTask.taskStatus.status)
+            assertEquals(TaskType.UPDATE_LOL_CHARACTERS_TASK, insertedTask.type)
         }
     }
 

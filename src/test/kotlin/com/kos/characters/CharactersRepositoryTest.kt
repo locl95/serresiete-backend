@@ -140,6 +140,59 @@ abstract class CharactersRepositoryTestCommon {
         }
     }
 
+    @Test
+    fun `given a repository with a lol character, i can update it`() {
+        runBlocking {
+            val repoWithState = repository.withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+            val updatedName = "Marcnute"
+            val updatedTag = "EUW"
+            val updatedSummonerIconId = 10
+            val updatedSummonerLevel = 500
+            val request = LolCharacterEnrichedRequest(
+                updatedName,
+                updatedTag,
+                basicLolCharacter.puuid,
+                updatedSummonerIconId,
+                basicLolCharacter.summonerId,
+                updatedSummonerLevel
+            )
+            val update = repoWithState.update(1, request, Game.LOL)
+            update
+                .onRight { assertEquals(1, it) }
+                .onLeft { fail(it.message) }
+            val updated = repository.state().lolCharacters.first()
+            assertEquals(updatedName, updated.name)
+            assertEquals(updatedTag, updated.tag)
+            assertEquals(updatedSummonerIconId, updated.summonerIcon)
+            assertEquals(updatedSummonerLevel, updated.summonerLevel)
+            assertEquals(basicLolCharacter.puuid, updated.puuid)
+            assertEquals(basicLolCharacter.summonerId, updated.summonerId)
+        }
+    }
+
+    @Test
+    fun `given a repository with a wow character, i can update it`() {
+        runBlocking {
+            val repoWithState = repository.withState(CharactersState(listOf(basicWowCharacter), listOf()))
+            val updatedName = "camilo"
+            val updatedRegion = "eu"
+            val updatedRealm = "stitches"
+            val request = WowCharacterRequest(
+                updatedName,
+                updatedRegion,
+                updatedRealm
+            )
+            val update = repoWithState.update(1, request, Game.WOW)
+            update
+                .onRight { assertEquals(1, it) }
+                .onLeft { fail(it.message) }
+            val updated = repository.state().wowCharacters.first()
+            assertEquals(updatedName, updated.name)
+            assertEquals(updatedRegion, updated.region)
+            assertEquals(updatedRealm, updated.realm)
+        }
+    }
+
 
 }
 

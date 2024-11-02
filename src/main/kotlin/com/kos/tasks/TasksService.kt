@@ -2,7 +2,9 @@ package com.kos.tasks
 
 import com.kos.auth.AuthService
 import com.kos.characters.CharactersService
+import com.kos.characters.LolCharacter
 import com.kos.common.WithLogger
+import com.kos.common.split
 import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
 import com.kos.views.Game
@@ -27,6 +29,34 @@ data class TasksService(
             TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType, taskId)
             TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType, taskId)
             TaskType.TASK_CLEANUP_TASK -> taskCleanup(taskId)
+            TaskType.UPDATE_LOL_CHARACTERS_TASK -> updateLolCharacters(taskId)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend fun updateLolCharacters(id: String) {
+        logger.info("Updating lol characters")
+        val lolCharacters = charactersService.get(Game.LOL) as List<LolCharacter>
+        val errors = charactersService.updateLolCharacters(lolCharacters).split().first
+        if (errors.isEmpty()) {
+            tasksRepository.insertTask(
+                Task(
+                    id,
+                    TaskType.UPDATE_LOL_CHARACTERS_TASK,
+                    TaskStatus(Status.SUCCESSFUL, null),
+                    OffsetDateTime.now()
+                )
+            )
+        }
+        else {
+            tasksRepository.insertTask(
+                Task(
+                    id,
+                    TaskType.UPDATE_LOL_CHARACTERS_TASK,
+                    TaskStatus(Status.ERROR, errors.joinToString(",\n") { it.toString() }),
+                    OffsetDateTime.now()
+                )
+            )
         }
     }
 

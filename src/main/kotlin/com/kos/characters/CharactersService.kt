@@ -2,17 +2,17 @@ package com.kos.characters
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.raise.either
 import com.kos.characters.repository.CharactersRepository
-import com.kos.common.InsertCharacterError
-import com.kos.common.WithLogger
-import com.kos.common.collect
-import com.kos.common.split
+import com.kos.common.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 data class CharactersService(
     private val charactersRepository: CharactersRepository,
@@ -82,6 +82,34 @@ data class CharactersService(
 
         return charactersRepository.insert(newThatExist, game)
             .map { list -> list.map { it.id } + existentAndNew.first.map { it.id } }
+    }
+
+    suspend fun updateLolCharacters(characters: List<LolCharacter>): List<Either<ControllerError, Int>> {
+        return coroutineScope {
+            val semaphore = Semaphore(40)
+            characters.map { lolCharacter ->
+                async {
+                    semaphore.withPermit {
+                        either {
+                            val summoner = riotClient.getSummonerByPuuid(lolCharacter.puuid).bind()
+                            val account = riotClient.getAccountByPUUID(lolCharacter.puuid).bind()
+                            charactersRepository.update(
+                                id = lolCharacter.id,
+                                character = LolCharacterEnrichedRequest(
+                                    name = account.gameName,
+                                    tag = account.tagLine,
+                                    puuid = lolCharacter.puuid,
+                                    summonerIconId = summoner.profileIconId,
+                                    summonerId = summoner.id,
+                                    summonerLevel = summoner.summonerLevel
+                                ),
+                                Game.LOL
+                            ).bind()
+                        }
+                    }
+                }
+            }.awaitAll()
+        }
     }
 
     suspend fun get(id: Long, game: Game): Character? = charactersRepository.get(id, game)

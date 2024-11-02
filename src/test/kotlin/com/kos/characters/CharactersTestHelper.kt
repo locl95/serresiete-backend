@@ -1,6 +1,7 @@
 package com.kos.characters
 
 import com.kos.characters.repository.CharactersState
+import com.kos.httpclients.domain.GetAccountResponse
 import com.kos.httpclients.domain.GetPUUIDResponse
 import com.kos.httpclients.domain.GetSummonerResponse
 
@@ -26,6 +27,10 @@ object CharactersTestHelper {
         2,
         25,
         29
+    )
+    val basicGetAccountResponse = GetAccountResponse(
+        "Marcnute",
+        "EUW"
     )
     val basicGetPuuidResponse = GetPUUIDResponse(
         "1",

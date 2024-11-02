@@ -170,6 +170,29 @@ abstract class CharactersRepositoryTestCommon {
         }
     }
 
+    @Test
+    fun `given a repository with a wow character, i can update it`() {
+        runBlocking {
+            val repoWithState = repository.withState(CharactersState(listOf(basicWowCharacter), listOf()))
+            val updatedName = "camilo"
+            val updatedRegion = "eu"
+            val updatedRealm = "stitches"
+            val request = WowCharacterRequest(
+                updatedName,
+                updatedRegion,
+                updatedRealm
+            )
+            val update = repoWithState.update(1, request, Game.WOW)
+            update
+                .onRight { assertEquals(1, it) }
+                .onLeft { fail(it.message) }
+            val updated = repository.state().wowCharacters.first()
+            assertEquals(updatedName, updated.name)
+            assertEquals(updatedRegion, updated.region)
+            assertEquals(updatedRealm, updated.realm)
+        }
+    }
+
 
 }
 

@@ -98,7 +98,18 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                 else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
             }
             Game.WOW -> when(character) {
-                is WowCharacterRequest -> TODO()
+                is WowCharacterRequest -> {
+                    val index = wowCharacters.indexOfFirst { it.id == id }
+                    wowCharacters.removeAt(index)
+                    val c = WowCharacter(
+                        id,
+                        character.name,
+                        character.region,
+                        character.realm
+                    )
+                    wowCharacters.add(index, c)
+                    Either.Right(1)
+                }
                 else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
             }
         }

@@ -159,7 +159,16 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                         else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
                     }
                 }
-                Game.WOW -> TODO()
+                Game.WOW -> when (character) {
+                    is WowCharacterRequest -> {
+                        Either.Right(WowCharacters.update({WowCharacters.id eq id}) {
+                            it[name] = character.name
+                            it[region] = character.region
+                            it[realm] = character.realm
+                        })
+                    }
+                    else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                }
             }
         }
     }

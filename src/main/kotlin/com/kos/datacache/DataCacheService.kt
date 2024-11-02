@@ -110,7 +110,7 @@ data class DataCacheService(
             }
 
         dataChannel.close()
-        errorsChannel.cancel()
+        errorsChannel.close()
 
         errorsCollector.join()
         dataCollector.join()

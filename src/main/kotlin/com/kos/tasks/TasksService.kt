@@ -37,7 +37,7 @@ data class TasksService(
     suspend fun updateLolCharacters(id: String) {
         logger.info("Updating lol characters")
         val lolCharacters = charactersService.get(Game.LOL) as List<LolCharacter>
-        val errors = charactersService.updateLolCharacters(lolCharacters).split().first
+        val errors = charactersService.updateLolCharacters(lolCharacters)
         if (errors.isEmpty()) {
             tasksRepository.insertTask(
                 Task(

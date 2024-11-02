@@ -23,7 +23,7 @@ jobs:
         id: checklist
         run: |
           
-          echo ${BODY,,}"
+          echo "${BODY,,}"
           
           UNCHECKED_CHANGELOG="\[ \] $changelog_checkbox"
           MARKED_CHANGELOG="\[x\] $changelog_checkbox"

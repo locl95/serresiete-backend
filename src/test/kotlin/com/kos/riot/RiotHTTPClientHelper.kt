@@ -51,7 +51,11 @@ object RiotHTTPClientHelper {
                             HttpStatusCode.OK
                         )
 
-
+                    "/riot/account/v1/accounts/by-puuid/XpUAakpMee4budbZ_KVchTTxwkN4OHgqjbYa0r4pXR_Ya6E" ->
+                        respond(
+                            responseFromResource("riot-get-account-by-puuid-response.json"),
+                            HttpStatusCode.OK
+                        )
                     else -> error("Unhandled ${request.url.encodedPath}")
                 }
             }

@@ -57,7 +57,7 @@ jobs:
             echo "Unit Test Checkbox is checked"
           elif echo "${BODY,,}" | grep -q "$UNCHECKED_TEST"; then
             echo "Unit Test Checkbox is not checked"
-            if git diff --name-only HEAD^ HEAD | grep -q '^src/test/kotlin/'; then
+            if git diff --name-only HEAD^1 HEAD | grep -q '^src/test/kotlin/'; then
               echo "At least one test file was modified or added in src/test/kotlin"
             else
               echo "No test files modified or added in src/test/kotlin, and Unit Test Checkbox is not checked"

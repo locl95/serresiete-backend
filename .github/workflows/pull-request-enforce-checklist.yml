@@ -5,9 +5,9 @@ on:
     types: [opened, edited, synchronize]
 
 env:
-  changelog_checkbox: "This PR doesn't need to update changelog"
-  unit_test_checkbox: "I have either added unit tests for this feature or confirmed it doesn't need unit tests"
-  environment_checkbox: "I have tested this feature in an environment (e.g., production, development, local)"
+  changelog_checkbox: "this pr doesn't need to update changelog"
+  unit_test_checkbox: "i have either added unit tests for this feature or confirmed it doesn't need unit tests"
+  environment_checkbox: "i have tested this feature in an environment (e.g., production, development, local)"
 
 jobs:
   validate-pr:

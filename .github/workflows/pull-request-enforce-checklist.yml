@@ -5,8 +5,8 @@ on:
     types: [opened, edited, synchronize]
 
 env:
-  changelog_checkbox: "this pr doesn't need to update changelog"
-  unit_test_checkbox: "i have either added unit tests for this feature or confirmed it doesn't need unit tests"
+  changelog_checkbox: "i didn't add a changelog entry because this feature didn't need to update changelog"
+  unit_test_checkbox: "i didn't add a single test because this feature didn't require unit testing"
   environment_checkbox: "i have tested this feature in an environment (e.g., production, development, local)"
 
 jobs:
@@ -21,10 +21,7 @@ jobs:
         env:
           BODY: ${{ github.event.pull_request.body }}
         id: checklist
-        run: |
-          
-          echo "${BODY,,}"
-          
+        run: |          
           UNCHECKED_CHANGELOG="\[ \] $changelog_checkbox"
           MARKED_CHANGELOG="\[x\] $changelog_checkbox"
           
@@ -39,7 +36,12 @@ jobs:
             echo "Changelog Checkbox is checked"
           elif echo "${BODY,,}" | grep -q "$UNCHECKED_CHANGELOG"; then
             echo "Changelog Checkbox is not checked"
-            exit 1
+            if git diff --name-only HEAD^ HEAD | grep -q "CHANGELOG.md"; then
+              echo "CHANGELOG.md was modified"
+            else
+              echo "CHANGELOG.md was not modified and Changelog Checkbox is not checked"
+              exit 1
+          fi
           else
             echo "Changelog Checkbox not found in pull request description"
             exit 1
@@ -50,7 +52,12 @@ jobs:
             echo "Unit Test Checkbox is checked"
           elif echo "${BODY,,}" | grep -q "$UNCHECKED_TEST"; then
             echo "Unit Test Checkbox is not checked"
-            exit 1
+            if git diff --name-only HEAD^ HEAD | grep -q '^src/test/kotlin/'; then
+              echo "At least one test file was modified or added in src/test/kotlin"
+            else
+              echo "No test files modified or added in src/test/kotlin, and Unit Test Checkbox is not checked"
+              exit 1
+            fi
           else
             echo "Unit Test Checkbox not found in pull request description"
             exit 1

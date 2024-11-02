@@ -1,6 +1,8 @@
 ### Description
 
-Please describe your changes.
+<!---
+Please add description to the feature
+-->
 
 ### Checklist
 
@@ -13,3 +15,5 @@ Please describe your changes.
 ---
 
 *If the changelog checkbox is not checked, make sure to add an entry in `CHANGELOG.md`.*
+
+*If the unit testing is not checked, make sure to add unit tests in `/src/test/kotlin`.*

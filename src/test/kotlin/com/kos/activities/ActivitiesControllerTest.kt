@@ -19,7 +19,6 @@ class ActivitiesControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
     private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
 
-
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
         activitiesState: Set<Activity>,

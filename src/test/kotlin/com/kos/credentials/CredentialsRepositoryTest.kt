@@ -6,6 +6,7 @@ import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepository
+import com.kos.roles.Role
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
@@ -53,12 +54,12 @@ abstract class CredentialsRepositoryTest {
         runBlocking {
             val repositoryWithState = repository.withState(
                 basicCredentialsInitialState.copy(
-                    credentialsRoles = mapOf(user to listOf("role1", "role2"))
+                    credentialsRoles = mapOf(user to listOf(Role.USER, Role.ADMIN))
                 )
             )
 
             val roles = repositoryWithState.getUserRoles(user)
-            assertEquals(listOf("role1", "role2"), roles)
+            assertEquals(listOf(Role.USER, Role.ADMIN), roles)
         }
     }
 
@@ -77,10 +78,10 @@ abstract class CredentialsRepositoryTest {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsInitialState)
             val initialRoles = repositoryWithState.state().credentialsRoles[user]
-            repositoryWithState.insertRole(user, "role2")
+            repositoryWithState.insertRole(user, Role.ADMIN)
             val finalState = repositoryWithState.state().credentialsRoles[user]
             assertEquals(emptyList(), initialRoles.orEmpty())
-            assertEquals(listOf("role2"), finalState.orEmpty())
+            assertEquals(listOf(Role.ADMIN), finalState.orEmpty())
         }
     }
 
@@ -89,17 +90,16 @@ abstract class CredentialsRepositoryTest {
         runBlocking {
             val repositoryWithState = repository.withState(
                 basicCredentialsInitialState.copy(
-                    credentialsRoles = mapOf(user to listOf("role1", "role2"), "user2" to listOf("role1", "role3"))
+                    credentialsRoles = mapOf(user to listOf(Role.USER, Role.ADMIN), "user2" to listOf(Role.USER, Role.SERVICE)))
                 )
-            )
             val initialRolesUser = repositoryWithState.state().credentialsRoles[user]
             val initialRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
-            repositoryWithState.deleteRole(user, "role2")
+            repositoryWithState.deleteRole(user, Role.ADMIN)
             val finalRolesUser = repositoryWithState.state().credentialsRoles[user]
             val finalRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
-            assertEquals(listOf("role1", "role2"), initialRolesUser.orEmpty())
-            assertEquals(listOf("role1", "role3"), initialRolesUser2.orEmpty())
-            assertEquals(listOf("role1"), finalRolesUser)
+            assertEquals(listOf(Role.USER, Role.ADMIN), initialRolesUser.orEmpty())
+            assertEquals(listOf(Role.USER, Role.SERVICE), initialRolesUser2.orEmpty())
+            assertEquals(listOf(Role.USER), finalRolesUser)
             assertEquals(initialRolesUser2, finalRolesUser2)
         }
     }

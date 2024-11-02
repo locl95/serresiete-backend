@@ -6,18 +6,19 @@ import com.kos.common.HttpError
 import com.kos.httpclients.domain.*
 
 object RiotMockHelper {
+    val flexQEntryResponse = LeagueEntryResponse(
+        QueueType.FLEX_Q,
+        "GOLD",
+        "I",
+        1,
+        13,
+        14,
+        false
+    )
     val leagueEntries: Either<HttpError, List<LeagueEntryResponse>> =
         Either.Right(
             listOf(
-                LeagueEntryResponse(
-                    QueueType.FLEX_Q,
-                    "GOLD",
-                    "I",
-                    1,
-                    13,
-                    14,
-                    false
-                ),
+                flexQEntryResponse,
                 LeagueEntryResponse(
                     QueueType.SOLO_Q,
                     "GOLD",
@@ -31,11 +32,11 @@ object RiotMockHelper {
         )
     val matchId = "EUW1_232424252"
     val matches = Either.Right(listOf(matchId))
-    val match: Either<HttpError, GetMatchResponse> = Either.Right(
+    val match: GetMatchResponse =
         GetMatchResponse(
-            MatchInfo(
+            metadata = Metadata(matchId),
+            info = MatchInfo(
                 1,
-                "COMPLETED",
                 1,
                 listOf(
                     MatchParticipant(
@@ -61,7 +62,6 @@ object RiotMockHelper {
                 )
             )
         )
-    )
 
     val riotData: RiotData =
         RiotData(
@@ -80,6 +80,7 @@ object RiotMockHelper {
                         winrate = 0.5925925925925926,
                         matches = listOf(
                             MatchProfile(
+                                id = matchId,
                                 championId = 497,
                                 championName = "Rakan",
                                 role = "SUPPORT",
@@ -96,6 +97,7 @@ object RiotMockHelper {
                                 totalTimeSpentDead = 174,
                                 win = true
                             ), MatchProfile(
+                                id = matchId,
                                 championId = 497,
                                 championName = "Rakan",
                                 role = "SUPPORT",
@@ -112,6 +114,7 @@ object RiotMockHelper {
                                 totalTimeSpentDead = 24,
                                 win = true
                             ), MatchProfile(
+                                id = matchId,
                                 championId = 12,
                                 championName = "Alistar",
                                 role = "SUPPORT",
@@ -128,6 +131,7 @@ object RiotMockHelper {
                                 totalTimeSpentDead = 36,
                                 win = true
                             ), MatchProfile(
+                                id = matchId,
                                 championId = 497,
                                 championName = "Rakan",
                                 role = "SUPPORT",
@@ -144,6 +148,7 @@ object RiotMockHelper {
                                 totalTimeSpentDead = 67,
                                 win = true
                             ), MatchProfile(
+                                id = matchId,
                                 championId = 235,
                                 championName = "Senna",
                                 role = "SUPPORT",

@@ -137,6 +137,42 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         }
     }
 
+    override suspend fun update(
+        id: Long,
+        character: CharacterInsertRequest,
+        game: Game
+    ): Either<InsertCharacterError, Int> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (game) {
+                Game.LOL -> {
+                    when (character) {
+                        is LolCharacterEnrichedRequest -> {
+                            Either.Right(LolCharacters.update({ LolCharacters.id eq id }) {
+                                it[name] = character.name
+                                it[tag] = character.tag
+                                it[puuid] = character.puuid
+                                it[summonerIcon] = character.summonerIconId
+                                it[summonerId] = character.summonerId
+                                it[summonerLevel] = character.summonerLevel
+                            })
+                        }
+                        else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                    }
+                }
+                Game.WOW -> when (character) {
+                    is WowCharacterRequest -> {
+                        Either.Right(WowCharacters.update({WowCharacters.id eq id}) {
+                            it[name] = character.name
+                            it[region] = character.region
+                            it[realm] = character.realm
+                        })
+                    }
+                    else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                }
+            }
+        }
+    }
+
     override suspend fun get(id: Long, game: Game): Character? {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {

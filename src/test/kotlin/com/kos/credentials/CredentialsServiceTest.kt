@@ -7,11 +7,11 @@ import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitia
 import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.roles.Role
 import com.kos.roles.RolesTestHelper.basicRolesActivities
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
-import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -80,7 +80,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            assertEquals(credentialsService.getUserRoles(user), listOf(role))
+            assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
         }
     }
 
@@ -93,8 +93,8 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.addRoleToUser(user, role)
-            assertEquals(credentialsService.getUserRoles(user), listOf(role))
+            credentialsService.addRoleToUser(user, Role.USER)
+            assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
         }
     }
 
@@ -107,7 +107,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.deleteRoleFromUser(user, role)
+            credentialsService.deleteRoleFromUser(user, Role.USER)
             assertEquals(credentialsService.getUserRoles(user), listOf())
         }
     }
@@ -148,7 +148,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            assertEquals(credentialsService.getRoleActivities(role), setOf(basicActivity))
+            assertEquals(credentialsService.getRoleActivities(Role.USER), setOf(basicActivity))
         }
     }
 }

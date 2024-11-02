@@ -1,12 +1,15 @@
 package com.kos.characters
 
 import arrow.core.Either
+import arrow.core.split
+import com.kos.characters.CharactersTestHelper.basicGetAccountResponse
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicGetPuuidResponse
 import com.kos.characters.CharactersTestHelper.basicGetSummonerResponse
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.split
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
@@ -122,6 +125,21 @@ class CharactersServiceTest {
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
 
             assertEquals(listOf(basicLolCharacter), charactersService.get(Game.LOL))
+        }
+    }
+
+    @Test
+    fun `i can update lol characters`() {
+        runBlocking {
+            val charactersRepository =
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+
+            `when`(riotClient.getSummonerByPuuid(basicLolCharacter.puuid)).thenReturn(Either.Right(basicGetSummonerResponse))
+            `when`(riotClient.getAccountByPUUID(basicLolCharacter.puuid)).thenReturn(Either.Right(basicGetAccountResponse))
+
+            val res = charactersService.updateLolCharacters(listOf(basicLolCharacter))
+            assertEquals(listOf(), res)
         }
     }
 }

@@ -2,10 +2,17 @@ package com.kos.views
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
+import com.kos.assertTrue
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.CharactersTestHelper.basicWowRequest2
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.common.NotEnoughPermissions
 import com.kos.common.NotFound
+import com.kos.common.TooMuchViews
 import com.kos.common.getLeftOrNull
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
@@ -13,33 +20,23 @@ import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
-import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper.role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
-import com.kos.views.ViewsTestHelper.basicSimpleWowView
-import com.kos.views.repository.ViewsInMemoryRepository
-import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito.mock
-import com.kos.assertTrue
-import com.kos.characters.CharactersTestHelper.basicLolCharacter
-import com.kos.characters.CharactersTestHelper.basicWowCharacter
-import com.kos.characters.CharactersTestHelper.basicWowCharacter2
-import com.kos.characters.CharactersTestHelper.basicWowRequest2
-import com.kos.characters.CharactersTestHelper.emptyCharactersState
-import com.kos.characters.LolCharacterRequest
-import com.kos.characters.repository.CharactersState
-import com.kos.common.TooMuchViews
 import com.kos.datacache.RaiderIoMockHelper
 import com.kos.datacache.RaiderIoMockHelper.raiderIoData
 import com.kos.datacache.RaiderIoMockHelper.raiderioCachedData
 import com.kos.datacache.RiotMockHelper.riotData
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
+import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.Role
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
+import com.kos.views.ViewsTestHelper.basicSimpleWowView
+import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
+import kotlinx.coroutines.runBlocking
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import kotlin.test.*
 
@@ -69,8 +66,9 @@ class ViewsControllerTest {
 
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient, credentialsService)
+
         return ViewsController(viewsService, credentialsService)
     }
 
@@ -89,7 +87,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -97,7 +95,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, basicSimpleWowView.copy(owner = "not-owner")),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.getOwnViews)))
+                mapOf(Pair(Role.USER, setOf(Activities.getOwnViews)))
             )
             assertEquals(listOf(basicSimpleWowView), controller.getViews("owner").getOrNull())
         }
@@ -108,7 +106,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val notOwnerView = basicSimpleWowView.copy(owner = "not-owner")
@@ -117,7 +115,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.getAnyViews)))
+                mapOf(Pair(Role.USER, setOf(Activities.getAnyViews)))
             )
             assertEquals(listOf(basicSimpleWowView, notOwnerView), controller.getViews("owner").getOrNull())
         }
@@ -128,7 +126,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val notOwnerView = basicSimpleWowView.copy(owner = "not-owner", id = "2")
@@ -137,7 +135,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.getOwnView)))
+                mapOf(Pair(Role.USER, setOf(Activities.getOwnView)))
             )
             assertEquals(basicSimpleWowView, controller.getView("owner", basicSimpleWowView.id).getOrNull()?.toSimple())
             assertEquals(NotEnoughPermissions("owner"), controller.getView("owner", notOwnerView.id).getLeftOrNull())
@@ -149,7 +147,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -157,7 +155,7 @@ class ViewsControllerTest {
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.getOwnView)))
+                mapOf(Pair(Role.USER, setOf(Activities.getOwnView)))
             )
             assertEquals(
                 NotFound(basicSimpleWowView.id),
@@ -171,7 +169,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -179,14 +177,14 @@ class ViewsControllerTest {
                 listOf(),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.createViews)))
+                mapOf(Pair(Role.USER, setOf(Activities.createViews)))
             )
             val res =
                 controller.createView("owner", ViewRequest(basicSimpleWowView.name, true, listOf(), Game.WOW))
                     .getOrNull()
 
-            assertTrue(res?.viewId?.isNotEmpty())
-            assertEquals(listOf(), res?.characters)
+            assertTrue(res?.id?.isNotEmpty())
+            assertEquals(listOf(), res?.characterIds)
         }
     }
 
@@ -195,7 +193,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -203,7 +201,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView, basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.createViews)))
+                mapOf(Pair(Role.USER, setOf(Activities.createViews)))
             )
 
             assertIs<TooMuchViews>(
@@ -220,7 +218,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -228,7 +226,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
                 listOf(),
-                mapOf(Pair(role, setOf(Activities.getViewData)))
+                mapOf(Pair(Role.USER, setOf(Activities.getViewData)))
             )
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
@@ -247,7 +245,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -255,7 +253,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter.copy(id = 2))),
                 listOf(lolDataCache),
-                mapOf(Pair(role, setOf(Activities.getViewData)))
+                mapOf(Pair(Role.USER, setOf(Activities.getViewData)))
             )
 
             controller.getViewData("owner", basicSimpleLolView.id)
@@ -271,7 +269,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -279,7 +277,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
                 listOf(wowDataCache),
-                mapOf(Pair(role, setOf(Activities.getViewCachedData)))
+                mapOf(Pair(Role.USER, setOf(Activities.getViewCachedData)))
             )
 
             controller.getViewCachedData("owner", basicSimpleWowView.id)
@@ -295,7 +293,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -303,7 +301,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
-                mapOf(Pair(role, setOf(Activities.getViewCachedData)))
+                mapOf(Pair(Role.USER, setOf(Activities.getViewCachedData)))
             )
 
             controller.getViewCachedData("owner", basicSimpleLolView.id)
@@ -319,7 +317,7 @@ class ViewsControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
@@ -327,7 +325,7 @@ class ViewsControllerTest {
                 listOf(basicSimpleWowView),
                 CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
-                mapOf(Pair(role, setOf(Activities.editAnyView)))
+                mapOf(Pair(Role.USER, setOf(Activities.editAnyView)))
             )
 
             `when`(raiderIoClient.exists(basicWowRequest2)).thenReturn(true)
@@ -336,7 +334,9 @@ class ViewsControllerTest {
 
             controller.editView("owner", viewRequest, basicSimpleWowView.id)
                 .onRight {
-                    assertEquals(ViewModified(basicSimpleWowView.id, listOf(2)), it)
+                    assertEquals(viewRequest.name, it.name)
+                    assertEquals(viewRequest.published, it.published)
+                    assertEquals(listOf(2L), it.characters)
                 }
                 .onLeft { fail(it.toStr()) }
         }

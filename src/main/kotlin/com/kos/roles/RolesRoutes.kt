@@ -36,7 +36,7 @@ fun Route.rolesRouting(
                     delete {
                         rolesController.deleteRole(
                             call.principal<UserIdPrincipal>()?.name,
-                            call.parameters["role"].orEmpty()
+                            Role.fromString(call.parameters["role"].orEmpty())
                         ).fold({
                             call.respondWithHandledError(it)
                         }, {
@@ -50,7 +50,7 @@ fun Route.rolesRouting(
                             rolesController.addActivityToRole(
                                 call.principal<UserIdPrincipal>()?.name,
                                 call.receive(),
-                                call.parameters["role"].orEmpty()
+                                Role.fromString(call.parameters["role"].orEmpty())
                             ).fold({
                                 call.respondWithHandledError(it)
                             }, {
@@ -63,7 +63,7 @@ fun Route.rolesRouting(
                             delete {
                                 rolesController.deleteActivityFromRole(
                                     call.principal<UserIdPrincipal>()?.name,
-                                    call.parameters["role"].orEmpty(),
+                                    Role.fromString(call.parameters["role"].orEmpty()),
                                     call.parameters["activity"].orEmpty()
                                 ).fold({
                                     call.respondWithHandledError(it)

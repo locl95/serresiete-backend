@@ -73,6 +73,37 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         }
     }
 
+    override suspend fun update(
+        id: Long,
+        character: CharacterInsertRequest,
+        game: Game
+    ): Either<InsertCharacterError, Int> {
+        return when(game) {
+            Game.LOL -> when(character) {
+                is LolCharacterEnrichedRequest -> {
+                    val index = lolCharacters.indexOfFirst { it.id == id }
+                    lolCharacters.removeAt(index)
+                    val c = LolCharacter(
+                        id,
+                        character.name,
+                        character.tag,
+                        character.puuid,
+                        character.summonerIconId,
+                        character.summonerId,
+                        character.summonerLevel
+                    )
+                    lolCharacters.add(index, c)
+                    Either.Right(1)
+                }
+                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+            }
+            Game.WOW -> when(character) {
+                is WowCharacterRequest -> TODO()
+                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+            }
+        }
+    }
+
     override suspend fun get(id: Long, game: Game): Character? =
         when (game) {
             Game.WOW -> wowCharacters.find { it.id == id }

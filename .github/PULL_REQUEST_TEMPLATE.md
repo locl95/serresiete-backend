@@ -4,7 +4,7 @@ Please describe your changes.
 
 ### Checklist
 
-- [ ] I didn't add a changelog entry because this pr didn't need to update changelog
+- [ ] I didn't add a changelog entry because this feature didn't need to update changelog
 - [ ] I didn't add a single test because this feature didn't require unit testing
 - [ ] I have tested this feature in an environment (e.g., production, development, local)
 

@@ -2,13 +2,17 @@ package com.kos.views
 
 import com.kos.activities.Activity
 import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.CharactersTestHelper.invalidListOfLolCharacterRequest
+import com.kos.characters.CharactersTestHelper.listOfLolCharacterRequest
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.TooMuchCharacters
 import com.kos.common.TooMuchViews
 import com.kos.common.UserWithoutRoles
 import com.kos.credentials.Credentials
@@ -116,7 +120,7 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val request = ViewRequest(name, published, listOf(), Game.LOL)
+            val request = ViewRequest(name, published, listOfLolCharacterRequest, Game.LOL)
             viewsService.create(owner, request).onRight {
                 assertEquals(request.name, it.name)
                 assertEquals(request.published, it.published)
@@ -126,6 +130,26 @@ class ViewsServiceTest {
             }
 
             assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
+        }
+    }
+
+    @Test
+    fun `i can't create a lol view because too many characers provided`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                listOf(),
+                emptyCharactersState,
+                listOf(),
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                mapOf()
+            )
+
+            val request = ViewRequest(name, published, invalidListOfLolCharacterRequest, Game.WOW)
+            viewsService.create(owner, request).onRight {
+                fail()
+            }.onLeft {
+                assertTrue(it is TooMuchCharacters)
+            }
         }
     }
 

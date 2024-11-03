@@ -16,8 +16,10 @@ import com.kos.common.TooMuchViews
 import com.kos.common.UserWithoutRoles
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsService
+import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
 import com.kos.credentials.CredentialsTestHelper.emptyCredentialsInitialState
 import com.kos.credentials.CredentialsTestHelper.password
+import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
@@ -135,6 +137,30 @@ class ViewsServiceTest {
     }
 
     @Test
+    fun `i can create a wow view`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                listOf(),
+                emptyCharactersState,
+                listOf(),
+                basicCredentialsWithRolesInitialState,
+                mapOf()
+            )
+
+            val request = ViewRequest(name, published, listOf(), Game.WOW)
+            viewsService.create(user, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+                assertEquals(request.game, it.game)
+            }.onLeft {
+                fail(it.toStr())
+            }
+
+            assertTrue(viewsService.create(user, ViewRequest(name, published, listOf(), Game.WOW)).isRight())
+        }
+    }
+
+    @Test
     fun `i can create a lol view with some characters`() {
         runBlocking {
             val (_, viewsService) = createService(
@@ -210,13 +236,14 @@ class ViewsServiceTest {
                 listOf(basicSimpleLolView),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                basicCredentialsWithRolesInitialState,
                 mapOf()
             )
 
             val newName = "new-name"
+
             val request = ViewRequest(newName, published, listOf(), Game.LOL)
-            viewsService.edit(basicSimpleLolView.id, request).onRight {
+            viewsService.edit(basicSimpleLolView.id, user, request).onRight {
                 assertEquals(request.name, it.name)
                 assertEquals(request.published, it.published)
             }.onLeft {
@@ -305,14 +332,14 @@ class ViewsServiceTest {
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                basicCredentialsWithRolesInitialState,
                 mapOf()
             )
 
             assertTrue(viewsRepository.state().all { it.characterIds.isEmpty() })
 
             viewsService.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
+                id, user, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
                 assertEquals(id, it.viewId)
                 assertEquals(listOf<Long>(1, 2, 3, 4), it.characters)
@@ -346,14 +373,14 @@ class ViewsServiceTest {
                     listOf()
                 ),
                 listOf(),
-                emptyCredentialsInitialState,
+                basicCredentialsWithRolesInitialState,
                 mapOf()
             )
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
             viewsService.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
+                id, user, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
                 assertEquals(listOf<Long>(3, 4, 5, 6), it.characters)
                 assertEquals(name, it.name)
@@ -394,11 +421,11 @@ class ViewsServiceTest {
                 listOf(basicSimpleWowView),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                basicCredentialsWithRolesInitialState,
                 mapOf()
             )
 
-            val patch = viewsService.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null, Game.WOW))
+            val patch = viewsService.patch(basicSimpleWowView.id, user, ViewPatchRequest(patchedName, null, null, Game.WOW))
             patch.onRight {
                 assertEquals(basicSimpleWowView.id, it.viewId)
                 assertEquals(null, it.published)
@@ -428,14 +455,14 @@ class ViewsServiceTest {
                 listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                 emptyCharactersState,
                 listOf(),
-                emptyCredentialsInitialState,
+                basicCredentialsWithRolesInitialState,
                 mapOf()
             )
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
             viewsService.patch(
-                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
+                id, user, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
                 assertEquals(basicSimpleWowView.id, it.viewId)
                 assertEquals(null, it.published)

@@ -2,6 +2,7 @@ package com.kos.views
 
 import arrow.core.Either
 import arrow.core.flatten
+import arrow.core.raise.either
 import com.kos.activities.Activities
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
@@ -51,16 +52,16 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewData(client: String?, id: String): Either<ControllerError, List<Data>> {
+    suspend fun getViewData(client: String?, id: String): Either<ControllerError, ViewData> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
                 return when (val maybeView = viewsService.get(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
-                        if (credentialsService.hasPermissions(client, Activities.getViewData) && maybeView.published)
-                            Either.Right(viewsService.getData(maybeView)).flatten()
-                        else if (!maybeView.published) Either.Left(NotPublished(id))
+                        if (credentialsService.hasPermissions(client, Activities.getViewData) && maybeView.published) {
+                            either { ViewData(maybeView.name, viewsService.getData(maybeView).bind()) }
+                        } else if (!maybeView.published) Either.Left(NotPublished(id))
                         else Either.Left(NotEnoughPermissions(client))
                     }
                 }
@@ -68,7 +69,7 @@ class ViewsController(
         }
     }
 
-    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, List<Data>> {
+    suspend fun getViewCachedData(client: String?, id: String): Either<ControllerError, ViewData> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
@@ -80,7 +81,7 @@ class ViewsController(
                                 Activities.getViewCachedData
                             ) && maybeView.published
                         )
-                            Either.Right(viewsService.getCachedData(maybeView)).flatten()
+                            either { ViewData(maybeView.name, viewsService.getCachedData(maybeView).bind()) }
                         else if (!maybeView.published) Either.Left(NotPublished(id))
                         else Either.Left(NotEnoughPermissions(client))
                     }
@@ -119,7 +120,11 @@ class ViewsController(
         }
     }
 
-    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewPatched> {
+    suspend fun patchView(
+        client: String?,
+        request: ViewPatchRequest,
+        id: String
+    ): Either<ControllerError, ViewPatched> {
         //TODO: We can propagate view fields to those who are optional from patch, or we can keep it like this to display which fields we modified
         return when (client) {
             null -> Either.Left(NotAuthorized())

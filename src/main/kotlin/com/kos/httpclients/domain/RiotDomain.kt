@@ -161,6 +161,7 @@ data class RiotData(
     val summonerIcon: Int,
     val summonerLevel: Int,
     val summonerName: String,
+    val summonerTag: String,
     val leagues: Map<QueueType, LeagueProfile>
 ) : Data {
     companion object {
@@ -173,6 +174,7 @@ data class RiotData(
                 lolCharacter.summonerIcon,
                 lolCharacter.summonerLevel,
                 lolCharacter.name,
+                lolCharacter.tag,
                 leagues.associate { leagueMatchData ->
                     val leagueEntryResponse = leagueMatchData.leagueEntry
                     val retrievedMatches = leagueMatchData.matchResponses

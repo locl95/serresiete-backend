@@ -1,9 +1,11 @@
 # Changelog
 
-## [3.5.0] 01-11-2024
+## [3.5.0] 03-11-2024
 
 ### Added
 - Introduced a daily update for League characters to refresh summoner details, including summoner icon, summoner level, Riot name, and Riot tag every 24 hours.
+- Optimized further the League Character's Sync by allowing the reuse of match data across multiple players in the same synchronization batch, leveraging dynamic programming to minimize calls. While this may not drastically increase capacity, it significantly improves efficiency in the synchronization process.
+
 
 ## [3.4.1] 01-11-2024
 

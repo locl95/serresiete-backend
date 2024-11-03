@@ -78,6 +78,7 @@ data class DataCacheService(
         val errorsChannel = Channel<HttpError>()
         val dataChannel = Channel<DataCache>()
         val errorsList = mutableListOf<HttpError>()
+        val matchCache = DynamicCache<Either<HttpError, GetMatchResponse>>()
 
         val errorsCollector = launch {
             errorsChannel.consumeAsFlow().collect { error ->
@@ -98,7 +99,7 @@ data class DataCacheService(
         lolCharacters.asFlow()
             .buffer(10)
             .collect { lolCharacter ->
-                val result = cacheLolCharacter(lolCharacter)
+                val result = cacheLolCharacter(lolCharacter, matchCache)
                 result.fold(
                     ifLeft = { error -> errorsChannel.send(error) },
                     ifRight = { (id, riotData) ->
@@ -119,7 +120,10 @@ data class DataCacheService(
         errorsList
     }
 
-    private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =
+    private suspend fun cacheLolCharacter(
+        lolCharacter: LolCharacter,
+        matchCache: DynamicCache<Either<HttpError, GetMatchResponse>>
+    ): Either<HttpError, Pair<Long, RiotData>> =
         either {
 
             val newestCharacterDataCacheEntry: RiotData? =
@@ -158,8 +162,10 @@ data class DataCacheService(
                             )
 
                             val matchResponses: List<GetMatchResponse> = matchesToRequest.map { matchId ->
-                                retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
-                                    riotClient.getMatchById(matchId)
+                                matchCache.get(matchId) {
+                                    retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
+                                        riotClient.getMatchById(matchId)
+                                    }
                                 }.bind()
                             }
 

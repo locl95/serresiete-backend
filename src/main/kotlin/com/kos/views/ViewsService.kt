@@ -53,7 +53,7 @@ class ViewsService(
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, SimpleView> {
         return either {
             val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
-            ensure(viewsRepository.getOwnViews(owner).size <= ownerMaxViews) { TooMuchViews }
+            ensure(viewsRepository.getOwnViews(owner).size < ownerMaxViews) { TooMuchViews }
             val ownerMaxCharacters = getMaxNumberOfCharactersByRole(owner).bind()
             ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
             val characterIds = charactersService.createAndReturnIds(request.characters, request.game).bind()

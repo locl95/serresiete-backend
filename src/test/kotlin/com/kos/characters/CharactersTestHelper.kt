@@ -32,11 +32,4 @@ object CharactersTestHelper {
         "R7 Disney Girl",
         "EUW"
     )
-    val listOfLolCharacterRequest = List(9) {
-        basicLolCharacterRequest
-    }
-    val invalidListOfLolCharacterRequest = List(11) {
-        basicLolCharacterRequest
-    }
-    val basicLolCharacterRequest = LolCharacterRequest("oscar", "thoalitas")
 }

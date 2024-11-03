@@ -1,14 +1,13 @@
 package com.kos.views
 
+import arrow.core.Either
 import com.kos.activities.Activity
 import com.kos.characters.CharactersService
-import com.kos.characters.CharactersTestHelper
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
-import com.kos.characters.CharactersTestHelper.invalidListOfLolCharacterRequest
-import com.kos.characters.CharactersTestHelper.listOfLolCharacterRequest
+import com.kos.characters.LolCharacterRequest
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
@@ -27,6 +26,8 @@ import com.kos.datacache.RiotMockHelper.anotherRiotData
 import com.kos.datacache.TestHelper.anotherLolDataCache
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.httpclients.domain.GetPUUIDResponse
+import com.kos.httpclients.domain.GetSummonerResponse
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
@@ -41,9 +42,9 @@ import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -120,7 +121,7 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val request = ViewRequest(name, published, listOfLolCharacterRequest, Game.LOL)
+            val request = ViewRequest(name, published, listOf(), Game.LOL)
             viewsService.create(owner, request).onRight {
                 assertEquals(request.name, it.name)
                 assertEquals(request.published, it.published)
@@ -134,7 +135,7 @@ class ViewsServiceTest {
     }
 
     @Test
-    fun `i can't create a lol view because too many characers provided`() {
+    fun `i can create a lol view with some characters`() {
         runBlocking {
             val (_, viewsService) = createService(
                 listOf(),
@@ -144,7 +145,56 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val request = ViewRequest(name, published, invalidListOfLolCharacterRequest, Game.WOW)
+            val charactersRequest = (1..10).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+            `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
+                val name = invocation.getArgument<String>(0)
+                val tag = invocation.getArgument<String>(1)
+                Either.Right(GetPUUIDResponse(UUID.randomUUID().toString(), name, tag))
+            }
+
+            `when`(riotClient.getSummonerByPuuid(anyString())).thenAnswer { invocation ->
+                val puuid = invocation.getArgument<String>(0)
+                Either.Right(
+                    GetSummonerResponse(
+                        UUID.randomUUID().toString(),
+                        UUID.randomUUID().toString(),
+                        puuid,
+                        10,
+                        10L,
+                        200
+                    )
+                )
+            }
+
+            val request = ViewRequest(name, published, charactersRequest, Game.LOL)
+            viewsService.create(owner, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+                assertEquals(request.game, it.game)
+                assertEquals(request.characters.size, it.characterIds.size)
+            }.onLeft {
+                fail(it.toStr())
+            }
+
+            assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
+        }
+    }
+
+    @Test
+    fun `i can't create a lol view because too many characters provided`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                listOf(),
+                emptyCharactersState,
+                listOf(),
+                CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                mapOf()
+            )
+
+            val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+            val request = ViewRequest(name, published, charactersRequest, Game.WOW)
             viewsService.create(owner, request).onRight {
                 fail()
             }.onLeft {

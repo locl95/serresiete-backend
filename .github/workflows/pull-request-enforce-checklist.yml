@@ -23,10 +23,7 @@ jobs:
         env:
           BODY: ${{ github.event.pull_request.body }}
         id: checklist
-        run: |
-          
-          echo "${BODY,,}"
-          
+        run: |          
           UNCHECKED_CHANGELOG="\[ \] $changelog_checkbox"
           MARKED_CHANGELOG="\[x\] $changelog_checkbox"
           

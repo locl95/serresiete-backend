@@ -12,6 +12,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable
+data class GetAccountResponse(val gameName: String, val tagLine: String)
+
+@Serializable
 data class GetPUUIDResponse(val puuid: String, val gameName: String, val tagLine: String)
 
 @Serializable

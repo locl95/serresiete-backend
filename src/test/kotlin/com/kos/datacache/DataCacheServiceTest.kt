@@ -243,4 +243,77 @@ class DataCacheServiceTest {
         }
     }
 
+    @Test
+    fun `caching lol data behaves smart, retrieves only necessary matches using dynamic cache`() {
+        runBlocking {
+            val requestedMatchIds = listOf("match3", "match4", "match5", "match6", "match7")
+
+            `when`(riotClient.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
+                .thenReturn(Either.Right(listOf(flexQEntryResponse)))
+            `when`(
+                riotClient.getMatchesByPuuid(basicLolCharacter.puuid, QueueType.FLEX_Q.toInt())
+            ).thenReturn(Either.Right(requestedMatchIds))
+
+            `when`(riotClient.getMatchById("match3")).thenReturn(
+                Either.Right(
+                    RiotMockHelper.match.copy(
+                        metadata = Metadata(
+                            "match4"
+                        )
+                    )
+                )
+            )
+
+            `when`(riotClient.getMatchById("match4")).thenReturn(
+                Either.Right(
+                    RiotMockHelper.match.copy(
+                        metadata = Metadata(
+                            "match4"
+                        )
+                    )
+                )
+            )
+            `when`(riotClient.getMatchById("match5")).thenReturn(
+                Either.Right(
+                    RiotMockHelper.match.copy(
+                        metadata = Metadata(
+                            "match5"
+                        )
+                    )
+                )
+            )
+            `when`(riotClient.getMatchById("match6")).thenReturn(
+                Either.Right(
+                    RiotMockHelper.match.copy(
+                        metadata = Metadata(
+                            "match6"
+                        )
+                    )
+                )
+            )
+            `when`(riotClient.getMatchById("match7")).thenReturn(
+                Either.Right(
+                    RiotMockHelper.match.copy(
+                        metadata = Metadata(
+                            "match7"
+                        )
+                    )
+                )
+            )
+
+            val repo = DataCacheInMemoryRepository()
+            val service = DataCacheService(repo, raiderIoClient, riotClient)
+
+            val errors = service.cache(listOf(basicLolCharacter, basicLolCharacter.copy(id = 2)), Game.LOL)
+
+            verify(riotClient, times(1)).getMatchById("match3")
+            verify(riotClient, times(1)).getMatchById("match4")
+            verify(riotClient, times(1)).getMatchById("match5")
+            verify(riotClient, times(1)).getMatchById("match6")
+            verify(riotClient, times(1)).getMatchById("match7")
+
+            assertEquals(listOf(), errors)
+        }
+    }
+
 }

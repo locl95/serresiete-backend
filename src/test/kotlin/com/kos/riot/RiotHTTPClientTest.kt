@@ -13,7 +13,7 @@ class RiotHTTPClientTest {
     private val riotHTTPClient = RiotHTTPClient(client, "fake-key")
 
     @Test
-    fun `dummy test to check everything is going under control`() {
+    fun `get puuid by riot id works as expected`() {
         runBlocking {
             val res = riotHTTPClient.getPUUIDByRiotId("GTP ZeroMVPs", "WOW")
             assertTrue(res.isRight())
@@ -22,7 +22,7 @@ class RiotHTTPClientTest {
     }
 
     @Test
-    fun `dummy test to check everything is going under control 2`() {
+    fun `get summoner by puuid works as expected`() {
         runBlocking {
             val res = riotHTTPClient.getSummonerByPuuid("vJre0esG5sIx3rvCAe-YVsDfqCIMV5b2P-61wrYZ4w-hs9u_Ek8dVlo-KLo-GNA4NumLV1YTNxeCmA")
             assertTrue(res.isRight())
@@ -31,7 +31,7 @@ class RiotHTTPClientTest {
     }
 
     @Test
-    fun `dummy test to check everything is going under control 3`() {
+    fun `get matches by puuid works as expected`() {
         runBlocking {
             val res = riotHTTPClient.getMatchesByPuuid("vJre0esG5sIx3rvCAe-YVsDfqCIMV5b2P-61wrYZ4w-hs9u_Ek8dVlo-KLo-GNA4NumLV1YTNxeCmA",
                 QueueType.SOLO_Q.toInt()
@@ -42,7 +42,7 @@ class RiotHTTPClientTest {
     }
 
     @Test
-    fun `dummy test to check everything is going under control 4`() {
+    fun `get match by id works as expected`() {
         runBlocking {
             val res = riotHTTPClient.getMatchById("EUW1_7130322326")
             
@@ -51,10 +51,19 @@ class RiotHTTPClientTest {
     }
 
     @Test
-    fun `dummy test to check everything is going under control 5`() {
+    fun `get league entries by summoner id works as expected`() {
         runBlocking {
             val res = riotHTTPClient.getLeagueEntriesBySummonerId("XpUAakpMee4budbZ_KVchTTxwkN4OHgqjbYa0r4pXR_Ya6E")
             
+            assertTrue(res.isRight())
+        }
+    }
+
+    @Test
+    fun `get account by puuid works as expected`() {
+        runBlocking {
+            val res = riotHTTPClient.getAccountByPUUID("XpUAakpMee4budbZ_KVchTTxwkN4OHgqjbYa0r4pXR_Ya6E")
+
             assertTrue(res.isRight())
         }
     }

@@ -7,6 +7,7 @@ import com.kos.tasks.repository.TasksRepository
 import com.kos.tasks.runnables.CacheGameDataRunnable
 import com.kos.tasks.runnables.TasksCleanupRunnable
 import com.kos.tasks.runnables.TokenCleanupRunnable
+import com.kos.tasks.runnables.UpdateLolCharactersRunnable
 import com.kos.views.Game
 import kotlinx.coroutines.CoroutineScope
 import java.time.Duration
@@ -28,6 +29,7 @@ data class TasksLauncher(
         val lolDataTaskDelay = 30
         val tokenCleanupDelay = 15
         val tasksCleanupDelay = 10080
+        val updateLolCharactersDelay = 1440
 
 
         suspend fun getTaskInitialDelay(now: OffsetDateTime, taskType: TaskType, timeDelay: Int): Long =
@@ -41,11 +43,13 @@ data class TasksLauncher(
         val cacheLolDataTaskInitDelay: Long = getTaskInitialDelay(now, TaskType.CACHE_LOL_DATA_TASK, lolDataTaskDelay)
         val tokenCleanupInitDelay: Long = getTaskInitialDelay(now, TaskType.TOKEN_CLEANUP_TASK, tokenCleanupDelay)
         val tasksCleanupInitDelay: Long = getTaskInitialDelay(now, TaskType.TASK_CLEANUP_TASK, tasksCleanupDelay)
+        val updateLolCharactersInitDelay: Long = getTaskInitialDelay(now, TaskType.UPDATE_LOL_CHARACTERS_TASK, tasksCleanupDelay)
 
         logger.info("Setting $cacheWowDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_WOW_DATA_TASK}")
-        logger.info("Setting $cacheLolDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_WOW_DATA_TASK}")
+        logger.info("Setting $cacheLolDataTaskInitDelay minutes of delay before launching ${TaskType.CACHE_LOL_DATA_TASK}")
         logger.info("Setting $tokenCleanupInitDelay minutes of delay before launching ${TaskType.TOKEN_CLEANUP_TASK}")
         logger.info("Setting $tasksCleanupInitDelay minutes of delay before launching ${TaskType.TASK_CLEANUP_TASK}")
+        logger.info("Setting $updateLolCharactersInitDelay minutes of delay before launching ${TaskType.UPDATE_LOL_CHARACTERS_TASK}")
 
 
         executorService.scheduleAtFixedRate(
@@ -81,6 +85,14 @@ data class TasksLauncher(
                 coroutineScope
             ),
             tasksCleanupInitDelay, tasksCleanupDelay.toLong(), TimeUnit.MINUTES
+        )
+
+        executorService.scheduleAtFixedRate(
+            UpdateLolCharactersRunnable(
+                tasksService,
+                coroutineScope
+            ),
+            updateLolCharactersInitDelay, updateLolCharactersDelay.toLong(), TimeUnit.MINUTES
         )
 
         Runtime.getRuntime().addShutdownHook(Thread {

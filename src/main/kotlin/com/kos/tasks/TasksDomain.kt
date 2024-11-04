@@ -49,6 +49,9 @@ enum class TaskType {
     },
     TASK_CLEANUP_TASK {
         override fun toString(): String = "taskCleanupTask"
+    },
+    UPDATE_LOL_CHARACTERS_TASK {
+        override fun toString(): String = "updateLolCharactersTask"
     };
 
     companion object {
@@ -57,6 +60,7 @@ enum class TaskType {
             "cacheLolDataTask" -> Either.Right(CACHE_LOL_DATA_TASK)
             "tokenCleanupTask" -> Either.Right(TOKEN_CLEANUP_TASK)
             "taskCleanupTask" -> Either.Right(TASK_CLEANUP_TASK)
+            "updateLolCharactersTask" -> Either.Right(UPDATE_LOL_CHARACTERS_TASK)
             else -> Either.Left(InvalidTaskType(value))
         }
     }

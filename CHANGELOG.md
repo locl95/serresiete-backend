@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.2] 04-11-2024
+
+### Added
+
+- **Character Limit by Role in Views**: Introduced a new feature that limits the maximum number of characters allowed per view based on user roles.
+
 ## [3.4.1] 01-11-2024
 
 ### Improved

@@ -11,7 +11,7 @@ class AuthService(private val authRepository: AuthRepository) {
         return LoginResponse(accessToken, refreshToken)
     }
 
-    suspend fun logout(user: String) = authRepository.deleteToken(user)
+    suspend fun logout(user: String) = authRepository.deleteTokensFromUser(user)
     suspend fun validateTokenAndReturnUsername(token: String, isAccessRequest: Boolean): Either<TokenError, String> =
         when (val maybeAuthorization = authRepository.getAuthorization(token)) {
             null -> Either.Left(TokenNotFound(token))

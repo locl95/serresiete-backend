@@ -2,7 +2,6 @@ package com.kos.auth.repository
 
 import com.kos.auth.Authorization
 import com.kos.common.InMemoryRepository
-import com.kos.common.isDefined
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -22,7 +21,7 @@ class AuthInMemoryRepository : AuthRepository, InMemoryRepository {
         return authorization
     }
 
-    override suspend fun deleteToken(token: String) = authorizations.removeIf { it.token == token }
+    override suspend fun deleteTokensFromUser(userName: String) = authorizations.removeIf { it.userName == userName }
     override suspend fun getAuthorization(token: String): Authorization? {
         return authorizations.find { it.token == token }
     }

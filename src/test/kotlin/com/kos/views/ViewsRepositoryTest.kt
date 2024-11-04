@@ -1,42 +1,44 @@
 package com.kos.views
 
-import com.kos.common.DatabaseFactory
-import com.kos.views.ViewsTestHelper.basicSimpleView
+import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
 import com.kos.views.ViewsTestHelper.owner
+import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsDatabaseRepository
 import com.kos.views.repository.ViewsInMemoryRepository
 import com.kos.views.repository.ViewsRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class ViewsRepositoryTest {
     abstract val repository: ViewsRepository
 
-    @BeforeTest
-    abstract fun beforeEach()
-
     @Test
     fun `given a repository with views i can retrieve them`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            assertEquals(listOf(basicSimpleView), repositoryWithState.getOwnViews(owner))
+            val repositoryWithState = repository.withState(listOf(basicSimpleWowView))
+            assertEquals(listOf(basicSimpleWowView), repositoryWithState.getOwnViews(owner))
         }
     }
 
     @Test
     fun `given a repository with views i can retrieve a certain view`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            assertEquals((SimpleView(id, name, owner, listOf())), repositoryWithState.get(id))
+            val repositoryWithState = repository.withState(listOf(basicSimpleWowView))
+            assertEquals(basicSimpleWowView, repositoryWithState.get(id))
         }
     }
 
     @Test
-    fun `given an empty repository, trying to retrieve a certain guild returns null`() {
+    fun `given an empty repository, trying to retrieve a certain view returns null`() {
         runBlocking {
             assertEquals(null, repository.get(id))
         }
@@ -45,9 +47,12 @@ abstract class ViewsRepositoryTest {
     @Test
     fun `given an empty repository i can insert views`() {
         runBlocking {
-            assert(repository.create(name, owner, listOf()).isSuccess)
+            val res = repository.create(name, owner, listOf(), Game.WOW)
+            assertEquals(owner, res.owner)
+            assertEquals(name, res.name)
+            assertEquals(listOf(), res.characterIds)
+            assertEquals(Game.WOW, res.game)
             assert(repository.state().size == 1)
-            assert(repository.state().all { it.owner == owner })
         }
     }
 
@@ -55,47 +60,99 @@ abstract class ViewsRepositoryTest {
     fun `given a repository with a view i can edit it`() {
         runBlocking {
             val repo =
-                repository.withState(listOf(basicSimpleView))
-            val edit = repo.edit(id, "name2", listOf(1))
+                repository.withState(listOf(basicSimpleWowView))
+            val res = repo.edit(id, "name2", published, listOf(1))
             val finalState = repo.state()
-            assertEquals(ViewModified(id, listOf(1)), edit)
-            assertEquals(finalState, listOf(basicSimpleView.copy(name = "name2", characterIds = listOf(1))))
+            assertEquals(ViewModified(id, "name2", published, listOf(1)), res)
+            assertEquals(finalState, listOf(basicSimpleWowView.copy(name = "name2", characterIds = listOf(1))))
         }
     }
 
     @Test
     fun `given a repository with a view i can edit more than one character`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(basicSimpleView))
-            val edit = repositoryWithState.edit(id, "name", listOf(1, 2, 3, 4))
+            val repositoryWithState = repository.withState(listOf(basicSimpleWowView))
+            val edit = repositoryWithState.edit(id, "name", published, listOf(1, 2, 3, 4))
             val finalState = repositoryWithState.state()
-            assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), edit)
-            assertEquals(finalState, listOf(basicSimpleView.copy(characterIds = listOf(1, 2, 3, 4))))
+            assertEquals(ViewModified(id, "name", published, listOf(1, 2, 3, 4)), edit)
+            assertEquals(finalState, listOf(basicSimpleWowView.copy(characterIds = listOf(1, 2, 3, 4))))
         }
     }
 
     @Test
     fun `given a repository with a view i can delete it`() {
         runBlocking {
-            val repo = repository.withState(listOf(basicSimpleView))
+            val repo = repository.withState(listOf(basicSimpleWowView))
             val delete = repo.delete(id)
             val finalState = repo.state()
             assertEquals(ViewDeleted(id), delete)
             assertEquals(finalState, listOf())
         }
     }
+
+    @Test
+    fun `given a repository with a view i can patch it`() {
+        runBlocking {
+            val repo = repository.withState(listOf(basicSimpleWowView))
+            val patchedName = "new-name"
+            val patch = repo.patch(basicSimpleWowView.id, patchedName, null, null)
+            val patchedView = repo.state().first()
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, null, null), patch)
+            assertEquals(basicSimpleWowView.id, patchedView.id)
+            assertEquals(basicSimpleWowView.published, patchedView.published)
+            assertEquals(basicSimpleWowView.characterIds, patchedView.characterIds)
+            assertEquals(patchedName, patchedView.name)
+        }
+    }
+
+    @Test
+    fun `given a repository with a view i can patch more than one field`() {
+        runBlocking {
+            val repo = repository.withState(listOf(basicSimpleWowView))
+            val characters: List<Long> = listOf(1, 2, 3)
+            val patchedName = "new-name"
+            val patchedPublish = false
+            val patch = repo.patch(basicSimpleWowView.id, patchedName, patchedPublish, characters)
+            val patchedView = repo.state().first()
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, patchedPublish, characters), patch)
+            assertEquals(basicSimpleWowView.id, patchedView.id)
+            assertEquals(patchedPublish, patchedView.published)
+            assertEquals(characters, patchedView.characterIds)
+            assertEquals(patchedName, patchedView.name)
+        }
+    }
 }
 
 class ViewsInMemoryRepositoryTest : ViewsRepositoryTest() {
     override val repository = ViewsInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ViewsDatabaseRepositoryTest : ViewsRepositoryTest() {
-    override val repository = ViewsDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = ViewsDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

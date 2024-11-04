@@ -1,68 +1,89 @@
 package com.kos.datacache
 
-import com.kos.common.DatabaseFactory
-import com.kos.datacache.TestHelper.dataCache
 import com.kos.datacache.TestHelper.outdatedDataCache
+import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.datacache.repository.DataCacheRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-abstract class DataCacheRepositoryTest {
+abstract class DataCacheRepositoryTestCommon {
 
     abstract val repository: DataCacheRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     open fun `given an empty repository i can insert data`() {
         runBlocking {
             assertEquals(listOf(), repository.state())
-            assertEquals(true, repository.insert(listOf(dataCache)))
-            assertEquals(listOf(dataCache), repository.state())
+            assertEquals(true, repository.insert(listOf(wowDataCache)))
+            assertEquals(listOf(wowDataCache), repository.state())
         }
     }
 
     @Test
     open fun `given a repository with a single cached data i can retrieve it`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(dataCache))
-            assertEquals(listOf(dataCache), repositoryWithState.get(1))
+            val repositoryWithState = repository.withState(listOf(wowDataCache))
+            assertEquals(listOf(wowDataCache), repositoryWithState.get(1))
         }
     }
 
     @Test
     open fun `given a repository with multiple cached data i can retrieve the only ones related to a certain character`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(dataCache, dataCache.copy(characterId = 2)))
-            assertEquals(listOf(dataCache), repositoryWithState.get(1))
+            val repositoryWithState = repository.withState(listOf(wowDataCache, wowDataCache.copy(characterId = 2)))
+            assertEquals(listOf(wowDataCache), repositoryWithState.get(1))
         }
     }
 
     @Test
     open fun `giver a repository with an expired record i can clear it`() {
         runBlocking {
-            val repositoryWithState = repository.withState(listOf(dataCache, outdatedDataCache))
+            val repositoryWithState = repository.withState(listOf(wowDataCache, outdatedDataCache))
             assertEquals(1, repositoryWithState.deleteExpiredRecord(24))
-            assertEquals(listOf(dataCache), repositoryWithState.state())
+            assertEquals(listOf(wowDataCache), repositoryWithState.state())
         }
     }
 }
 
-class DataCacheInMemoryRepositoryTest : DataCacheRepositoryTest() {
+class DataCacheInMemoryRepositoryTest : DataCacheRepositoryTestCommon() {
     override val repository = DataCacheInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
-class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTest() {
-    override val repository: DataCacheRepository = DataCacheDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class DataCacheDatabaseRepositoryTest : DataCacheRepositoryTestCommon() {
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = DataCacheDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

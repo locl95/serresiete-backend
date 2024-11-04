@@ -1,32 +1,36 @@
 package com.kos.eventsourcing
 
-import com.kos.common.DatabaseFactory
 import com.kos.eventsourcing.events.Event
-import com.kos.eventsourcing.events.EventData
+import com.kos.eventsourcing.events.EventType
+import com.kos.eventsourcing.events.ViewToBeCreated
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreDatabase
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
+import com.kos.views.ViewRequest
+import com.kos.views.ViewsTestHelper.basicSimpleWowView
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.Serializable
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Serializable
-data class TestData(val int: Int, val string: String): EventData
 
 abstract class EventStoreTest {
 
     abstract val store: EventStore
 
-    @BeforeTest
-    abstract fun beforeEach()
-
     @Test
     fun `given an empty store i can save events`() {
         runBlocking {
-            val event1 = Event("TestAggregate","TestDataEvent", TestData(1, "Data"))
-            val event2 = Event("TestAggregate2","TestDataEvent", TestData(2, "Data2"))
+            val viewRequest =
+                ViewRequest(basicSimpleWowView.name, basicSimpleWowView.published, listOf(), basicSimpleWowView.game)
+            val event1 = Event("/credentials/client1", ViewToBeCreated(viewRequest, UUID.randomUUID().toString()))
+            val event2 = Event("/credentials/client1", ViewToBeCreated(viewRequest, UUID.randomUUID().toString()))
             val savedEvent1 = store.save(event1)
             val savedEvent2 = store.save(event2)
             val expected = listOf(savedEvent1, savedEvent2)
@@ -38,14 +42,34 @@ abstract class EventStoreTest {
 
 class EventStoreInMemoryTest : EventStoreTest() {
     override val store = EventStoreInMemory()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         store.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EventStoreDatabaseTest : EventStoreTest() {
-    override val store = EventStoreDatabase()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val store = EventStoreDatabase(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

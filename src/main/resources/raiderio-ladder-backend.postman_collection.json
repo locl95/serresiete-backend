@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "ce2e9159-2ff1-4a53-b715-20ef7fbed1d2",
+		"_postman_id": "f1d6c4ec-961c-4f3c-a076-7184345bdec5",
 		"name": "raiderio-ladder-backend",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "20384788"
+		"_exporter_id": "30887858"
 	},
 	"item": [
 		{
@@ -176,7 +176,8 @@
 									"var jsonData = JSON.parse(responseBody)",
 									"pm.collectionVariables.set(\"viewId\", jsonData.viewId);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -195,7 +196,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [\n        {\n            \"name\": \"kakarona\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"osborno\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        },\n        {\n            \"name\": \"sanxxei\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\"\n        }\n    ]\n}",
+							"raw": "{\n    \"name\": \"lol-view-example\",\n    \"game\": \"LOL\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"sanxei\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Handx\",\n            \"tag\": \"013\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -213,7 +214,106 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Create WOW View",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"wow-view-example\",\n    \"game\": \"WOW\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"kakarona\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        },\n        {\n            \"name\": \"osborno\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        },\n        {\n            \"name\": \"sanxxei\",\n            \"region\": \"eu\",\n            \"realm\": \"zuljin\",\n            \"type\": \"com.kos.characters.WowCharacterRequest\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUri}}/api/views",
+									"host": [
+										"{{baseUri}}"
+									],
+									"path": [
+										"api",
+										"views"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "72"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"viewId\": \"3da5cfbc-06a5-43e0-aad5-96dbdaf3743b\",\n    \"characters\": [\n        2,\n        16,\n        14\n    ]\n}"
+						},
+						{
+							"name": "Create LOL View",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"lol-view-example\",\n    \"game\": \"LOL\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"sanxei\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Handx\",\n            \"tag\": \"013\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUri}}/api/views",
+									"host": [
+										"{{baseUri}}"
+									],
+									"path": [
+										"api",
+										"views"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "67"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"viewId\": \"83607273-e2d9-44db-8d12-ad4dec00ecc0\",\n    \"characters\": [\n        49\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "Edit View",
@@ -232,7 +332,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }]\n}",
+							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Apohunter\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kumico\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Sanxei\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }\n    ],\n    \"name\": \"nice-view\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -256,10 +356,28 @@
 				{
 					"name": "Delete View",
 					"request": {
-						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": ""
+							"raw": "{{baseUri}}/api/views/{{viewId}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"views",
+								"{{viewId}}"
+							]
 						}
 					},
 					"response": []
@@ -277,9 +395,11 @@
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody)",
-									"pm.collectionVariables.set(\"token\", jsonData.token);"
+									"pm.collectionVariables.set(\"token\", jsonData.accessToken.token);",
+									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken.token);"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -309,6 +429,48 @@
 							"path": [
 								"api",
 								"auth"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody)",
+									"pm.collectionVariables.set(\"token\", jsonData.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{refreshToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/auth/refresh",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh"
 							]
 						}
 					},
@@ -375,7 +537,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userName\": \"oscar\",\r\n    \"password\": \"tarea\"\r\n}",
+							"raw": "{\n    \"user\": \"testUser\",\n    \"password\": \"testPassword\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -383,13 +545,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUri}}/api/credentials",
+							"raw": "{{baseUri}}/api/credentials/",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"credentials"
+								"credentials",
+								""
 							]
 						}
 					},
@@ -412,7 +575,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userName\": \"oscar\",\r\n    \"password\": \"tareaMod\"\r\n}",
+							"raw": "{\n    \"userName\": \"oscar\",\n    \"password\": \"latarea\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -427,6 +590,462 @@
 							"path": [
 								"api",
 								"credentials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Roles From User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/credentials/{{user}}/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"credentials",
+								"{{user}}",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "roles",
+			"item": [
+				{
+					"name": "Get Roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create a Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role2}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add activity to role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"activity\": \"play ping pong\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role}}/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role}}",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete activity from role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"role\": \"nefertiti\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "activities",
+			"item": [
+				{
+					"name": "Get Activities From Role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities/{{role}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities",
+								"{{role}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activities",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Activity",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"activity\": \"play ping pong\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/activities",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete activity",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/activities/{{activity}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"activities",
+								"{{activity}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "tasks",
+			"item": [
+				{
+					"name": "Run task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const locationHeader = pm.response.headers.get('Location');",
+									"const id = locationHeader.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)[1];",
+									"",
+									"pm.collectionVariables.set(\"taskId\", id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"CACHE_LOL_DATA_TASK\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/tasks",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get tasks",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/tasks",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get task",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUri}}/api/tasks/{{taskId}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"tasks",
+								"{{taskId}}"
 							]
 						}
 					},
@@ -543,12 +1162,36 @@
 		},
 		{
 			"key": "password",
-			"value": "1234",
+			"value": "tareaMod",
 			"type": "default"
 		},
 		{
 			"key": "baseUri",
 			"value": "http://localhost:8080"
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "activity",
+			"value": ""
+		},
+		{
+			"key": "role",
+			"value": "admin"
+		},
+		{
+			"key": "role2",
+			"value": "nefertiti"
+		},
+		{
+			"key": "activity2",
+			"value": "play ping pong"
+		},
+		{
+			"key": "taskId",
+			"value": "fdbb48d1-b846-4912-849d-2545dfd498a2"
 		}
 	]
 }

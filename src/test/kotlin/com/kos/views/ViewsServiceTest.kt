@@ -253,6 +253,30 @@ class ViewsServiceTest {
     }
 
     @Test
+    fun `i can't edit a lol view because too many characters provided`() {
+        runBlocking {
+            val (_, viewsService) = createService(
+                listOf(basicSimpleLolView),
+                emptyCharactersState,
+                listOf(),
+                basicCredentialsWithRolesInitialState,
+                mapOf()
+            )
+
+            val newName = "new-name"
+            val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+            val request = ViewRequest(newName, published, charactersRequest, Game.LOL)
+            viewsService.edit(basicSimpleLolView.id, user, request).onRight {
+                assertEquals(request.name, it.name)
+                assertEquals(request.published, it.published)
+            }.onLeft {
+                assertTrue(it is TooMuchCharacters)
+            }
+        }
+    }
+
+    @Test
     fun `users cant create more than maximum views`() {
         runBlocking {
             val (_, viewsService) = createService(
@@ -425,7 +449,8 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val patch = viewsService.patch(basicSimpleWowView.id, user, ViewPatchRequest(patchedName, null, null, Game.WOW))
+            val patch =
+                viewsService.patch(basicSimpleWowView.id, user, ViewPatchRequest(patchedName, null, null, Game.WOW))
             patch.onRight {
                 assertEquals(basicSimpleWowView.id, it.viewId)
                 assertEquals(null, it.published)
@@ -433,6 +458,37 @@ class ViewsServiceTest {
                 assertEquals(patchedName, it.name)
             }.onLeft {
                 fail(it.toStr())
+            }
+        }
+    }
+
+    @Test
+    fun `i can't patch a view because too many characters`() {
+        runBlocking {
+            val patchedName = "new-name"
+
+            val (_, viewsService) = createService(
+                listOf(basicSimpleWowView),
+                emptyCharactersState,
+                listOf(),
+                basicCredentialsWithRolesInitialState,
+                mapOf()
+            )
+
+            val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+            val patch = viewsService.patch(
+                basicSimpleWowView.id,
+                user,
+                ViewPatchRequest(patchedName, null, charactersRequest, Game.WOW)
+            )
+            patch.onRight {
+                assertEquals(basicSimpleWowView.id, it.viewId)
+                assertEquals(null, it.published)
+                assertEquals(null, it.characters)
+                assertEquals(patchedName, it.name)
+            }.onLeft {
+                assertTrue(it is TooMuchCharacters)
             }
         }
     }

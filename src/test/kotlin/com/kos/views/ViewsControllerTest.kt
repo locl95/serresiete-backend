@@ -15,6 +15,25 @@ import com.kos.common.TooMuchViews
 import com.kos.common.getLeftOrNull
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
+import com.kos.activities.Activity
+import com.kos.assertTrue
+import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.CharactersTestHelper.basicWowRequest2
+import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
+import com.kos.common.NotEnoughPermissions
+import com.kos.common.NotFound
+import com.kos.common.TooMuchViews
+import com.kos.common.getLeftOrNull
+import com.kos.credentials.CredentialsService
+import com.kos.credentials.CredentialsTestHelper.basicCredentials
+import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.credentials.repository.CredentialsRepositoryState
+import com.kos.datacache.DataCache
+import com.kos.datacache.DataCacheService
 import com.kos.datacache.RaiderIoMockHelper
 import com.kos.datacache.RaiderIoMockHelper.raiderIoData
 import com.kos.datacache.RaiderIoMockHelper.raiderioCachedData
@@ -24,6 +43,8 @@ import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.Role
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.repository.ViewsInMemoryRepository
@@ -53,7 +74,9 @@ class ViewsControllerTest {
 
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient)
+        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient, credentialsService)
+
         return ViewsController(viewsService)
     }
 
@@ -149,8 +172,8 @@ class ViewsControllerTest {
                 )
                     .getOrNull()
 
-            assertTrue(res?.viewId?.isNotEmpty())
-            assertEquals(listOf(), res?.characters)
+            assertTrue(res?.id?.isNotEmpty())
+            assertEquals(listOf(), res?.characterIds)
         }
     }
 
@@ -263,7 +286,9 @@ class ViewsControllerTest {
 
             controller.editView("owner", viewRequest, basicSimpleWowView.id, setOf(Activities.editAnyView))
                 .onRight {
-                    assertEquals(ViewModified(basicSimpleWowView.id, listOf(2)), it)
+                    assertEquals(viewRequest.name, it.name)
+                    assertEquals(viewRequest.published, it.published)
+                    assertEquals(listOf(2L), it.characters)
                 }
                 .onLeft { fail(it.toStr()) }
         }

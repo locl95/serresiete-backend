@@ -82,11 +82,7 @@ class ViewsController(
         }
     }
 
-    suspend fun createView(
-        client: String?,
-        request: ViewRequest,
-        activities: Set<Activity>
-    ): Either<ControllerError, ViewModified> {
+    suspend fun createView(client: String?, request: ViewRequest, activities: Set<Activity>): Either<ControllerError, SimpleView> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
@@ -121,12 +117,8 @@ class ViewsController(
         }
     }
 
-    suspend fun patchView(
-        client: String?,
-        request: ViewPatchRequest,
-        id: String,
-        activities: Set<Activity>
-    ): Either<ControllerError, ViewModified> {
+    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String, activities: Set<Activity>): Either<ControllerError, ViewPatched> {
+        //TODO: We can propagate view fields to those who are optional from patch, or we can keep it like this to display which fields we modified
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {

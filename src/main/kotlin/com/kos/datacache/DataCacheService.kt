@@ -1,17 +1,11 @@
 package com.kos.datacache
 
 import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.flatten
 import arrow.core.raise.either
-import arrow.core.sequence
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
-import com.kos.common.HttpError
-import com.kos.common.JsonParseError
-import com.kos.common.WithLogger
-import com.kos.common.split
+import com.kos.common.*
 import com.kos.datacache.repository.DataCacheRepository
 import com.kos.httpclients.HttpUtils.retryEitherWithFixedDelay
 import com.kos.httpclients.domain.*
@@ -20,7 +14,10 @@ import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -78,44 +75,106 @@ data class DataCacheService(
     }
 
     private suspend fun cacheLolCharacters(lolCharacters: List<LolCharacter>): List<HttpError> = coroutineScope {
-        val errorsAndData: Pair<List<HttpError>, List<Pair<Long, RiotData>>> =
-            lolCharacters.map { lolCharacter ->
-                async {
-                    cacheLolCharacter(lolCharacter)
-                }
-            }.awaitAll().split()
+        val errorsChannel = Channel<HttpError>()
+        val dataChannel = Channel<DataCache>()
+        val errorsList = mutableListOf<HttpError>()
+        val matchCache = DynamicCache<Either<HttpError, GetMatchResponse>>()
 
-        errorsAndData.first.forEach { logger.error(it.error()) }
-        val data = errorsAndData.second.map { (id, riotData) ->
-            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+        val errorsCollector = launch {
+            errorsChannel.consumeAsFlow().collect { error ->
+                logger.error(error.error())
+                errorsList.add(error)
+            }
         }
-        dataCacheRepository.insert(data)
-        data.forEach { logger.info("Cached character ${it.characterId}") }
-        errorsAndData.first
+
+        val dataCollector = launch {
+            dataChannel.consumeAsFlow()
+                .buffer(50)
+                .collect { data ->
+                    dataCacheRepository.insert(listOf(data))
+                    logger.info("Cached character ${data.characterId}")
+                }
+        }
+
+        lolCharacters.asFlow()
+            .buffer(10)
+            .collect { lolCharacter ->
+                val result = cacheLolCharacter(lolCharacter, matchCache)
+                result.fold(
+                    ifLeft = { error -> errorsChannel.send(error) },
+                    ifRight = { (id, riotData) ->
+                        dataChannel.send(
+                            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+                        )
+                    }
+                )
+            }
+
+        dataChannel.close()
+        errorsChannel.close()
+
+        errorsCollector.join()
+        dataCollector.join()
+
+        logger.info("Finished Caching Lol characters")
+        errorsList
     }
 
-    private suspend fun cacheLolCharacter(lolCharacter: LolCharacter): Either<HttpError, Pair<Long, RiotData>> =
+    private suspend fun cacheLolCharacter(
+        lolCharacter: LolCharacter,
+        matchCache: DynamicCache<Either<HttpError, GetMatchResponse>>
+    ): Either<HttpError, Pair<Long, RiotData>> =
         either {
+
+            val newestCharacterDataCacheEntry: RiotData? =
+                dataCacheRepository.get(lolCharacter.id).maxByOrNull { it.inserted }?.let {
+                    try {
+                        json.decodeFromString<RiotData>(it.data)
+                    } catch (e: Throwable) {
+                        logger.debug("Couldn't deserialize character ${lolCharacter.id} while trying to obtain newest cached record.\n${e.message}")
+                        null
+                    }
+                }
+
             val leagues: List<LeagueEntryResponse> =
                 retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") {
                     riotClient.getLeagueEntriesBySummonerId(lolCharacter.summonerId)
                 }.bind()
 
-            val leagueWithMatches: List<Pair<LeagueEntryResponse, List<GetMatchResponse>>> =
+            val leagueWithMatches: List<LeagueMatchData> =
                 coroutineScope {
                     leagues.map { leagueEntry ->
                         async {
-                            val matchIds: List<String> = retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
-                                riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
-                            }.bind()
+                            val lastMatchesForLeague: List<String> =
+                                retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
+                                    riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
+                                }.bind()
 
-                            val matchResponses: List<GetMatchResponse> = matchIds.map { matchId ->
-                                retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
-                                    riotClient.getMatchById(matchId)
+                            val matchesToRequest = newestCharacterDataCacheEntry._fold(
+                                left = { lastMatchesForLeague },
+                                right = { record ->
+                                    lastMatchesForLeague
+                                        .filterNot { id ->
+                                            record.leagues[leagueEntry.queueType]?.matches?.map { it.id }
+                                                ?.contains(id)._fold({ false }, { it })
+                                        }
+                                }
+                            )
+
+                            val matchResponses: List<GetMatchResponse> = matchesToRequest.map { matchId ->
+                                matchCache.get(matchId) {
+                                    retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
+                                        riotClient.getMatchById(matchId)
+                                    }
                                 }.bind()
                             }
 
-                            leagueEntry to matchResponses
+                            LeagueMatchData(
+                                leagueEntry,
+                                matchResponses,
+                                newestCharacterDataCacheEntry?.leagues?.get(leagueEntry.queueType)?.matches.orEmpty()
+                                    .filter { lastMatchesForLeague.contains(it.id) }
+                            )
                         }
                     }.awaitAll()
                 }

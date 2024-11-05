@@ -9,7 +9,6 @@ import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
@@ -52,12 +51,12 @@ class AuthControllerTest {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(
                 listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val controller = createController(
                 credentialsState,
-                mapOf(Pair(role, setOf(Activities.login))),
+                mapOf(Pair(Role.USER, setOf(Activities.login))),
                 listOf()
             )
             val res = controller.login("owner").getOrNull()

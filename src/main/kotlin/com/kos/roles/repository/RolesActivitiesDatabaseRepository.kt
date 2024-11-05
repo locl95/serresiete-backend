@@ -20,7 +20,7 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
     override suspend fun state(): Map<Role, Set<Activity>> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             RoleActivities.selectAll().groupBy(
-                keySelector = { it[RoleActivities.role] },
+                keySelector = { Role.fromString(it[RoleActivities.role]) },
                 valueTransform = { it[RoleActivities.activity] }
             ).mapValues { (_, activities) ->
                 activities.toSet()
@@ -35,7 +35,7 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
                     Pair(role, it)
                 }
             }) {
-                this[RoleActivities.role] = it.first
+                this[RoleActivities.role] = it.first.toString()
                 this[RoleActivities.activity] = it.second
             }
         }
@@ -45,7 +45,7 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
     override suspend fun insertActivityToRole(activity: Activity, role: Role) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             RoleActivities.insert {
-                it[this.role] = role
+                it[this.role] = role.toString()
                 it[this.activity] = activity
             }
         }
@@ -54,14 +54,14 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
     override suspend fun deleteActivityFromRole(activity: Activity, role: Role) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             RoleActivities.deleteWhere {
-                (RoleActivities.role eq role) and (RoleActivities.activity eq activity)
+                (RoleActivities.role eq role.toString()) and (RoleActivities.activity eq activity)
             }
         }
     }
 
     override suspend fun getActivitiesFromRole(role: Role): Set<Activity> {
         return transaction {
-            RoleActivities.select { RoleActivities.role eq role }.map {
+            RoleActivities.select { RoleActivities.role eq role.toString() }.map {
                 it[RoleActivities.activity]
             }.toSet()
         }

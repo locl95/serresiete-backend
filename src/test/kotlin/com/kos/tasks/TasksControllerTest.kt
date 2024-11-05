@@ -20,7 +20,6 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksInMemoryRepository
@@ -78,7 +77,7 @@ class TasksControllerTest {
                 listOf(),
                 mapOf()
             )
-            assertEquals(listOf(task), controller.get("owner", setOf(Activities.getTasks)).getOrNull())
+            assertEquals(listOf(task), controller.getTasks("owner", setOf(Activities.getTasks), null).getOrNull())
         }
     }
 
@@ -88,7 +87,7 @@ class TasksControllerTest {
             val now = OffsetDateTime.now()
             val credentialsState = CredentialsRepositoryState(
                 listOf(CredentialsTestHelper.basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(RolesTestHelper.role)))
+                mapOf(Pair("owner", listOf(Role.USER)))
             )
 
             val knownId = "1"
@@ -101,7 +100,7 @@ class TasksControllerTest {
                 listOf(),
                 mapOf()
             )
-            assertEquals(task, controller.get("owner", knownId, setOf(Activities.getTask)).getOrNull())
+            assertEquals(task, controller.getTask("owner", knownId, setOf(Activities.getTask)).getOrNull())
         }
     }
 }

@@ -10,6 +10,12 @@ data object NotAuthorized : ControllerError
 data class NotEnoughPermissions(val user: String) : ControllerError
 data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
+class InvalidQueryParameter(param: String, value: String, allowed: List<String>?) : ControllerError {
+    private val baseMessage = "invalid query param[$param]: $value"
+    val message: String = allowed._fold({baseMessage},{"$baseMessage\nallowed values: $it"})
+}
+
+class InvalidTaskType(val type: String)
 interface HttpError : ControllerError {
     fun error(): String
 }
@@ -28,7 +34,8 @@ data class RaiderIoError(
 
 interface ViewsError : ControllerError
 class NotPublished(val id: String) : ViewsError
-class TooMuchViews : ViewsError
+data object TooMuchViews : ViewsError
+data object UserWithoutRoles : ViewsError
 
 interface DatabaseError : ControllerError
 data class InsertError(val message: String) : DatabaseError
@@ -53,6 +60,7 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is BadRequest -> respond(HttpStatusCode.BadRequest, error.problem)
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
+        is InvalidQueryParameter -> respond(HttpStatusCode.BadRequest, error.message)
         is InsertError -> respondLogging(error.message)
         is AuthError -> respond(HttpStatusCode.Unauthorized, error.message)
         is DatabaseError -> respondLogging(error.toString()) //TODO: improve

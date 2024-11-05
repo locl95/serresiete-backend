@@ -47,9 +47,12 @@ abstract class ViewsRepositoryTest {
     @Test
     fun `given an empty repository i can insert views`() {
         runBlocking {
-            assert(repository.create(name, owner, listOf(), Game.WOW).isSuccess)
+            val res = repository.create(name, owner, listOf(), Game.WOW)
+            assertEquals(owner, res.owner)
+            assertEquals(name, res.name)
+            assertEquals(listOf(), res.characterIds)
+            assertEquals(Game.WOW, res.game)
             assert(repository.state().size == 1)
-            assert(repository.state().all { it.owner == owner })
         }
     }
 
@@ -58,9 +61,9 @@ abstract class ViewsRepositoryTest {
         runBlocking {
             val repo =
                 repository.withState(listOf(basicSimpleWowView))
-            val edit = repo.edit(id, "name2", published, listOf(1))
+            val res = repo.edit(id, "name2", published, listOf(1))
             val finalState = repo.state()
-            assertEquals(ViewModified(id, listOf(1)), edit)
+            assertEquals(ViewModified(id, "name2", published, listOf(1)), res)
             assertEquals(finalState, listOf(basicSimpleWowView.copy(name = "name2", characterIds = listOf(1))))
         }
     }
@@ -71,7 +74,7 @@ abstract class ViewsRepositoryTest {
             val repositoryWithState = repository.withState(listOf(basicSimpleWowView))
             val edit = repositoryWithState.edit(id, "name", published, listOf(1, 2, 3, 4))
             val finalState = repositoryWithState.state()
-            assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), edit)
+            assertEquals(ViewModified(id, "name", published, listOf(1, 2, 3, 4)), edit)
             assertEquals(finalState, listOf(basicSimpleWowView.copy(characterIds = listOf(1, 2, 3, 4))))
         }
     }
@@ -94,7 +97,7 @@ abstract class ViewsRepositoryTest {
             val patchedName = "new-name"
             val patch = repo.patch(basicSimpleWowView.id, patchedName, null, null)
             val patchedView = repo.state().first()
-            assertEquals(ViewModified(basicSimpleWowView.id, basicSimpleWowView.characterIds), patch)
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, null, null), patch)
             assertEquals(basicSimpleWowView.id, patchedView.id)
             assertEquals(basicSimpleWowView.published, patchedView.published)
             assertEquals(basicSimpleWowView.characterIds, patchedView.characterIds)
@@ -111,7 +114,7 @@ abstract class ViewsRepositoryTest {
             val patchedPublish = false
             val patch = repo.patch(basicSimpleWowView.id, patchedName, patchedPublish, characters)
             val patchedView = repo.state().first()
-            assertEquals(ViewModified(basicSimpleWowView.id, characters), patch)
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, patchedPublish, characters), patch)
             assertEquals(basicSimpleWowView.id, patchedView.id)
             assertEquals(patchedPublish, patchedView.published)
             assertEquals(characters, patchedView.characterIds)

@@ -40,7 +40,7 @@ fun Route.rolesRouting(
                         val userWithActivities = call.principal<UserWithActivities>()
                         rolesController.deleteRole(
                             userWithActivities?.name,
-                            call.parameters["role"].orEmpty(),
+                            Role.fromString(call.parameters["role"].orEmpty()),
                             userWithActivities?.activities.orEmpty()
                         ).fold({
                             call.respondWithHandledError(it)
@@ -56,7 +56,7 @@ fun Route.rolesRouting(
                             rolesController.addActivityToRole(
                                 userWithActivities?.name,
                                 call.receive(),
-                                call.parameters["role"].orEmpty(),
+                                Role.fromString(call.parameters["role"].orEmpty()),
                                 userWithActivities?.activities.orEmpty()
                             ).fold({
                                 call.respondWithHandledError(it)
@@ -72,7 +72,7 @@ fun Route.rolesRouting(
                                 rolesController.deleteActivityFromRole(
                                     userWithActivities?.name,
                                     call.parameters["role"].orEmpty(),
-                                    call.parameters["activity"].orEmpty(),
+                                    Role.fromString(call.parameters["role"].orEmpty()),
                                     userWithActivities?.activities.orEmpty()
                                 ).fold({
                                     call.respondWithHandledError(it)

@@ -4,6 +4,7 @@ import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.activities.ActivityRequest
 import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesInMemoryRepository

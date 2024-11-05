@@ -19,7 +19,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
                 roles.map { Pair(userName, it) }
             }) {
                 this[CredentialsRoles.userName] = it.first
-                this[CredentialsRoles.role] = it.second
+                this[CredentialsRoles.role] = it.second.toString()
             }
         }
         return this
@@ -47,7 +47,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials): Unit {
+    override suspend fun insertCredentials(credentials: Credentials) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Users.insert {
                 it[userName] = credentials.userName
@@ -65,7 +65,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
 
     private fun resultRowToCredentialsRoles(row: ResultRow) = CredentialsRole(
         row[CredentialsRoles.userName],
-        row[CredentialsRoles.role]
+        Role.fromString(row[CredentialsRoles.role])
     )
 
     override suspend fun editCredentials(userName: String, newPassword: String) {
@@ -87,14 +87,14 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRoles.insert {
                 it[CredentialsRoles.userName] = userName
-                it[CredentialsRoles.role] = role
+                it[CredentialsRoles.role] = role.toString()
             }
         }
     }
 
-    override suspend fun deleteRole(userName: String, role: String) {
+    override suspend fun deleteRole(userName: String, role: Role) {
         newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role) and CredentialsRoles.userName.eq(userName) }
+            CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role.toString()) and CredentialsRoles.userName.eq(userName) }
         }
     }
 

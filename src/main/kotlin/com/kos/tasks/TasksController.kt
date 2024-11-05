@@ -35,21 +35,21 @@ class TasksController(private val tasksService: TasksService) {
         }
     }
 
-    suspend fun get(client: String?, activities: Set<Activity>): Either<ControllerError, List<Task>> {
+    suspend fun getTasks(client: String?, activities: Set<Activity>, taskType: TaskType?): Either<ControllerError, List<Task>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.getTasks)) Either.Right(tasksService.get())
+                if (activities.contains(Activities.getTasks)) Either.Right(tasksService.getTasks(taskType))
                 else Either.Left(NotEnoughPermissions(client))
             }
         }
     }
 
-    suspend fun get(client: String?, id: String, activities: Set<Activity>): Either<ControllerError, Task> {
+    suspend fun getTask(client: String?, id: String, activities: Set<Activity>): Either<ControllerError, Task> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                return when (val maybeTask = tasksService.get(id)) {
+                return when (val maybeTask = tasksService.getTask(id)) {
                     null -> Either.Left(NotFound(id))
                     else -> {
                         if (activities.contains(Activities.getTask)) Either.Right(maybeTask)

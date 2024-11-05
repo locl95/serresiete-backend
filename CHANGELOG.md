@@ -1,5 +1,43 @@
 # Changelog
 
+## [3.5.0] 03-11-2024
+
+### Added
+- Introduced a daily update for League characters to refresh summoner details, including summoner icon, summoner level, Riot name, and Riot tag every 24 hours.
+- Optimized further the League Character's Sync by allowing the reuse of match data across multiple players in the same synchronization batch, leveraging dynamic programming to minimize calls. While this may not drastically increase capacity, it significantly improves efficiency in the synchronization process.
+
+
+## [3.4.1] 01-11-2024
+
+### Improved
+- Implemented a mechanism to reuse cached matches, significantly reducing unnecessary API calls and improving League caching time.
+
+## [3.4.0] 31-10-2024
+
+### Improved
+- Enhanced caching service for League characters, allowing for larger views with a greater number of matches per character.
+- Integrated `Flow` and `Channels` to optimize memory usage, ensuring more efficient handling of concurrent data streams.
+
+## [3.3.0] 30-10-2024
+
+### Added
+
+- **Task Filtering by Type**: Introduced a new feature allowing tasks to be filtered by `taskType`.
+    - This enhancement improves user control and efficiency by enabling targeted task retrieval.
+
+- **Query Parameter Validation**: Added validation for query parameters to ensure data integrity and prevent potential errors.
+
+## [3.2.0] 28-10-2024
+
+### Changed
+
+- **View Limit by Role**: Updated the view creation limit to be role-based instead of a fixed number:
+    - **Admin** now have no limit on the number of views they can create.
+    - **User** remain limited to a maximum of **2** views.
+
+  This enhancement provides greater flexibility and control, especially for administrators managing multiple views.
+
+
 ## [3.1.0] 18-10-2024
 
 ### Added

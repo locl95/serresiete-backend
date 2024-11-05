@@ -79,7 +79,7 @@ fun Application.module() {
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
-    val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
+    val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient, credentialsService)
     val viewsController = ViewsController(viewsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()

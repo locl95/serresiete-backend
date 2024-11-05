@@ -1,6 +1,7 @@
 package com.kos.activities
 
 import com.kos.common.respondWithHandledError
+import com.kos.roles.Role
 import com.kos.plugins.UserWithActivities
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -59,7 +60,7 @@ fun Route.activitiesRouting(
                 val userWithActivities = call.principal<UserWithActivities>()
                 activitiesController.getActivitiesFromRole(
                     userWithActivities?.name,
-                    call.parameters["role"].orEmpty(),
+                    Role.fromString(call.parameters["role"].orEmpty()),
                     userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)

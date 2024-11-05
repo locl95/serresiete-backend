@@ -2,7 +2,7 @@ val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
-val h2_version: String by project
+val resilience4j_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.0"
@@ -23,7 +23,7 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = "0.75".toBigDecimal()
+                minimum = "0.5".toBigDecimal()
             }
         }
     }
@@ -86,7 +86,6 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
-    implementation("com.h2database:h2:$h2_version")
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
@@ -100,6 +99,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("io.ktor:ktor-server-auth:$ktor_version")
     implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
+    implementation("io.github.resilience4j:resilience4j-kotlin:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")

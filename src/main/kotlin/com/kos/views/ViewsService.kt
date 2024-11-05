@@ -15,6 +15,8 @@ import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
 import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.views.Game.LOL
+import com.kos.views.Game.WOW
 import com.kos.views.repository.ViewsRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -58,6 +60,8 @@ class ViewsService(
         return either {
             val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
             ensure(viewsRepository.getOwnViews(owner).size < ownerMaxViews) { TooMuchViews }
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(owner).bind()
+            ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
             val operationId = UUID.randomUUID().toString()
             val aggregateRoot = "/credentials/$owner"
             val event = Event(
@@ -96,21 +100,25 @@ class ViewsService(
         }
     }
 
-    suspend fun edit(owner: String, id: String, request: ViewRequest): Either<ControllerError, Operation> {
-        val operationId = UUID.randomUUID().toString()
-        val aggregateRoot = "/credentials/$owner"
-        val event = Event(
-            aggregateRoot,
-            operationId,
-            ViewToBeEdited(
-                id,
-                request.name,
-                request.published,
-                request.characters,
-                request.game
+    suspend fun edit(client: String, id: String, request: ViewRequest): Either<ControllerError, Operation> {
+        return either {
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
+            ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
+            val operationId = UUID.randomUUID().toString()
+            val aggregateRoot = "/credentials/$client"
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewToBeEdited(
+                    id,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game
+                )
             )
-        )
-        return Either.Right(eventStore.save(event))
+            eventStore.save(event)
+        }
     }
 
     suspend fun editView(viewToBeEdited: ViewToBeEdited): Either<ControllerError, ViewModified> {
@@ -125,22 +133,28 @@ class ViewsService(
         }
     }
 
-    suspend fun patch(owner: String, id: String, request: ViewPatchRequest): Either<ControllerError, Operation> {
-        val operationId = UUID.randomUUID().toString()
-        val aggregateRoot = "/credentials/$owner"
-        val event = Event(
-            aggregateRoot,
-            id,
-            ViewToBePatched(
-                operationId,
-                request.name,
-                request.published,
-                request.characters,
-                request.game
+    suspend fun patch(client: String, id: String, request: ViewPatchRequest): Either<ControllerError, Operation> {
+        return either {
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
+            request.characters?.let { charactersToInsert ->
+                ensure(charactersToInsert.size <= ownerMaxCharacters) { TooMuchCharacters }
+            }
+            val operationId = UUID.randomUUID().toString()
+            val aggregateRoot = "/credentials/$client"
+            val event = Event(
+                aggregateRoot,
+                id,
+                ViewToBePatched(
+                    operationId,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game
+                )
             )
-        )
 
-        return Either.Right(eventStore.save(event))
+            eventStore.save(event)
+        }
     }
 
     suspend fun patchView(viewToBePatched: ViewToBePatched): Either<InsertCharacterError, ViewPatched> {
@@ -178,8 +192,8 @@ class ViewsService(
 
     suspend fun getData(view: View): Either<HttpError, List<Data>> {
         return when (view.game) {
-            Game.WOW -> getWowData(view)
-            Game.LOL -> getLolData(view)
+            WOW -> getWowData(view)
+            LOL -> getLolData(view)
         }
     }
 
@@ -246,5 +260,12 @@ class ViewsService(
         when (val maxNumberOfViews = credentialsService.getUserRoles(owner).maxOfOrNull { it.maxNumberOfViews }) {
             null -> Either.Left(UserWithoutRoles)
             else -> Either.Right(maxNumberOfViews)
+        }
+
+    private suspend fun getMaxNumberOfCharactersByRole(owner: String): Either<UserWithoutRoles, Int> =
+        when (val maxNumberOfCharacters =
+            credentialsService.getUserRoles(owner).maxOfOrNull { it.maxNumberOfCharacters }) {
+            null -> Either.Left(UserWithoutRoles)
+            else -> Either.Right(maxNumberOfCharacters)
         }
 }

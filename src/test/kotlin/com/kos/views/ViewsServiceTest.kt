@@ -23,6 +23,10 @@ import com.kos.datacache.RiotMockHelper.anotherRiotData
 import com.kos.datacache.TestHelper.anotherLolDataCache
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.EventType
+import com.kos.eventsourcing.events.ViewToBeCreated
+import com.kos.eventsourcing.events.ViewToBeEdited
+import com.kos.eventsourcing.events.ViewToBePatched
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -41,6 +45,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -95,11 +100,16 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val request = ViewRequest(name, published, listOf(), Game.WOW)
-            viewsService.create(owner, request).onRight {
-                assertEquals(request.name, it.name)
-                assertEquals(request.published, it.published)
-                assertEquals(request.game, it.game)
+            val id = UUID.randomUUID().toString()
+            val aggregateRoot = "credentials/owner"
+            viewsService.createView(
+                id,
+                aggregateRoot,
+                ViewToBeCreated(id, name, published, listOf(), Game.WOW, owner)
+            ).onRight {
+                assertEquals(id, it.id)
+                assertEquals(aggregateRoot, it.aggregateRoot)
+                assertEquals(it.type, EventType.VIEW_CREATED)
             }.onLeft {
                 fail(it.toStr())
             }
@@ -117,16 +127,18 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val request = ViewRequest(name, published, listOf(), Game.LOL)
-            viewsService.create(owner, request).onRight {
-                assertEquals(request.name, it.name)
-                assertEquals(request.published, it.published)
-                assertEquals(request.game, it.game)
+            val aggregateRoot = "credentials/owner"
+            viewsService.createView(
+                id, aggregateRoot,
+                ViewToBeCreated(id, name, published, listOf(), Game.LOL, owner)
+            ).onRight {
+                assertEquals(id, it.id)
+                assertEquals(aggregateRoot, it.aggregateRoot)
+                assertEquals(it.type, EventType.VIEW_CREATED)
             }.onLeft {
                 fail(it.toStr())
             }
 
-            assertTrue(viewsService.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
         }
     }
 
@@ -142,10 +154,13 @@ class ViewsServiceTest {
             )
 
             val newName = "new-name"
-            val request = ViewRequest(newName, published, listOf(), Game.LOL)
-            viewsService.edit(basicSimpleLolView.id, request).onRight {
-                assertEquals(request.name, it.name)
-                assertEquals(request.published, it.published)
+            viewsService.editView(
+                ViewToBeEdited(id, newName, published, listOf(), Game.LOL)
+            ).onRight {
+                assertEquals(id, it.viewId)
+                assertEquals(listOf(), it.characters)
+                assertEquals(newName, it.name)
+                assertEquals(published, it.published)
             }.onLeft {
                 fail(it.toStr())
             }
@@ -185,9 +200,9 @@ class ViewsServiceTest {
 
             val request = ViewRequest(name, published, listOf(), Game.WOW)
             viewsService.create(owner, request).onRight {
-                assertEquals(request.name, it.name)
-                assertEquals(request.published, it.published)
-                assertEquals(request.game, it.game)
+                assertTrue(it.id.isNotEmpty())
+                assertEquals("/credentials/owner", it.aggregateRoot)
+                assertEquals(EventType.VIEW_TO_BE_CREATED, it.type)
             }.onLeft {
                 fail(it.toStr())
             }
@@ -238,8 +253,8 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().all { it.characterIds.isEmpty() })
 
-            viewsService.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
+            viewsService.editView(
+                ViewToBeEdited(id, name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
                 assertEquals(id, it.viewId)
                 assertEquals(listOf<Long>(1, 2, 3, 4), it.characters)
@@ -279,8 +294,8 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
-            viewsService.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
+            viewsService.editView(
+                ViewToBeEdited(id, name, published, listOf(request1, request2, request3, request4), Game.WOW)
             ).onRight {
                 assertEquals(listOf<Long>(3, 4, 5, 6), it.characters)
                 assertEquals(name, it.name)
@@ -325,7 +340,15 @@ class ViewsServiceTest {
                 mapOf()
             )
 
-            val patch = viewsService.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null, Game.WOW))
+            val patch = viewsService.patchView(
+                ViewToBePatched(
+                    basicSimpleWowView.id,
+                    patchedName,
+                    null,
+                    null,
+                    Game.WOW
+                )
+            )
             patch.onRight {
                 assertEquals(basicSimpleWowView.id, it.viewId)
                 assertEquals(null, it.published)
@@ -361,8 +384,14 @@ class ViewsServiceTest {
 
             assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
-            viewsService.patch(
-                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
+            viewsService.patchView(
+                ViewToBePatched(
+                    id,
+                    null,
+                    null,
+                    listOf(request1, request2, request3, request4),
+                    Game.WOW
+                )
             ).onRight {
                 assertEquals(basicSimpleWowView.id, it.viewId)
                 assertEquals(null, it.published)

@@ -74,8 +74,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
-        val id = UUID.randomUUID().toString()
+    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Views.insert {
                 it[Views.id] = id

@@ -49,7 +49,7 @@ data class ViewRequest(
     val name: String,
     val published: Boolean,
     val characters: List<CharacterCreateRequest>,
-    val game: Game
+    val game: Game,
 )
 
 @Serializable

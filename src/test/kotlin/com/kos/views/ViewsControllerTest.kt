@@ -27,6 +27,7 @@ import com.kos.datacache.RiotMockHelper.riotData
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.EventType
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -193,7 +194,8 @@ class ViewsControllerTest {
                     .getOrNull()
 
             assertTrue(res?.id?.isNotEmpty())
-            assertEquals(listOf(), res?.characterIds)
+            assertEquals("/credentials/owner", res?.aggregateRoot)
+            assertEquals(EventType.VIEW_TO_BE_CREATED, res?.type)
         }
     }
 
@@ -343,9 +345,9 @@ class ViewsControllerTest {
 
             controller.editView("owner", viewRequest, basicSimpleWowView.id)
                 .onRight {
-                    assertEquals(viewRequest.name, it.name)
-                    assertEquals(viewRequest.published, it.published)
-                    assertEquals(listOf(2L), it.characters)
+                    assertTrue(it.id.isNotEmpty())
+                    assertEquals("/credentials/owner", it.aggregateRoot)
+                    assertEquals(EventType.VIEW_TO_BE_EDITED, it.type)
                 }
                 .onLeft { fail(it.toStr()) }
         }

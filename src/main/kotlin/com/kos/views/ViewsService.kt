@@ -10,8 +10,7 @@ import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
-import com.kos.eventsourcing.events.Event
-import com.kos.eventsourcing.events.ViewToBeCreated
+import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
@@ -55,32 +54,121 @@ class ViewsService(
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, SimpleView> {
+    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, Operation> {
         return either {
             val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
-            ensure (viewsRepository.getOwnViews(owner).size < ownerMaxViews)  { TooMuchViews }
-            val characterIds = charactersService.createAndReturnIds(request.characters, request.game).bind()
-            val viewToBeCreated = Event("/credentials/$owner", ViewToBeCreated(request, UUID.randomUUID().toString()))
-            eventStore.save(viewToBeCreated)
-            viewsRepository.create(request.name, owner, characterIds, request.game)
+            ensure(viewsRepository.getOwnViews(owner).size < ownerMaxViews) { TooMuchViews }
+            val operationId = UUID.randomUUID().toString()
+            val aggregateRoot = "/credentials/$owner"
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewToBeCreated(
+                    operationId,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game,
+                    owner
+                )
+            )
+            eventStore.save(event)
         }
     }
 
-    suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        val characters = charactersService.createAndReturnIds(request.characters, request.game)
-        return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
+    suspend fun createView(operationId: String, aggregateRoot: String, viewToBeCreated: ViewToBeCreated): Either<InsertCharacterError, Operation> {
+        return either {
+            val characterIds =
+                charactersService.createAndReturnIds(viewToBeCreated.characters, viewToBeCreated.game).bind()
+            val view = viewsRepository.create(
+                viewToBeCreated.id,
+                viewToBeCreated.name,
+                viewToBeCreated.owner,
+                characterIds,
+                viewToBeCreated.game
+            )
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewCreated.fromSimpleView(view)
+            )
+            eventStore.save(event)
+        }
     }
 
-    suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewPatched> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? = request.characters.fold({ null },
-            { charactersRequest ->
-                charactersService.createAndReturnIds(
-                    charactersRequest,
-                    request.game
+    suspend fun edit(owner: String, id: String, request: ViewRequest): Either<ControllerError, Operation> {
+        val operationId = UUID.randomUUID().toString()
+        val aggregateRoot = "/credentials/$owner"
+        val event = Event(
+            aggregateRoot,
+            operationId,
+            ViewToBeEdited(
+                id,
+                request.name,
+                request.published,
+                request.characters,
+                request.game
+            )
+        )
+        return Either.Right(eventStore.save(event))
+    }
+
+    suspend fun editView(viewToBeEdited: ViewToBeEdited): Either<ControllerError, ViewModified> {
+        val characters = charactersService.createAndReturnIds(viewToBeEdited.characters, viewToBeEdited.game)
+        return characters.map {
+            viewsRepository.edit(
+                viewToBeEdited.id,
+                viewToBeEdited.name,
+                viewToBeEdited.published,
+                it
+            )
+        }
+    }
+
+    suspend fun patch(owner: String, id: String, request: ViewPatchRequest): Either<ControllerError, Operation> {
+        val operationId = UUID.randomUUID().toString()
+        val aggregateRoot = "/credentials/$owner"
+        val event = Event(
+            aggregateRoot,
+            id,
+            ViewToBePatched(
+                operationId,
+                request.name,
+                request.published,
+                request.characters,
+                request.game
+            )
+        )
+
+        return Either.Right(eventStore.save(event))
+    }
+
+    suspend fun patchView(viewToBePatched: ViewToBePatched): Either<InsertCharacterError, ViewPatched> {
+        return when (val characters: Either<InsertCharacterError, List<Long>>? =
+            viewToBePatched.characters.fold({ null },
+                { charactersRequest ->
+                    charactersService.createAndReturnIds(
+                        charactersRequest,
+                        viewToBePatched.game
+                    )
+                })) {
+            null -> Either.Right(
+                viewsRepository.patch(
+                    viewToBePatched.id,
+                    viewToBePatched.name,
+                    viewToBePatched.published,
+                    null
                 )
-            })) {
-            null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
-            else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
+            )
+
+            else -> characters.map {
+                viewsRepository.patch(
+                    viewToBePatched.id,
+                    viewToBePatched.name,
+                    viewToBePatched.published,
+                    it
+                )
+            }
         }
     }
 

@@ -1,9 +1,7 @@
 package com.kos.eventsourcing.events.repository
 
-import com.kos.eventsourcing.events.Event
-import com.kos.eventsourcing.events.EventData
-import com.kos.eventsourcing.events.EventWithVersion
-import com.kos.eventsourcing.events.ViewToBeCreated
+import com.kos.common._fold
+import com.kos.eventsourcing.events.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -20,6 +18,8 @@ class EventStoreDatabase(private val db: Database) : EventStore {
         serializersModule = SerializersModule {
             polymorphic(EventData::class) {
                 subclass(ViewToBeCreated::class, ViewToBeCreated.serializer())
+                subclass(ViewToBePatched::class, ViewToBePatched.serializer())
+                subclass(ViewToBeEdited::class, ViewToBeEdited.serializer())
             }
         }
         ignoreUnknownKeys = true
@@ -28,6 +28,7 @@ class EventStoreDatabase(private val db: Database) : EventStore {
     object Events : Table() {
         val version = long("version")
         val aggregateRoot = varchar("aggregate_root", 128)
+        val operationId = varchar("operation_id", 128)
         val eventType = varchar("event_type", 48)
         val data = text("data")
 
@@ -38,24 +39,39 @@ class EventStoreDatabase(private val db: Database) : EventStore {
     private fun resultRowToEventWithVersion(row: ResultRow): EventWithVersion =
         EventWithVersion(
             row[Events.version],
-            Event(row[Events.aggregateRoot], json.decodeFromString(row[Events.data]))
+            Event(row[Events.aggregateRoot], row[Events.operationId], json.decodeFromString(row[Events.data]))
+        )
+
+    private fun resultRowToOperation(row: ResultRow): Operation =
+        Operation(
+            row[Events.operationId],
+            row[Events.aggregateRoot],
+            EventType.fromString(row[Events.eventType])
         )
 
 
-    override suspend fun save(event: Event): EventWithVersion {
+    override suspend fun save(event: Event): Operation {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val id = selectNextId()
             Events.insert {
                 it[aggregateRoot] = event.aggregateRoot
+                it[operationId] = event.operationId
                 it[version] = id
                 it[eventType] = event.eventData.eventType.toString()
                 it[data] = json.encodeToString(event.eventData)
-            }.resultedValues?.map { resultRowToEventWithVersion(it) }?.singleOrNull() ?: throw Exception(":(")
+            }.resultedValues?.map { resultRowToOperation(it) }?.singleOrNull() ?: throw Exception(":(")
         }
     }
 
     override suspend fun getEvents(version: Long?): Sequence<EventWithVersion> {
-        TODO("Not yet implemented")
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            version._fold(
+                left = { Events.selectAll().map { resultRowToEventWithVersion(it) }.asSequence() },
+                right = {
+                    Events.select { Events.version greater it }.orderBy(Events.version)
+                        .map { resultRowToEventWithVersion(it) }.asSequence()
+                })
+        }
     }
 
     override suspend fun state(): List<EventWithVersion> {

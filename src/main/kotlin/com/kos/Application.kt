@@ -9,13 +9,14 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.common.launchSubscription
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.eventsourcing.events.repository.EventStoreDatabase
-import com.kos.eventsourcing.events.repository.EventStoreInMemory
+import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
 import com.kos.plugins.*
 import com.kos.httpclients.raiderio.RaiderIoHTTPClient
@@ -59,7 +60,6 @@ fun Application.module() {
     val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
 
     val eventStore = EventStoreDatabase(db)
-    val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
 
     val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
 
@@ -105,6 +105,23 @@ fun Application.module() {
     val tasksController = TasksController(tasksService, credentialsService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
+
+    val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
+    val viewsEventSubscription = EventSubscription(
+        "views",
+        eventStore,
+        subscriptionsRepository
+    ) { EventSubscription.viewsProcessor(it, viewsService) }
+
+    val syncLolEventSubscription = EventSubscription(
+        "sync-lol",
+        eventStore,
+        subscriptionsRepository
+    ) { EventSubscription.syncLolCharactersProcessor(it) }
+
+    launchSubscription(viewsEventSubscription)
+    launchSubscription(syncLolEventSubscription)
+
     configureAuthentication(authService, credentialsService)
     configureCors()
     configureRouting(

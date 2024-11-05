@@ -5,6 +5,7 @@ import arrow.core.flatten
 import com.kos.activities.Activities
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
+import com.kos.eventsourcing.events.Operation
 import com.kos.httpclients.domain.Data
 
 class ViewsController(
@@ -89,7 +90,7 @@ class ViewsController(
         }
     }
 
-    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, SimpleView> {
+    suspend fun createView(client: String?, request: ViewRequest): Either<ControllerError, Operation> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> {
@@ -103,7 +104,7 @@ class ViewsController(
         }
     }
 
-    suspend fun editView(client: String?, request: ViewRequest, id: String): Either<ControllerError, ViewModified> {
+    suspend fun editView(client: String?, request: ViewRequest, id: String): Either<ControllerError, Operation> {
         return when (client) {
             null -> Either.Left(NotAuthorized())
             else -> when (val maybeView = viewsService.get(id)) {
@@ -112,14 +113,14 @@ class ViewsController(
                     if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
                         || credentialsService.hasPermissions(client, Activities.editAnyView)
                     ) {
-                        viewsService.edit(maybeView.id, request)
+                        viewsService.edit(client, maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }
         }
     }
 
-    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, ViewPatched> {
+    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String): Either<ControllerError, Operation> {
         //TODO: We can propagate view fields to those who are optional from patch, or we can keep it like this to display which fields we modified
         return when (client) {
             null -> Either.Left(NotAuthorized())
@@ -129,7 +130,7 @@ class ViewsController(
                     if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
                         || credentialsService.hasPermissions(client, Activities.editAnyView)
                     ) {
-                        viewsService.patch(maybeView.id, request)
+                        viewsService.patch(client, maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }

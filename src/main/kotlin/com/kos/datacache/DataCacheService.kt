@@ -6,8 +6,8 @@ import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
 import com.kos.common.*
+import com.kos.common.Retry.retryEitherWithFixedDelay
 import com.kos.datacache.repository.DataCacheRepository
-import com.kos.httpclients.HttpUtils.retryEitherWithFixedDelay
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient

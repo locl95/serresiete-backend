@@ -9,6 +9,7 @@ create sequence event_versions;
 create table events
 (
     version integer default NEXTVAL('event_versions') primary key,
+    operation_id varchar(128) not null,
     aggregate_root varchar(128) not null,
     event_type varchar(128) not null,
     data text not null
@@ -16,4 +17,5 @@ create table events
 
 create index aggregate_root ON events (aggregate_root);
 
-insert into subscriptions (name) values ('data-cache');
+insert into subscriptions (name) values ('views');
+insert into subscriptions (name) values ('sync-lol');

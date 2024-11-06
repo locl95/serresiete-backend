@@ -68,6 +68,7 @@ object RiotMockHelper {
             summonerIcon = 1389,
             summonerLevel = 499,
             summonerName = "GTP ZeroMVPs",
+            summonerTag = "KAKO",
             leagues = mapOf(
                 Pair(
                     QueueType.SOLO_Q,
@@ -175,6 +176,7 @@ object RiotMockHelper {
         summonerIcon = 3582,
         summonerLevel = 367,
         summonerName = "sanxei",
+        summonerTag = "EUW",
         leagues = mapOf()
     )
 

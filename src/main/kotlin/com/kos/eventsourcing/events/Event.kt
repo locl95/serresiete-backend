@@ -45,6 +45,7 @@ enum class EventType {
 sealed interface EventData {
     val eventType: EventType
 }
+
 @Serializable
 data class ViewToBeCreatedEvent(
     val id: String,
@@ -87,7 +88,7 @@ data class ViewCreatedEvent(
     val characters: List<Long>,
     val published: Boolean,
     val game: Game
-): EventData {
+) : EventData {
     override val eventType: EventType = EventType.VIEW_CREATED
 
     companion object {
@@ -102,38 +103,44 @@ data class ViewCreatedEvent(
     }
 }
 
+@Serializable
 data class ViewEditedEvent(
     val id: String,
     val name: String,
     val characters: List<Long>,
-    val published: Boolean
-): EventData {
+    val published: Boolean,
+    val game: Game
+) : EventData {
     override val eventType: EventType = EventType.VIEW_EDITED
 
     companion object {
-        fun fromViewModified(id:String, viewModified: ViewModified) = ViewEditedEvent(
+        fun fromViewModified(id: String, game: Game, viewModified: ViewModified) = ViewEditedEvent(
             id,
             viewModified.name,
             viewModified.characters,
             viewModified.published,
+            game
         )
     }
 }
 
+@Serializable
 data class ViewPatchedEvent(
     val id: String,
     val name: String?,
     val characters: List<Long>?,
-    val published: Boolean?
-): EventData {
+    val published: Boolean?,
+    val game: Game
+) : EventData {
     override val eventType: EventType = EventType.VIEW_PATCHED
 
     companion object {
-        fun fromViewPatched(id:String, viewPatched: ViewPatched) = ViewPatchedEvent(
+        fun fromViewPatched(id: String, game: Game, viewPatched: ViewPatched) = ViewPatchedEvent(
             id,
             viewPatched.name,
             viewPatched.characters,
-            viewPatched.published
+            viewPatched.published,
+            game
         )
     }
 }

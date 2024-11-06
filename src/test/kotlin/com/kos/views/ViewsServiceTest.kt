@@ -481,7 +481,7 @@ class ViewsServiceTest {
                 val expectedEvent = Event(
                     aggregateRoot,
                     id,
-                    ViewEditedEvent(id, newName, listOf(), published)
+                    ViewEditedEvent(id, newName, listOf(), published, Game.LOL)
                 )
 
                 val events = eventStore.getEvents(null).toList()
@@ -530,7 +530,7 @@ class ViewsServiceTest {
                 val expectedEvent = Event(
                     aggregateRoot,
                     id,
-                    ViewEditedEvent(id, name, listOf<Long>(3, 4, 5, 6), published)
+                    ViewEditedEvent(id, name, listOf(3, 4, 5, 6), published, Game.WOW)
                 )
 
                 val events = eventStore.getEvents(null).toList()

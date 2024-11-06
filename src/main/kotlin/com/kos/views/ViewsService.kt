@@ -143,7 +143,7 @@ class ViewsService(
             val event = Event(
                 aggregateRoot,
                 operationId,
-                ViewEditedEvent.fromViewModified(operationId, viewModified)
+                ViewEditedEvent.fromViewModified(operationId, viewToBeEditedEvent.game, viewModified)
             )
             eventStore.save(event)
         }
@@ -191,7 +191,7 @@ class ViewsService(
             val event = Event(
                 operationId,
                 aggregateRoot,
-                ViewPatchedEvent.fromViewPatched(operationId, patchedView)
+                ViewPatchedEvent.fromViewPatched(operationId,viewToBePatchedEvent.game, patchedView)
             )
             eventStore.save(event)
         }

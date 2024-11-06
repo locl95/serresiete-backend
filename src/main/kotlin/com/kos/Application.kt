@@ -117,7 +117,7 @@ fun Application.module() {
         "sync-lol",
         eventStore,
         subscriptionsRepository
-    ) { EventSubscription.syncLolCharactersProcessor(it) }
+    ) { EventSubscription.syncLolCharactersProcessor(it, charactersService) }
 
     launchSubscription(viewsEventSubscription)
     launchSubscription(syncLolEventSubscription)

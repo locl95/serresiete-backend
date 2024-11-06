@@ -2,6 +2,8 @@ package com.kos.eventsourcing.subscriptions
 
 import arrow.core.Either
 import arrow.core.raise.either
+import com.kos.characters.CharactersService
+import com.kos.characters.LolCharacter
 import com.kos.common.ControllerError
 import com.kos.common.OffsetDateTimeSerializer
 import com.kos.common.Retry.retryEitherWithExponentialBackoff
@@ -9,6 +11,8 @@ import com.kos.common.WithLogger
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
+import com.kos.tasks.TasksService
+import com.kos.views.Game
 import com.kos.views.ViewsService
 import kotlinx.serialization.Serializable
 import java.time.OffsetDateTime
@@ -60,7 +64,7 @@ class EventSubscription(
                         SubscriptionState(SubscriptionStatus.FAILED, event.version, OffsetDateTime.now(), e.message)
                     )
                     logger.error("processing event ${event.version} has failed because ${e.message}")
-                    Pair(false, event.version)
+                    Pair(false, event.version - 1)
                 }
             }
         if (hasSucceededWithVersion.first) {
@@ -108,28 +112,55 @@ class EventSubscription(
             }
         }
 
+        @Suppress("UNCHECKED_CAST")
         suspend fun syncLolCharactersProcessor(
-            eventWithVersion: EventWithVersion
+            eventWithVersion: EventWithVersion,
+            charactersService: CharactersService
         ): Either<ControllerError, Unit> {
             return when (eventWithVersion.event.eventData.eventType) {
                 EventType.VIEW_CREATED -> {
                     val payload = eventWithVersion.event.eventData as ViewCreatedEvent
-                    println("I will process $payload at some point ...")
-                    Either.Right(Unit)
+                    return when(payload.game) {
+                        Game.LOL -> {
+                            val viewCharacters = payload.characters.mapNotNull { charactersService.get(it, Game.LOL) } as List<LolCharacter>
+                            charactersService.updateLolCharacters(viewCharacters)
+                            Either.Right(Unit)
+                        }
+                        Game.WOW -> {
+                            Either.Right(Unit)
+                        }
+                    }
                 }
 
                 EventType.VIEW_EDITED -> {
                     val payload = eventWithVersion.event.eventData as ViewEditedEvent
-                    println("I will process $payload at some point ...")
-                    Either.Right(Unit)
+                    return when(payload.game) {
+                        Game.LOL -> {
+                            val viewCharacters = payload.characters.mapNotNull { charactersService.get(it, Game.LOL) } as List<LolCharacter>
+                            charactersService.updateLolCharacters(viewCharacters)
+                            Either.Right(Unit)
+                        }
+                        Game.WOW -> {
+                            Either.Right(Unit)
+                        }
+                    }
                 }
 
                 EventType.VIEW_PATCHED -> {
-                    val payload = eventWithVersion.event.eventData as ViewEditedEvent
-                    println("I will process $payload at some point ...")
-                    Either.Right(Unit)
+                    val payload = eventWithVersion.event.eventData as ViewPatchedEvent
+                    return when(payload.game) {
+                        Game.LOL -> {
+                            payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
+                                it as List<LolCharacter>
+                                charactersService.updateLolCharacters(it)
+                            }
+                            Either.Right(Unit)
+                        }
+                        Game.WOW -> {
+                            Either.Right(Unit)
+                        }
+                    }
                 }
-
                 else -> Either.Right(Unit)
             }
         }

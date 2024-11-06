@@ -11,6 +11,7 @@ import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.eventsourcing.events.*
+import com.kos.eventsourcing.events.ViewPatchedEvent
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
@@ -67,7 +68,7 @@ class ViewsService(
             val event = Event(
                 aggregateRoot,
                 operationId,
-                ViewToBeCreated(
+                ViewToBeCreatedEvent(
                     operationId,
                     request.name,
                     request.published,
@@ -80,21 +81,25 @@ class ViewsService(
         }
     }
 
-    suspend fun createView(operationId: String, aggregateRoot: String, viewToBeCreated: ViewToBeCreated): Either<InsertCharacterError, Operation> {
+    suspend fun createView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBeCreatedEvent: ViewToBeCreatedEvent
+    ): Either<InsertCharacterError, Operation> {
         return either {
             val characterIds =
-                charactersService.createAndReturnIds(viewToBeCreated.characters, viewToBeCreated.game).bind()
+                charactersService.createAndReturnIds(viewToBeCreatedEvent.characters, viewToBeCreatedEvent.game).bind()
             val view = viewsRepository.create(
-                viewToBeCreated.id,
-                viewToBeCreated.name,
-                viewToBeCreated.owner,
+                viewToBeCreatedEvent.id,
+                viewToBeCreatedEvent.name,
+                viewToBeCreatedEvent.owner,
                 characterIds,
-                viewToBeCreated.game
+                viewToBeCreatedEvent.game
             )
             val event = Event(
                 aggregateRoot,
                 operationId,
-                ViewCreated.fromSimpleView(view)
+                ViewCreatedEvent.fromSimpleView(view)
             )
             eventStore.save(event)
         }
@@ -104,12 +109,11 @@ class ViewsService(
         return either {
             val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
             ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
-            val operationId = UUID.randomUUID().toString()
             val aggregateRoot = "/credentials/$client"
             val event = Event(
                 aggregateRoot,
-                operationId,
-                ViewToBeEdited(
+                id,
+                ViewToBeEditedEvent(
                     id,
                     request.name,
                     request.published,
@@ -121,16 +125,29 @@ class ViewsService(
         }
     }
 
-    suspend fun editView(viewToBeEdited: ViewToBeEdited): Either<ControllerError, ViewModified> {
-        val characters = charactersService.createAndReturnIds(viewToBeEdited.characters, viewToBeEdited.game)
-        return characters.map {
-            viewsRepository.edit(
-                viewToBeEdited.id,
-                viewToBeEdited.name,
-                viewToBeEdited.published,
-                it
+    suspend fun editView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBeEditedEvent: ViewToBeEditedEvent
+    ): Either<ControllerError, Operation> {
+        return either {
+            val characters =
+                charactersService.createAndReturnIds(viewToBeEditedEvent.characters, viewToBeEditedEvent.game).bind()
+            val viewModified =
+                viewsRepository.edit(
+                    viewToBeEditedEvent.id,
+                    viewToBeEditedEvent.name,
+                    viewToBeEditedEvent.published,
+                    characters
+                )
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewEditedEvent.fromViewModified(operationId, viewModified)
             )
+            eventStore.save(event)
         }
+
     }
 
     suspend fun patch(client: String, id: String, request: ViewPatchRequest): Either<ControllerError, Operation> {
@@ -139,13 +156,12 @@ class ViewsService(
             request.characters?.let { charactersToInsert ->
                 ensure(charactersToInsert.size <= ownerMaxCharacters) { TooMuchCharacters }
             }
-            val operationId = UUID.randomUUID().toString()
             val aggregateRoot = "/credentials/$client"
             val event = Event(
                 aggregateRoot,
                 id,
-                ViewToBePatched(
-                    operationId,
+                ViewToBePatchedEvent(
+                    id,
                     request.name,
                     request.published,
                     request.characters,
@@ -157,32 +173,27 @@ class ViewsService(
         }
     }
 
-    suspend fun patchView(viewToBePatched: ViewToBePatched): Either<InsertCharacterError, ViewPatched> {
-        return when (val characters: Either<InsertCharacterError, List<Long>>? =
-            viewToBePatched.characters.fold({ null },
-                { charactersRequest ->
-                    charactersService.createAndReturnIds(
-                        charactersRequest,
-                        viewToBePatched.game
-                    )
-                })) {
-            null -> Either.Right(
-                viewsRepository.patch(
-                    viewToBePatched.id,
-                    viewToBePatched.name,
-                    viewToBePatched.published,
-                    null
-                )
-            )
-
-            else -> characters.map {
-                viewsRepository.patch(
-                    viewToBePatched.id,
-                    viewToBePatched.name,
-                    viewToBePatched.published,
-                    it
-                )
+    suspend fun patchView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBePatchedEvent: ViewToBePatchedEvent
+    ): Either<InsertCharacterError, Operation> {
+        return either {
+            val charactersToInsert = viewToBePatchedEvent.characters?.let { charactersToInsert ->
+                charactersService.createAndReturnIds(charactersToInsert, viewToBePatchedEvent.game).bind()
             }
+            val patchedView = viewsRepository.patch(
+                viewToBePatchedEvent.id,
+                viewToBePatchedEvent.name,
+                viewToBePatchedEvent.published,
+                charactersToInsert
+            )
+            val event = Event(
+                operationId,
+                aggregateRoot,
+                ViewPatchedEvent.fromViewPatched(operationId, patchedView)
+            )
+            eventStore.save(event)
         }
     }
 

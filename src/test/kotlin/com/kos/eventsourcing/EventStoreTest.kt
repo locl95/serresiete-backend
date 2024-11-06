@@ -2,7 +2,7 @@ package com.kos.eventsourcing
 
 import com.kos.eventsourcing.events.Event
 import com.kos.eventsourcing.events.EventWithVersion
-import com.kos.eventsourcing.events.ViewToBeCreated
+import com.kos.eventsourcing.events.ViewToBeCreatedEvent
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreDatabase
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
@@ -26,7 +26,7 @@ abstract class EventStoreTest {
     @Test
     fun `given an empty store i can save events`() {
         runBlocking {
-            val payload = ViewToBeCreated(
+            val payload = ViewToBeCreatedEvent(
                 UUID.randomUUID().toString(),
                 basicSimpleWowView.name,
                 basicSimpleWowView.published,

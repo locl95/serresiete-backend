@@ -3,6 +3,8 @@ package com.kos.eventsourcing.events
 import com.kos.characters.CharacterCreateRequest
 import com.kos.views.Game
 import com.kos.views.SimpleView
+import com.kos.views.ViewModified
+import com.kos.views.ViewPatched
 import kotlinx.serialization.Serializable
 
 enum class EventType {
@@ -44,7 +46,7 @@ sealed interface EventData {
     val eventType: EventType
 }
 @Serializable
-data class ViewToBeCreated(
+data class ViewToBeCreatedEvent(
     val id: String,
     val name: String,
     val published: Boolean,
@@ -56,7 +58,7 @@ data class ViewToBeCreated(
 }
 
 @Serializable
-data class ViewToBeEdited(
+data class ViewToBeEditedEvent(
     val id: String,
     val name: String,
     val published: Boolean,
@@ -67,7 +69,7 @@ data class ViewToBeEdited(
 }
 
 @Serializable
-data class ViewToBePatched(
+data class ViewToBePatchedEvent(
     val id: String,
     val name: String?,
     val published: Boolean?,
@@ -78,7 +80,7 @@ data class ViewToBePatched(
 }
 
 @Serializable
-data class ViewCreated(
+data class ViewCreatedEvent(
     val id: String,
     val name: String,
     val owner: String,
@@ -89,7 +91,7 @@ data class ViewCreated(
     override val eventType: EventType = EventType.VIEW_CREATED
 
     companion object {
-        fun fromSimpleView(simpleView: SimpleView) = ViewCreated(
+        fun fromSimpleView(simpleView: SimpleView) = ViewCreatedEvent(
             simpleView.id,
             simpleView.name,
             simpleView.owner,
@@ -100,16 +102,40 @@ data class ViewCreated(
     }
 }
 
-data class ViewEdited(
-    val id: String
+data class ViewEditedEvent(
+    val id: String,
+    val name: String,
+    val characters: List<Long>,
+    val published: Boolean
 ): EventData {
     override val eventType: EventType = EventType.VIEW_EDITED
+
+    companion object {
+        fun fromViewModified(id:String, viewModified: ViewModified) = ViewEditedEvent(
+            id,
+            viewModified.name,
+            viewModified.characters,
+            viewModified.published,
+        )
+    }
 }
 
-data class ViewPatched(
-    val id: String
+data class ViewPatchedEvent(
+    val id: String,
+    val name: String?,
+    val characters: List<Long>?,
+    val published: Boolean?
 ): EventData {
     override val eventType: EventType = EventType.VIEW_PATCHED
+
+    companion object {
+        fun fromViewPatched(id:String, viewPatched: ViewPatched) = ViewPatchedEvent(
+            id,
+            viewPatched.name,
+            viewPatched.characters,
+            viewPatched.published
+        )
+    }
 }
 
 @Serializable

@@ -17,9 +17,9 @@ class EventStoreDatabase(private val db: Database) : EventStore {
     private val json = Json {
         serializersModule = SerializersModule {
             polymorphic(EventData::class) {
-                subclass(ViewToBeCreated::class, ViewToBeCreated.serializer())
-                subclass(ViewToBePatched::class, ViewToBePatched.serializer())
-                subclass(ViewToBeEdited::class, ViewToBeEdited.serializer())
+                subclass(ViewToBeCreatedEvent::class, ViewToBeCreatedEvent.serializer())
+                subclass(ViewToBePatchedEvent::class, ViewToBePatchedEvent.serializer())
+                subclass(ViewToBeEditedEvent::class, ViewToBeEditedEvent.serializer())
             }
         }
         ignoreUnknownKeys = true

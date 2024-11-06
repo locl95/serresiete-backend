@@ -79,24 +79,31 @@ class EventSubscription(
             return when (eventWithVersion.event.eventData.eventType) {
                 EventType.VIEW_TO_BE_CREATED -> {
                     either {
-                        val payload = eventWithVersion.event.eventData as ViewToBeCreated
+                        val payload = eventWithVersion.event.eventData as ViewToBeCreatedEvent
                         val aggregateRoot = eventWithVersion.event.aggregateRoot
                         val operationId = eventWithVersion.event.operationId
                         viewsService.createView(operationId, aggregateRoot, payload).bind()
                     }
                 }
+
                 EventType.VIEW_TO_BE_EDITED -> {
                     either {
-                        val payload = eventWithVersion.event.eventData as ViewToBeEdited
-                        viewsService.editView(payload).bind()
+                        val payload = eventWithVersion.event.eventData as ViewToBeEditedEvent
+                        val aggregateRoot = eventWithVersion.event.aggregateRoot
+                        val operationId = eventWithVersion.event.operationId
+                        viewsService.editView(operationId, aggregateRoot, payload).bind()
                     }
                 }
+
                 EventType.VIEW_TO_BE_PATCHED -> {
                     either {
-                        val payload = eventWithVersion.event.eventData as ViewToBePatched
-                        viewsService.patchView(payload).bind()
+                        val payload = eventWithVersion.event.eventData as ViewToBePatchedEvent
+                        val aggregateRoot = eventWithVersion.event.aggregateRoot
+                        val operationId = eventWithVersion.event.operationId
+                        viewsService.patchView(operationId, aggregateRoot, payload).bind()
                     }
                 }
+
                 else -> Either.Right(Unit)
             }
         }
@@ -104,22 +111,25 @@ class EventSubscription(
         suspend fun syncLolCharactersProcessor(
             eventWithVersion: EventWithVersion
         ): Either<ControllerError, Unit> {
-            return when(eventWithVersion.event.eventData.eventType) {
+            return when (eventWithVersion.event.eventData.eventType) {
                 EventType.VIEW_CREATED -> {
-                    val payload = eventWithVersion.event.eventData as ViewCreated
+                    val payload = eventWithVersion.event.eventData as ViewCreatedEvent
                     println("I will process $payload at some point ...")
                     Either.Right(Unit)
                 }
+
                 EventType.VIEW_EDITED -> {
-                    val payload = eventWithVersion.event.eventData as ViewEdited
+                    val payload = eventWithVersion.event.eventData as ViewEditedEvent
                     println("I will process $payload at some point ...")
                     Either.Right(Unit)
                 }
+
                 EventType.VIEW_PATCHED -> {
-                    val payload = eventWithVersion.event.eventData as ViewEdited
+                    val payload = eventWithVersion.event.eventData as ViewEditedEvent
                     println("I will process $payload at some point ...")
                     Either.Right(Unit)
                 }
+
                 else -> Either.Right(Unit)
             }
         }

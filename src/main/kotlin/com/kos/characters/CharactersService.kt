@@ -2,6 +2,8 @@ package com.kos.characters
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.orNull
 import arrow.core.raise.either
 import com.kos.characters.repository.CharactersRepository
 import com.kos.common.*
@@ -14,10 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -65,30 +64,31 @@ data class CharactersService(
             }
 
             Game.LOL -> coroutineScope {
-                val x = existentAndNew.second.map { initialRequest ->
-                    async {
-                        initialRequest as LolCharacterRequest
-                        riotClient.getPUUIDByRiotId(initialRequest.name, initialRequest.tag).flatMap {
-                            riotClient.getSummonerByPuuid(it.puuid).map { summonerResponse ->
-                                LolCharacterEnrichedRequest(
-                                    initialRequest.name,
-                                    initialRequest.tag,
-                                    summonerResponse.puuid,
-                                    summonerResponse.profileIconId,
-                                    summonerResponse.id,
-                                    summonerResponse.summonerLevel
-                                )
-                            }
-                        }
-                    }
-                }.awaitAll().split()
-                x.first.forEach { logger.info(it.error()) }
-                x.second.filter { charactersToInsert ->
-                    !currentCharacters.any { charactersToInsert.same(it) }
-                }
+                existentAndNew.second.asFlow()
+                    .buffer(40)
+                    .mapNotNull { initialRequest ->
+                        either {
+                            initialRequest as LolCharacterRequest
+                            val puuid = riotClient.getPUUIDByRiotId(initialRequest.name, initialRequest.tag)
+                                .onLeft { error -> logger.error(error.error()) }
+                                .bind()
+                            val summonerResponse = riotClient.getSummonerByPuuid(puuid.puuid)
+                                .onLeft { error -> logger.error(error.error()) }
+                                .bind()
+                            LolCharacterEnrichedRequest(
+                                initialRequest.name,
+                                initialRequest.tag,
+                                summonerResponse.puuid,
+                                summonerResponse.profileIconId,
+                                summonerResponse.id,
+                                summonerResponse.summonerLevel
+                            )
+                        }.getOrNull()
+                    }.filter { characterToInsert ->
+                        !currentCharacters.any { characterToInsert.same(it) }
+                    }.toList()
             }
         }
-
 
         return charactersRepository.insert(newThatExist, game)
             .map { list -> list.map { it.id } + existentAndNew.first.map { it.id } }
@@ -109,7 +109,7 @@ data class CharactersService(
 
             val dataCollector = launch {
                 dataChannel.consumeAsFlow()
-                    .buffer(50)
+                    .buffer(40)
                     .collect { characterWithId ->
                         charactersRepository.update(characterWithId.second, characterWithId.first, Game.LOL)
                         logger.info("updated character ${characterWithId.second}")

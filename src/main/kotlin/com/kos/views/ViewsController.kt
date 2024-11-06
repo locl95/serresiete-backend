@@ -113,7 +113,7 @@ class ViewsController(
                     if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
                         || credentialsService.hasPermissions(client, Activities.editAnyView)
                     ) {
-                        viewsService.edit(maybeView.id, request)
+                        viewsService.edit(maybeView.id, client, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }
@@ -134,7 +134,7 @@ class ViewsController(
                     if ((maybeView.owner == client && credentialsService.hasPermissions(client, Activities.editOwnView))
                         || credentialsService.hasPermissions(client, Activities.editAnyView)
                     ) {
-                        viewsService.patch(maybeView.id, request)
+                        viewsService.patch(maybeView.id, client, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }

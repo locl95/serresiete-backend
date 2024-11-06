@@ -189,8 +189,8 @@ class ViewsService(
                 charactersToInsert
             )
             val event = Event(
-                operationId,
                 aggregateRoot,
+                operationId,
                 ViewPatchedEvent.fromViewPatched(operationId,viewToBePatchedEvent.game, patchedView)
             )
             eventStore.save(event)
@@ -245,22 +245,6 @@ class ViewsService(
                 }
             }
         }
-        /*
-        TODO: This will be used in the future again. We will make usage of every call to raiderio to avoid
-        TODO: needing to retrieve data for every character again if it was called in a 1h period. This will lighten
-        TODO: the scheduled task.
-        eitherJsonErrorOrData.onRight {
-            it.forEach { data ->
-                dataCacheService.insert(
-                    DataCache(
-                        data.id,
-                        json.encodeToString(data),
-                        OffsetDateTime.now()
-                    )
-                )
-            }
-        }
-        */
         eitherJsonErrorOrData
     }
 

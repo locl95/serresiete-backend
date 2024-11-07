@@ -1,8 +1,12 @@
 package com.kos.datacache
 
 import arrow.core.Either
+import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
+import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
 import com.kos.common.RetryConfig
@@ -11,18 +15,27 @@ import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.smartSyncDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.Event
+import com.kos.eventsourcing.events.EventWithVersion
+import com.kos.eventsourcing.events.ViewCreatedEvent
+import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.domain.Metadata
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
+import com.kos.views.ViewsTestHelper
+import io.mockk.coVerify
+import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Nested
 import org.mockito.Mockito.*
 import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class DataCacheServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)

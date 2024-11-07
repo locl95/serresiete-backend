@@ -2,121 +2,603 @@ package com.kos.eventsourcing
 
 
 import arrow.core.Either
+import com.kos.activities.Activity
 import com.kos.assertTrue
-import com.kos.common.ControllerError
+import com.kos.characters.CharactersService
+import com.kos.characters.CharactersTestHelper
+import com.kos.characters.repository.CharactersInMemoryRepository
+import com.kos.characters.repository.CharactersState
 import com.kos.common.NotFound
 import com.kos.common.RetryConfig
-import com.kos.eventsourcing.events.Event
-import com.kos.eventsourcing.events.EventWithVersion
-import com.kos.eventsourcing.events.ViewToBeCreatedEvent
+import com.kos.credentials.CredentialsService
+import com.kos.credentials.CredentialsTestHelper
+import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.credentials.repository.CredentialsRepositoryState
+import com.kos.datacache.DataCache
+import com.kos.datacache.DataCacheService
+import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.*
+import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.SubscriptionState
 import com.kos.eventsourcing.subscriptions.SubscriptionStatus
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsInMemoryRepository
+import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.Role
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.Game
+import com.kos.views.SimpleView
+import com.kos.views.ViewsService
+import com.kos.views.ViewsTestHelper
+import com.kos.views.repository.ViewsInMemoryRepository
+import com.kos.views.repository.ViewsRepository
+import io.mockk.coVerify
+import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class EventSubscriptionTest {
     private val retryConfig = RetryConfig(1, 1)
+    private val raiderIoClient = Mockito.mock(RaiderIoClient::class.java)
+    private val riotClient = Mockito.mock(RiotClient::class.java)
 
-    @Test
-    fun `processPendingEvents throws exception if subscription is not found`(): Unit = runBlocking {
-        val eventStore = EventStoreInMemory()
-        val subscriptionsRepository = SubscriptionsInMemoryRepository()
 
-        val subscription = EventSubscription(
-            subscriptionName = "testSubscription",
-            eventStore = eventStore,
-            subscriptionsRepository = subscriptionsRepository,
-            retryConfig = retryConfig,
-            process = { Either.Right(Unit) }
-        )
+    @Nested
+    inner class BehaviorOfProcessPendingEvents {
+        @Test
+        fun `processPendingEvents throws exception if subscription is not found`() {
+            runBlocking {
+                val eventStore = EventStoreInMemory()
+                val subscriptionsRepository = SubscriptionsInMemoryRepository()
 
-        assertThrows<Exception> {
-            subscription.processPendingEvents()
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = { Either.Right(Unit) }
+                )
+
+                assertThrows<Exception> {
+                    subscription.processPendingEvents()
+                }
+            }
+        }
+
+        @Test
+        fun `processPendingEvents updates state to WAITING on successful processing`() {
+            runBlocking {
+                val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
+                val event = Event("root", "id", eventData)
+                val eventWithVersion = EventWithVersion(1, event)
+
+                val eventStore = EventStoreInMemory().withState(listOf(eventWithVersion))
+
+                val initialSubscriptionStateTime = OffsetDateTime.now()
+                val subscriptionState = SubscriptionState(
+                    SubscriptionStatus.WAITING,
+                    version = 0,
+                    time = initialSubscriptionStateTime
+                )
+
+                val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
+                    mapOf(
+                        "testSubscription" to subscriptionState
+                    )
+                )
+
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = { Either.Right(Unit) }
+                )
+
+                subscription.processPendingEvents()
+
+                val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+
+                assertEquals(SubscriptionStatus.WAITING, finalSubscriptionState?.status)
+                assertEquals(1, finalSubscriptionState?.version)
+                assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+            }
+        }
+
+        @Test
+        fun `processPendingEvents sets state to FAILED on processing error`() {
+            runBlocking {
+                val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
+                val event = Event("root", "id", eventData)
+                val eventWithVersion = EventWithVersion(1, event)
+
+                val eventStore = EventStoreInMemory().withState(listOf(eventWithVersion))
+
+                val initialSubscriptionStateTime = OffsetDateTime.now()
+                val subscriptionState = SubscriptionState(
+                    SubscriptionStatus.WAITING,
+                    version = 0,
+                    time = initialSubscriptionStateTime
+                )
+
+                val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
+                    mapOf(
+                        "testSubscription" to subscriptionState
+                    )
+                )
+
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = { Either.Left(NotFound("Simulated error")) }
+                )
+
+                subscription.processPendingEvents()
+
+                val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+
+                assertEquals(SubscriptionStatus.FAILED, finalSubscriptionState?.status)
+                assertEquals(0, finalSubscriptionState?.version)
+                assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+            }
+        }
+
+        @Test
+        fun `processPendingEvents sets state to FAILED on processing error and stops processing further events`() {
+            runBlocking {
+                val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
+                val event = Event("root", "id", eventData)
+
+                val events = (1L..10L).map { EventWithVersion(it, event) }
+
+                val eventStore = EventStoreInMemory().withState(events)
+
+                val initialSubscriptionStateTime = OffsetDateTime.now()
+                val subscriptionState = SubscriptionState(
+                    SubscriptionStatus.WAITING,
+                    version = 0,
+                    time = initialSubscriptionStateTime
+                )
+
+                val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
+                    mapOf(
+                        "testSubscription" to subscriptionState
+                    )
+                )
+
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = { Either.Left(NotFound("Simulated error")) }
+                )
+
+                subscription.processPendingEvents()
+
+                val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+
+                assertEquals(SubscriptionStatus.FAILED, finalSubscriptionState?.status)
+                assertEquals(0, finalSubscriptionState?.version)
+                assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+            }
+        }
+
+        @Test
+        fun `processPendingEvents sets state to FAILED on processing error and stops processing further events when some events were processed`() {
+            runBlocking {
+                val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
+                val event = Event("root", "id", eventData)
+
+                val events = (1L..10L).map { EventWithVersion(it, event) }
+
+                val eventStore = EventStoreInMemory().withState(events)
+
+                val initialSubscriptionStateTime = OffsetDateTime.now()
+                val subscriptionState = SubscriptionState(
+                    SubscriptionStatus.WAITING,
+                    version = 0,
+                    time = initialSubscriptionStateTime
+                )
+
+                val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
+                    mapOf(
+                        "testSubscription" to subscriptionState
+                    )
+                )
+
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = {
+                        if (it.version <= 5) Either.Right(Unit)
+                        else Either.Left(NotFound("Simulated error"))
+                    }
+                )
+
+                subscription.processPendingEvents()
+
+                val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+
+                assertEquals(SubscriptionStatus.FAILED, finalSubscriptionState?.status)
+                assertEquals(5, finalSubscriptionState?.version)
+                assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+            }
         }
     }
 
-    @Test
-    fun `processPendingEvents updates state to WAITING on successful processing`() = runBlocking {
-        val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
-        val event = Event("root", "id", eventData)
-        val eventWithVersion = EventWithVersion(1, event)
+    @Nested
+    inner class BehaviorOfSyncLolProcessor {
+        //TODO: Patch view
+        //TODO: Check datacache repository for new records
+        @Test
+        fun `syncLolCharactersProcessor calls updateLolCharacters on VIEW_CREATED with LOL game`() {
+            runBlocking {
+                `when`(riotClient.getLeagueEntriesBySummonerId(CharactersTestHelper.basicLolCharacter.summonerId))
+                    .thenReturn(Either.Right(listOf()))
 
-        val eventStore = EventStoreInMemory().withState(listOf(eventWithVersion))
+                val characters = listOf(CharactersTestHelper.basicLolCharacter)
+                val charactersRepository =
+                    CharactersInMemoryRepository().withState(
+                        CharactersState(
+                            listOf(CharactersTestHelper.basicWowCharacter),
+                            characters
+                        )
+                    )
 
-        val initialSubscriptionStateTime = OffsetDateTime.now()
-        val subscriptionState = SubscriptionState(
-            SubscriptionStatus.WAITING,
-            version = 0,
-            time = initialSubscriptionStateTime
-        )
+                val dataCacheRepository = DataCacheInMemoryRepository()
+                val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
 
-        val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
-            mapOf(
-                "testSubscription" to subscriptionState
-            )
-        )
+                val spiedService = spyk(dataCacheService)
 
-        val subscription = EventSubscription(
-            subscriptionName = "testSubscription",
-            eventStore = eventStore,
-            subscriptionsRepository = subscriptionsRepository,
-            retryConfig = retryConfig,
-            process = { Either.Right(Unit) }
-        )
+                val payload = ViewCreatedEvent(
+                    ViewsTestHelper.id,
+                    ViewsTestHelper.name,
+                    ViewsTestHelper.owner,
+                    characters.map { it.id },
+                    true,
+                    Game.LOL
+                )
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event("/credentials/owner", ViewsTestHelper.id, payload)
+                )
 
-        subscription.processPendingEvents()
+                val result =
+                    EventSubscription.syncLolCharactersProcessor(eventWithVersion, charactersService, spiedService)
 
-        val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+                result.fold(
+                    { fail("Expected success") },
+                    { coVerify { spiedService.cache(eq(characters), eq(Game.LOL)) } }
+                )
+            }
+        }
 
-        assertEquals(SubscriptionStatus.WAITING, finalSubscriptionState?.status)
-        assertEquals(1, finalSubscriptionState?.version)
-        assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+        @Test
+        fun `syncLolCharactersProcessor does not call updateLolCharacters on VIEW_CREATED with WOW game`() {
+            runBlocking {
+                val characters = listOf(CharactersTestHelper.basicLolCharacter)
+                val charactersRepository =
+                    CharactersInMemoryRepository().withState(
+                        CharactersState(
+                            listOf(CharactersTestHelper.basicWowCharacter),
+                            characters
+                        )
+                    )
+
+                val dataCacheRepository = DataCacheInMemoryRepository()
+                val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+                val spiedService = spyk(dataCacheService)
+
+                val payload = ViewCreatedEvent(
+                    ViewsTestHelper.id,
+                    ViewsTestHelper.name,
+                    ViewsTestHelper.owner,
+                    characters.map { it.id },
+                    true,
+                    Game.WOW
+                )
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event("/credentials/owner", ViewsTestHelper.id, payload)
+                )
+
+                val result =
+                    EventSubscription.syncLolCharactersProcessor(eventWithVersion, charactersService, spiedService)
+
+                result.fold(
+                    { fail("Expected success") },
+                    { coVerify(exactly = 0) { spiedService.cache(any(), any()) } }
+                )
+            }
+        }
+
+        @Test
+        fun `syncLolCharactersProcessor calls updateLolCharacters on VIEW_EDITED with LOL game`() {
+            runBlocking {
+                `when`(riotClient.getLeagueEntriesBySummonerId(CharactersTestHelper.basicLolCharacter.summonerId))
+                    .thenReturn(Either.Right(listOf()))
+
+                val characters = listOf(CharactersTestHelper.basicLolCharacter)
+                val charactersRepository =
+                    CharactersInMemoryRepository().withState(
+                        CharactersState(
+                            listOf(CharactersTestHelper.basicWowCharacter),
+                            characters
+                        )
+                    )
+
+                val dataCacheRepository = DataCacheInMemoryRepository()
+                val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+
+                val spiedService = spyk(dataCacheService)
+
+                val payload = ViewEditedEvent(
+                    ViewsTestHelper.id,
+                    ViewsTestHelper.name,
+                    characters.map { it.id },
+                    true,
+                    Game.LOL
+                )
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event("/credentials/owner", ViewsTestHelper.id, payload)
+                )
+
+                val result =
+                    EventSubscription.syncLolCharactersProcessor(eventWithVersion, charactersService, spiedService)
+
+                result.fold(
+                    { fail("Expected success") },
+                    { coVerify { spiedService.cache(eq(characters), eq(Game.LOL)) } }
+                )
+            }
+        }
+
+        @Test
+        fun `syncLolCharactersProcessor does not call updateLolCharacters on VIEW_EDITED with WOW game`() {
+            runBlocking {
+                val characters = listOf(CharactersTestHelper.basicLolCharacter)
+                val charactersRepository =
+                    CharactersInMemoryRepository().withState(
+                        CharactersState(
+                            listOf(CharactersTestHelper.basicWowCharacter),
+                            characters
+                        )
+                    )
+
+                val dataCacheRepository = DataCacheInMemoryRepository()
+                val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+                val spiedService = spyk(dataCacheService)
+
+                val payload = ViewEditedEvent(
+                    ViewsTestHelper.id,
+                    ViewsTestHelper.name,
+                    characters.map { it.id },
+                    true,
+                    Game.WOW
+                )
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event("/credentials/owner", ViewsTestHelper.id, payload)
+                )
+
+                val result =
+                    EventSubscription.syncLolCharactersProcessor(eventWithVersion, charactersService, spiedService)
+
+                result.fold(
+                    { fail("Expected success") },
+                    { coVerify(exactly = 0) { spiedService.cache(any(), any()) } }
+                )
+            }
+        }
     }
 
-    @Test
-    fun `processPendingEvents sets state to FAILED on processing error`() = runBlocking {
-        // Arrange
-        val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
-        val event = Event("root", "id", eventData)
-        val eventWithVersion = EventWithVersion(1, event)
+    @Nested
+    inner class BehaviorOfViewsProcessor {
+        private val aggregateRoot = "/credentials/owner"
 
-        val eventStore = EventStoreInMemory().withState(listOf(eventWithVersion))
+        @Test
+        fun `viewsProcessor calls createView on VIEW_TO_BE_CREATED event, creates a view and stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService, viewsRepository) = createService(
+                    listOf(),
+                    CharactersTestHelper.emptyCharactersState,
+                    listOf(),
+                    CredentialsTestHelper.emptyCredentialsInitialState,
+                    mapOf()
+                )
 
-        val initialSubscriptionStateTime = OffsetDateTime.now()
-        val subscriptionState = SubscriptionState(
-            SubscriptionStatus.WAITING,
-            version = 0,
-            time = initialSubscriptionStateTime
-        )
+                val spiedService = spyk(viewsService)
 
-        val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
-            mapOf(
-                "testSubscription" to subscriptionState
+                val eventData = ViewToBeCreatedEvent(ViewsTestHelper.id, "name", true, listOf(), Game.LOL, "owner")
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event(aggregateRoot, ViewsTestHelper.id, eventData)
+                )
+
+                EventSubscription.viewsProcessor(eventWithVersion, spiedService)
+                    .onLeft { fail("Expected success") }
+                    .onRight {
+                        coVerify {
+                            spiedService.createView(
+                                eq(ViewsTestHelper.id),
+                                eq(aggregateRoot),
+                                eq(eventData)
+                            )
+                        }
+                    }
+
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewCreatedEvent(
+                        ViewsTestHelper.id,
+                        ViewsTestHelper.name,
+                        ViewsTestHelper.owner, listOf(), true, Game.LOL
+                    )
+                )
+
+                assertView(viewsRepository, ViewsTestHelper.name)
+            }
+        }
+
+        @Test
+        fun `viewsProcessor calls edit view on VIEW_TO_BE_EDITED event, edits a view and stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService, viewsRepository) = createService(
+                    listOf(ViewsTestHelper.basicSimpleLolView),
+                    CharactersTestHelper.emptyCharactersState,
+                    listOf(),
+                    CredentialsTestHelper.emptyCredentialsInitialState,
+                    mapOf()
+                )
+
+                val spiedService = spyk(viewsService)
+
+                val newName = "new-name"
+                val eventData = ViewToBeEditedEvent(ViewsTestHelper.id, newName, true, listOf(), Game.LOL)
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event(aggregateRoot, ViewsTestHelper.id, eventData)
+                )
+
+                EventSubscription.viewsProcessor(eventWithVersion, spiedService)
+                    .onLeft { fail("Expected success") }
+                    .onRight {
+                        coVerify {
+                            spiedService.editView(
+                                eq(ViewsTestHelper.id),
+                                eq(aggregateRoot),
+                                eq(eventData)
+                            )
+                        }
+                    }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewEditedEvent(ViewsTestHelper.id, newName, listOf(), true, Game.LOL)
+                )
+
+                assertView(viewsRepository, newName)
+            }
+        }
+
+        @Test
+        fun `viewsProcessor calls patch view on VIEW_TO_BE_PATCHED event, patches a view and stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService, viewsRepository) = createService(
+                    listOf(ViewsTestHelper.basicSimpleLolView),
+                    CharactersTestHelper.emptyCharactersState,
+                    listOf(),
+                    CredentialsTestHelper.emptyCredentialsInitialState,
+                    mapOf()
+                )
+
+                val spiedService = spyk(viewsService)
+                val newName = "newName"
+                val eventData = ViewToBePatchedEvent(ViewsTestHelper.id, newName, null, null, Game.LOL)
+                val eventWithVersion = EventWithVersion(
+                    1L,
+                    Event(aggregateRoot, ViewsTestHelper.id, eventData)
+                )
+
+                EventSubscription.viewsProcessor(eventWithVersion, spiedService)
+                    .onLeft { fail("Expected success") }
+                    .onRight {
+                        coVerify {
+                            spiedService.patchView(
+                                eq(ViewsTestHelper.id),
+                                eq(aggregateRoot),
+                                eq(eventData)
+                            )
+                        }
+                    }
+
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewPatchedEvent(ViewsTestHelper.id, newName, null, null, Game.LOL)
+                )
+
+                assertView(viewsRepository, newName)
+            }
+        }
+
+        private suspend fun createService(
+            viewsState: List<SimpleView>,
+            charactersState: CharactersState,
+            dataCacheState: List<DataCache>,
+            credentialState: CredentialsRepositoryState,
+            rolesActivitiesState: Map<Role, Set<Activity>>
+        ): Triple<EventStore, ViewsService, ViewsRepository> {
+            val viewsRepository = ViewsInMemoryRepository()
+                .withState(viewsState)
+            val charactersRepository = CharactersInMemoryRepository()
+                .withState(charactersState)
+            val dataCacheRepository = DataCacheInMemoryRepository()
+                .withState(dataCacheState)
+            val credentialsRepository = CredentialsInMemoryRepository()
+                .withState(credentialState)
+            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
+                .withState(rolesActivitiesState)
+            val eventStore = EventStoreInMemory()
+
+            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+            val service =
+                ViewsService(
+                    viewsRepository,
+                    charactersService,
+                    dataCacheService,
+                    raiderIoClient,
+                    credentialsService,
+                    eventStore
+                )
+
+            return Triple(eventStore, service, viewsRepository)
+        }
+
+        private suspend fun assertEventStoredCorrectly(eventStore: EventStore, eventData: EventData) {
+            val events = eventStore.getEvents(null).toList()
+
+            val expectedEvent = Event(
+                aggregateRoot,
+                ViewsTestHelper.id,
+                eventData
             )
-        )
 
-        val subscription = EventSubscription(
-            subscriptionName = "testSubscription",
-            eventStore = eventStore,
-            subscriptionsRepository = subscriptionsRepository,
-            retryConfig = retryConfig,
-            process = { Either.Left(NotFound("Simulated error")) }
-        )
+            assertEquals(1, events.size)
+            assertEquals(EventWithVersion(1, expectedEvent), events.first())
+        }
 
-        subscription.processPendingEvents()
-
-        val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
-
-        assertEquals(SubscriptionStatus.FAILED, finalSubscriptionState?.status)
-        assertEquals(0, finalSubscriptionState?.version)
-        assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+        private suspend fun assertView(viewsRepository: ViewsRepository, name: String) {
+            assertEquals(1, viewsRepository.state().size)
+            val insertedView = viewsRepository.state().first()
+            assertEquals(ViewsTestHelper.id, insertedView.id)
+            assertEquals(name, insertedView.name)
+            assertEquals(ViewsTestHelper.owner, insertedView.owner)
+            assertEquals(listOf(), insertedView.characterIds)
+            assertTrue(insertedView.published)
+        }
     }
 
 }

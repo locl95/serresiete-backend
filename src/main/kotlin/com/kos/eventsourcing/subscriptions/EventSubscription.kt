@@ -9,6 +9,7 @@ import com.kos.common.OffsetDateTimeSerializer
 import com.kos.common.Retry.retryEitherWithExponentialBackoff
 import com.kos.common.RetryConfig
 import com.kos.common.WithLogger
+import com.kos.datacache.DataCacheService
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
@@ -50,24 +51,32 @@ class EventSubscription(
             subscriptionsRepository.getState(subscriptionName)
                 ?: throw Exception("Not found subscription $subscriptionName")
         val hasSucceededWithVersion =
-            eventStore.getEvents(initialState.version).fold(Pair(false, initialState.version)) { _, event ->
-                try {
-                    retryEitherWithExponentialBackoff(retryConfig) { process(event) }
-                        .onLeft { throw Exception(it.toString()) }
-                    subscriptionsRepository.setState(
-                        subscriptionName,
-                        SubscriptionState(SubscriptionStatus.RUNNING, event.version, OffsetDateTime.now())
-                    )
-                    Pair(true, event.version)
-                } catch (e: Exception) {
-                    subscriptionsRepository.setState(
-                        subscriptionName,
-                        SubscriptionState(SubscriptionStatus.FAILED, event.version - 1, OffsetDateTime.now(), e.message)
-                    )
-                    logger.error("processing event ${event.version} has failed because ${e.message}")
-                    Pair(false, event.version)
+            eventStore.getEvents(initialState.version)
+                .fold(Pair(true, initialState.version)) { (shouldKeepGoing, version), event ->
+                    if (shouldKeepGoing) {
+                        try {
+                            retryEitherWithExponentialBackoff(retryConfig) { process(event) }
+                                .onLeft { throw Exception(it.toString()) }
+                            subscriptionsRepository.setState(
+                                subscriptionName,
+                                SubscriptionState(SubscriptionStatus.RUNNING, event.version, OffsetDateTime.now())
+                            )
+                            Pair(true, event.version)
+                        } catch (e: Exception) {
+                            subscriptionsRepository.setState(
+                                subscriptionName,
+                                SubscriptionState(
+                                    SubscriptionStatus.FAILED,
+                                    event.version - 1,
+                                    OffsetDateTime.now(),
+                                    e.message
+                                )
+                            )
+                            logger.error("processing event ${event.version} has failed because ${e.message}")
+                            Pair(false, event.version)
+                        }
+                    } else Pair(false, version)
                 }
-            }
         if (hasSucceededWithVersion.first) {
             subscriptionsRepository.setState(
                 subscriptionName,
@@ -116,17 +125,24 @@ class EventSubscription(
         @Suppress("UNCHECKED_CAST")
         suspend fun syncLolCharactersProcessor(
             eventWithVersion: EventWithVersion,
-            charactersService: CharactersService
+            charactersService: CharactersService,
+            dataCacheService: DataCacheService
         ): Either<ControllerError, Unit> {
             return when (eventWithVersion.event.eventData.eventType) {
                 EventType.VIEW_CREATED -> {
                     val payload = eventWithVersion.event.eventData as ViewCreatedEvent
-                    return when(payload.game) {
+                    return when (payload.game) {
                         Game.LOL -> {
-                            val viewCharacters = payload.characters.mapNotNull { charactersService.get(it, Game.LOL) } as List<LolCharacter>
-                            charactersService.updateLolCharacters(viewCharacters)
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.LOL
+                                )
+                            } as List<LolCharacter>
+                            dataCacheService.cache(viewCharacters, payload.game)
                             Either.Right(Unit)
                         }
+
                         Game.WOW -> {
                             Either.Right(Unit)
                         }
@@ -135,12 +151,18 @@ class EventSubscription(
 
                 EventType.VIEW_EDITED -> {
                     val payload = eventWithVersion.event.eventData as ViewEditedEvent
-                    return when(payload.game) {
+                    return when (payload.game) {
                         Game.LOL -> {
-                            val viewCharacters = payload.characters.mapNotNull { charactersService.get(it, Game.LOL) } as List<LolCharacter>
-                            charactersService.updateLolCharacters(viewCharacters)
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.LOL
+                                )
+                            } as List<LolCharacter>
+                            dataCacheService.cache(viewCharacters, payload.game)
                             Either.Right(Unit)
                         }
+
                         Game.WOW -> {
                             Either.Right(Unit)
                         }
@@ -149,19 +171,21 @@ class EventSubscription(
 
                 EventType.VIEW_PATCHED -> {
                     val payload = eventWithVersion.event.eventData as ViewPatchedEvent
-                    return when(payload.game) {
+                    return when (payload.game) {
                         Game.LOL -> {
                             payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
                                 it as List<LolCharacter>
-                                charactersService.updateLolCharacters(it)
+                                dataCacheService.cache(it, payload.game)
                             }
                             Either.Right(Unit)
                         }
+
                         Game.WOW -> {
                             Either.Right(Unit)
                         }
                     }
                 }
+
                 else -> Either.Right(Unit)
             }
         }

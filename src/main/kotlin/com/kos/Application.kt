@@ -122,7 +122,7 @@ fun Application.module() {
         eventStore,
         subscriptionsRepository,
         subscriptionsRetryConfig
-    ) { EventSubscription.syncLolCharactersProcessor(it, charactersService) }
+    ) { EventSubscription.syncLolCharactersProcessor(it, charactersService, dataCacheService) }
 
     launchSubscription(viewsEventSubscription)
     launchSubscription(syncLolEventSubscription)

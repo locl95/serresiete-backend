@@ -13,6 +13,7 @@ import com.kos.characters.LolCharacterRequest
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.RetryConfig
 import com.kos.common.TooMuchCharacters
 import com.kos.common.TooMuchViews
 import com.kos.common.UserWithoutRoles
@@ -64,6 +65,7 @@ import kotlin.test.fail
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
 
     private val aggregateRoot = "/credentials/owner"
     private val defaultCredentialsState = CredentialsRepositoryState(
@@ -821,7 +823,7 @@ class ViewsServiceTest {
 
         val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
         val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
+        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
         val service =
             ViewsService(
                 viewsRepository,

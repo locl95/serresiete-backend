@@ -7,11 +7,11 @@ import com.kos.characters.LolCharacter
 import com.kos.common.ControllerError
 import com.kos.common.OffsetDateTimeSerializer
 import com.kos.common.Retry.retryEitherWithExponentialBackoff
+import com.kos.common.RetryConfig
 import com.kos.common.WithLogger
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
-import com.kos.tasks.TasksService
 import com.kos.views.Game
 import com.kos.views.ViewsService
 import kotlinx.serialization.Serializable
@@ -37,7 +37,8 @@ class EventSubscription(
     private val subscriptionName: String,
     private val eventStore: EventStore,
     private val subscriptionsRepository: SubscriptionsRepository,
-    private val process: suspend (EventWithVersion) -> Either<ControllerError, Unit>
+    private val retryConfig: RetryConfig,
+    private val process: suspend (EventWithVersion) -> Either<ControllerError, Unit>,
 ) : WithLogger("event-subscription-$subscriptionName") {
 
     init {
@@ -51,7 +52,7 @@ class EventSubscription(
         val hasSucceededWithVersion =
             eventStore.getEvents(initialState.version).fold(Pair(false, initialState.version)) { _, event ->
                 try {
-                    retryEitherWithExponentialBackoff(10) { process(event) }
+                    retryEitherWithExponentialBackoff(retryConfig) { process(event) }
                         .onLeft { throw Exception(it.toString()) }
                     subscriptionsRepository.setState(
                         subscriptionName,
@@ -61,10 +62,10 @@ class EventSubscription(
                 } catch (e: Exception) {
                     subscriptionsRepository.setState(
                         subscriptionName,
-                        SubscriptionState(SubscriptionStatus.FAILED, event.version, OffsetDateTime.now(), e.message)
+                        SubscriptionState(SubscriptionStatus.FAILED, event.version - 1, OffsetDateTime.now(), e.message)
                     )
                     logger.error("processing event ${event.version} has failed because ${e.message}")
-                    Pair(false, event.version - 1)
+                    Pair(false, event.version)
                 }
             }
         if (hasSucceededWithVersion.first) {

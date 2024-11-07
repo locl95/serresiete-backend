@@ -3,8 +3,27 @@ package com.kos.common
 import arrow.core.Either
 import kotlinx.coroutines.delay
 
+data class RetryConfig(val maxAttempts: Int, val delayTime: Long)
+
 object Retry : WithLogger("retry") {
     suspend fun <L, R> retryEitherWithFixedDelay(
+        retryConfig: RetryConfig,
+        functionName: String,
+        block: suspend () -> Either<L, R>
+    ): Either<L, R> {
+        return _retryEitherWithFixedDelay(retryConfig.maxAttempts, retryConfig.delayTime, functionName, block)
+    }
+
+    suspend fun <L, R> retryEitherWithExponentialBackoff(
+        retryConfig: RetryConfig,
+        factor: Double = 2.0,
+        maxDelayMillis: Long = Long.MAX_VALUE,
+        block: suspend () -> Either<L, R>
+    ): Either<L, R> {
+        return _retryEitherWithExponentialBackoff(retryConfig.maxAttempts, retryConfig.delayTime, factor, maxDelayMillis, block)
+    }
+
+    private suspend fun <L, R> _retryEitherWithFixedDelay(
         retries: Int,
         delayTime: Long = 1200L,
         functionName: String,
@@ -16,14 +35,13 @@ object Retry : WithLogger("retry") {
                 if (retries > 0) {
                     logger.info("Retries left $retries for $functionName")
                     delay(delayTime)
-                    retryEitherWithFixedDelay(retries - 1, delayTime, functionName, block)
+                    _retryEitherWithFixedDelay(retries - 1, delayTime, functionName, block)
                 } else res
         }
     }
 
-    suspend fun <L, R> retryEitherWithExponentialBackoff(
+    private suspend fun <L, R> _retryEitherWithExponentialBackoff(
         maxAttempts: Int,
-        attempt: Int = 1,
         initialDelayMillis: Long = 100,
         factor: Double = 2.0,
         maxDelayMillis: Long = Long.MAX_VALUE,
@@ -32,13 +50,12 @@ object Retry : WithLogger("retry") {
         return when (val res = block()) {
             is Either.Right -> res
             is Either.Left -> {
-                if (attempt < maxAttempts) {
+                if (maxAttempts > 0) {
                     delay(initialDelayMillis)
                     val nextDelay = (initialDelayMillis * factor).coerceAtMost(maxDelayMillis.toDouble()).toLong()
-                    logger.info("Retry number: $attempt, next delay: $nextDelay")
-                    retryEitherWithExponentialBackoff(
-                        maxAttempts,
-                        attempt + 1,
+                    logger.info("Retries left $maxAttempts, next delay: $nextDelay")
+                    _retryEitherWithExponentialBackoff(
+                        maxAttempts - 1,
                         nextDelay,
                         factor,
                         maxDelayMillis,

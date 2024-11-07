@@ -9,6 +9,7 @@ import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.RetryConfig
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper
 import com.kos.credentials.repository.CredentialsInMemoryRepository
@@ -31,6 +32,8 @@ import kotlin.test.assertEquals
 class TasksControllerTest {
     private val raiderIoClient = Mockito.mock(RaiderIoClient::class.java)
     private val riotClient = Mockito.mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
+
     private val charactersRepository = CharactersInMemoryRepository()
     private val dataCacheRepository = DataCacheInMemoryRepository()
     private val credentialsRepository = CredentialsInMemoryRepository()
@@ -53,7 +56,7 @@ class TasksControllerTest {
         val tasksRepositoryWithState = tasksRepository.withState(tasksState)
         val authRepositoryWithState = authRepository.withState(authState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val authService = AuthService(authRepositoryWithState)
         val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)

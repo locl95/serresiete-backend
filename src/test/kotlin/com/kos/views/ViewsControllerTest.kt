@@ -10,10 +10,7 @@ import com.kos.characters.CharactersTestHelper.basicWowRequest2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.common.NotEnoughPermissions
-import com.kos.common.NotFound
-import com.kos.common.TooMuchViews
-import com.kos.common.getLeftOrNull
+import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
@@ -47,6 +44,7 @@ import kotlin.test.*
 class ViewsControllerTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
     private val viewsRepository = ViewsInMemoryRepository()
     private val charactersRepository = CharactersInMemoryRepository()
     private val dataCacheRepository = DataCacheInMemoryRepository()
@@ -67,7 +65,7 @@ class ViewsControllerTest {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
         val viewsService = ViewsService(

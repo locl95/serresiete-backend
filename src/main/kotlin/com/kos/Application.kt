@@ -9,6 +9,7 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.common.RetryConfig
 import com.kos.common.launchSubscription
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
@@ -84,7 +85,8 @@ fun Application.module() {
 
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
+    val dataCacheRetryConfig = RetryConfig(3, 1200)
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
     val viewsService =
         ViewsService(
             viewsRepository,
@@ -106,17 +108,20 @@ fun Application.module() {
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
 
+    val subscriptionsRetryConfig = RetryConfig(10, 100)
     val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
     val viewsEventSubscription = EventSubscription(
         "views",
         eventStore,
-        subscriptionsRepository
+        subscriptionsRepository,
+        subscriptionsRetryConfig
     ) { EventSubscription.viewsProcessor(it, viewsService) }
 
     val syncLolEventSubscription = EventSubscription(
         "sync-lol",
         eventStore,
-        subscriptionsRepository
+        subscriptionsRepository,
+        subscriptionsRetryConfig
     ) { EventSubscription.syncLolCharactersProcessor(it, charactersService) }
 
     launchSubscription(viewsEventSubscription)

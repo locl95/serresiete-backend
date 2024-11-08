@@ -43,6 +43,46 @@ abstract class EventStoreTest {
             assertEquals(expected, store.state())
         }
     }
+
+    @Test
+    fun `given an store with events i can retrieve them`() {
+        runBlocking {
+            val payload = ViewToBeCreatedEvent(
+                UUID.randomUUID().toString(),
+                basicSimpleWowView.name,
+                basicSimpleWowView.published,
+                listOf(),
+                basicSimpleWowView.game,
+                basicSimpleWowView.owner
+            )
+            val event1 = EventWithVersion(1, Event("/credentials/client1", UUID.randomUUID().toString(), payload))
+            val event2 = EventWithVersion(2, Event("/credentials/client1", UUID.randomUUID().toString(), payload))
+            val storeWithEvents = store.withState(listOf(event1, event2))
+            val expected = listOf(event1, event2)
+
+            assertEquals(expected, storeWithEvents.getEvents(null).toList())
+        }
+    }
+
+    @Test
+    fun `given an store with events i can retrieve them starting from a version`() {
+        runBlocking {
+            val payload = ViewToBeCreatedEvent(
+                UUID.randomUUID().toString(),
+                basicSimpleWowView.name,
+                basicSimpleWowView.published,
+                listOf(),
+                basicSimpleWowView.game,
+                basicSimpleWowView.owner
+            )
+            val event1 = EventWithVersion(1, Event("/credentials/client1", UUID.randomUUID().toString(), payload))
+            val event2 = EventWithVersion(2, Event("/credentials/client1", UUID.randomUUID().toString(), payload))
+            val storeWithEvents = store.withState(listOf(event1, event2))
+            val expected = listOf(event2)
+
+            assertEquals(expected, storeWithEvents.getEvents(1).toList())
+        }
+    }
 }
 
 class EventStoreInMemoryTest : EventStoreTest() {

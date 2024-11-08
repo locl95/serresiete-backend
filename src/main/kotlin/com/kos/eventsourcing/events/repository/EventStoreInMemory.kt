@@ -17,7 +17,7 @@ class EventStoreInMemory : EventStore, InMemoryRepository {
 
     override suspend fun getEvents(version: Long?): Sequence<EventWithVersion> {
         return version?.let { v ->
-            events.filter { it.version >= v }.asSequence()
+            events.filter { it.version > v }.asSequence()
         } ?: events.asSequence()
     }
 

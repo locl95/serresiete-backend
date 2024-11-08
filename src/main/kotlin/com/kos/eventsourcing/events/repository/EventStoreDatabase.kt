@@ -1,6 +1,7 @@
 package com.kos.eventsourcing.events.repository
 
 import com.kos.common._fold
+import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.eventsourcing.events.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.encodeToString
@@ -84,7 +85,16 @@ class EventStoreDatabase(private val db: Database) : EventStore {
     }
 
     override suspend fun withState(initialState: List<EventWithVersion>): EventStore {
-        TODO("Not yet implemented")
+        newSuspendedTransaction(Dispatchers.IO, db)  {
+            Events.batchInsert(initialState) {
+                this[Events.aggregateRoot] = it.event.aggregateRoot
+                this[Events.operationId] = it.event.operationId
+                this[Events.version] = it.version
+                this[Events.eventType] = it.event.eventData.eventType.toString()
+                this[Events.data] = json.encodeToString(it.event.eventData)
+            }
+        }
+        return this
     }
 
     private suspend fun selectNextId(): Long =

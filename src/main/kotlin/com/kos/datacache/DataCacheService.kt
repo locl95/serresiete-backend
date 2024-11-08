@@ -25,6 +25,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Duration
 import java.time.OffsetDateTime
 
 data class DataCacheService(
@@ -97,6 +98,7 @@ data class DataCacheService(
                 }
         }
 
+        val start = OffsetDateTime.now()
         lolCharacters.asFlow()
             .buffer(10)
             .collect { lolCharacter ->
@@ -118,6 +120,8 @@ data class DataCacheService(
         dataCollector.join()
 
         logger.info("Finished Caching Lol characters")
+        logger.debug("cached ${lolCharacters.size} characters in ${Duration.between(start, OffsetDateTime.now()).toSeconds() / 60.0} minutes")
+        logger.debug("dynamic match cache hit rate: ${matchCache.hitRate}%")
         errorsList
     }
 

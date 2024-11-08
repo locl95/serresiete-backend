@@ -1,10 +1,15 @@
 # Changelog
+## [4.0.0] 09-11-2024
+
+### Added
+- **Event Sourcing Implementation**: Introduced a major architecture change with event sourcing for resource management. Previously, creating large views was not sustainable, as it required waiting for external systems to respond before proceeding. Now, when a user creates a view, an operation is queued, and an operation ID is returned, which will be used to track the status of the requested action over the resource.
+- **View Creation Process**: Views will be created once the subscriptions process the queued events, improving the overall efficiency of resource handling and allowing for better scalability.
+- **Queue System for Syncing League of Legends Characters**: League of Legends view updates now send characters for updates via queues, in addition to the background task. This ensures that views can be populated faster, as characters receive individual updates immediately, instead of waiting for a scheduled or forced background task to run.
+
 ## [3.5.1] 04-11-2024
 
 ### Added
-
 - **Character Limit by Role in Views**: Introduced a new feature that limits the maximum number of characters allowed per view based on user roles.
-
 
 ## [3.5.0] 03-11-2024
 

@@ -243,7 +243,7 @@ class ViewsControllerTest {
 
             controller.getViewData("owner", basicSimpleWowView.id)
                 .onRight {
-                    assertEquals(raiderIoData, it)
+                    assertEquals(ViewData(basicSimpleWowView.name, raiderIoData), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -267,7 +267,7 @@ class ViewsControllerTest {
 
             controller.getViewData("owner", basicSimpleLolView.id)
                 .onRight {
-                    assertEquals(listOf(riotData), it)
+                    assertEquals(ViewData(basicSimpleLolView.name, listOf(riotData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -291,7 +291,7 @@ class ViewsControllerTest {
 
             controller.getViewCachedData("owner", basicSimpleWowView.id)
                 .onRight {
-                    assertEquals(listOf(raiderioCachedData), it)
+                    assertEquals(ViewData(basicSimpleWowView.name, listOf(raiderioCachedData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -307,7 +307,7 @@ class ViewsControllerTest {
 
             val controller = createController(
                 credentialsState,
-                listOf(basicSimpleWowView.copy(characterIds = listOf(2))),
+                listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
                 mapOf(Pair(Role.USER, setOf(Activities.getViewCachedData)))
@@ -315,7 +315,7 @@ class ViewsControllerTest {
 
             controller.getViewCachedData("owner", basicSimpleLolView.id)
                 .onRight {
-                    assertEquals(listOf(riotData), it)
+                    assertEquals(ViewData(basicSimpleLolView.name, listOf(riotData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }

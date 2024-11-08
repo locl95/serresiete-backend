@@ -78,8 +78,8 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         character: CharacterInsertRequest,
         game: Game
     ): Either<InsertCharacterError, Int> {
-        return when(game) {
-            Game.LOL -> when(character) {
+        return when (game) {
+            Game.LOL -> when (character) {
                 is LolCharacterEnrichedRequest -> {
                     val index = lolCharacters.indexOfFirst { it.id == id }
                     lolCharacters.removeAt(index)
@@ -95,9 +95,11 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     lolCharacters.add(index, c)
                     Either.Right(1)
                 }
+
                 else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
             }
-            Game.WOW -> when(character) {
+
+            Game.WOW -> when (character) {
                 is WowCharacterRequest -> {
                     val index = wowCharacters.indexOfFirst { it.id == id }
                     wowCharacters.removeAt(index)
@@ -110,10 +112,27 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     wowCharacters.add(index, c)
                     Either.Right(1)
                 }
+
                 else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
             }
         }
     }
+
+    override suspend fun get(request: CharacterCreateRequest, game: Game): Character? =
+        when (game) {
+            Game.WOW -> wowCharacters.find {
+                request as WowCharacterRequest
+                it.name == request.name &&
+                        it.realm == request.realm &&
+                        it.region == request.region
+            }
+
+            Game.LOL -> lolCharacters.find {
+                request as LolCharacterRequest
+                it.name == request.name &&
+                        it.tag == request.tag
+            }
+        }
 
     override suspend fun get(id: Long, game: Game): Character? =
         when (game) {
@@ -126,6 +145,13 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
             Game.WOW -> wowCharacters
             Game.LOL -> lolCharacters
         }
+
+    override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
+        return when (game) {
+            Game.WOW -> wowCharacters.find { character.same(it) }
+            Game.LOL -> lolCharacters.find { character.same(it) }
+        }
+    }
 
     override suspend fun state(): CharactersState {
         return CharactersState(wowCharacters, lolCharacters)

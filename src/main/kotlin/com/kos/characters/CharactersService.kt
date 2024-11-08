@@ -1,14 +1,9 @@
 package com.kos.characters
 
 import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.orNull
 import arrow.core.raise.either
 import com.kos.characters.repository.CharactersRepository
 import com.kos.common.*
-import com.kos.datacache.DataCache
-import com.kos.httpclients.domain.Data
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
@@ -18,10 +13,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
-import kotlinx.serialization.encodeToString
-import java.time.OffsetDateTime
 
 data class CharactersService(
     private val charactersRepository: CharactersRepository,
@@ -29,24 +20,32 @@ data class CharactersService(
     private val riotClient: RiotClient
 ) : WithLogger("CharactersService") {
     suspend fun createAndReturnIds(
-        characters: List<CharacterCreateRequest>,
+        requestedCharacters: List<CharacterCreateRequest>,
         game: Game
     ): Either<InsertCharacterError, List<Long>> {
-        fun splitExistentAndNew(
-            charactersRequest: List<CharacterCreateRequest>,
-            currentCharacters: List<Character>
-        ): List<Either<Character, CharacterCreateRequest>> {
-            return charactersRequest.fold(emptyList()) { acc, character ->
-                when (val maybeCharacter =
-                    currentCharacters.find { character.same(it) }) {
-                    null -> acc + Either.Right(character)
-                    else -> acc + Either.Left(maybeCharacter)
+        suspend fun getCurrentAndNewCharacters(
+            requestedCharacters: List<CharacterCreateRequest>,
+            game: Game,
+            charactersRepository: CharactersRepository
+        ): Pair<List<Character>, List<CharacterCreateRequest>> = coroutineScope {
+
+            val characters = requestedCharacters.asFlow()
+                .map { requestedCharacter ->
+                    async {
+                        when (val maybeFound = charactersRepository.get(requestedCharacter, game)) {
+                            null -> Either.Right(requestedCharacter)
+                            else -> Either.Left(maybeFound)
+                        }
+                    }
                 }
-            }
+                .buffer(3)
+                .toList()
+                .awaitAll()
+
+            characters.split()
         }
 
-        val currentCharacters = charactersRepository.get(game)
-        val existentAndNew = splitExistentAndNew(characters, currentCharacters).split()
+        val existentAndNew = getCurrentAndNewCharacters(requestedCharacters, game, charactersRepository)
 
         existentAndNew.second.forEach { logger.info("Character new found: $it") }
 
@@ -84,9 +83,10 @@ data class CharactersService(
                                 summonerResponse.summonerLevel
                             )
                         }.getOrNull()
-                    }.filter { characterToInsert ->
-                        !currentCharacters.any { characterToInsert.same(it) }
-                    }.toList()
+                    }
+                    .buffer(3)
+                    .filterNot { characterToInsert -> charactersRepository.get(characterToInsert, game).isDefined() }
+                    .toList()
             }
         }
 

@@ -187,6 +187,14 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         }
     }
 
+    override suspend fun get(request: CharacterCreateRequest, game: Game): Character? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun get(game: Game): List<Character> =
         newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
@@ -194,7 +202,6 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
             }
         }
-
 
     override suspend fun state(): CharactersState {
         return newSuspendedTransaction(Dispatchers.IO, db) {

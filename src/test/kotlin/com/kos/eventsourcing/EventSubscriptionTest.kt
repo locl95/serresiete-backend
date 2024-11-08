@@ -51,7 +51,6 @@ class EventSubscriptionTest {
     private val raiderIoClient = Mockito.mock(RaiderIoClient::class.java)
     private val riotClient = Mockito.mock(RiotClient::class.java)
 
-
     @Nested
     inner class BehaviorOfProcessPendingEvents {
         @Test

@@ -16,6 +16,7 @@ import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
 import com.kos.views.Game
 import com.kos.views.ViewsService
 import kotlinx.serialization.Serializable
+import org.slf4j.LoggerFactory
 import java.time.OffsetDateTime
 
 enum class SubscriptionStatus {
@@ -86,6 +87,11 @@ class EventSubscription(
     }
 
     companion object {
+        private val viewsProcessorLogger = LoggerFactory.getLogger("eventSubscription.viewsProcessor")
+        private val syncLolCharactersProcessorLogger = LoggerFactory.getLogger("eventSubscription.syncLolCharactersProcessor")
+
+
+
         suspend fun viewsProcessor(
             eventWithVersion: EventWithVersion,
             viewsService: ViewsService,
@@ -93,6 +99,7 @@ class EventSubscription(
             return when (eventWithVersion.event.eventData.eventType) {
                 EventType.VIEW_TO_BE_CREATED -> {
                     either {
+                        viewsProcessorLogger.debug("processing event v${eventWithVersion.version}")
                         val payload = eventWithVersion.event.eventData as ViewToBeCreatedEvent
                         val aggregateRoot = eventWithVersion.event.aggregateRoot
                         val operationId = eventWithVersion.event.operationId
@@ -102,6 +109,7 @@ class EventSubscription(
 
                 EventType.VIEW_TO_BE_EDITED -> {
                     either {
+                        viewsProcessorLogger.debug("processing event v${eventWithVersion.version}")
                         val payload = eventWithVersion.event.eventData as ViewToBeEditedEvent
                         val aggregateRoot = eventWithVersion.event.aggregateRoot
                         val operationId = eventWithVersion.event.operationId
@@ -111,6 +119,7 @@ class EventSubscription(
 
                 EventType.VIEW_TO_BE_PATCHED -> {
                     either {
+                        viewsProcessorLogger.debug("processing event v${eventWithVersion.version}")
                         val payload = eventWithVersion.event.eventData as ViewToBePatchedEvent
                         val aggregateRoot = eventWithVersion.event.aggregateRoot
                         val operationId = eventWithVersion.event.operationId
@@ -118,7 +127,14 @@ class EventSubscription(
                     }
                 }
 
-                else -> Either.Right(Unit)
+                else -> {
+                    viewsProcessorLogger.debug(
+                        "skipping event v{} ({})",
+                        eventWithVersion.version,
+                        eventWithVersion.event.eventData.eventType
+                    )
+                    Either.Right(Unit)
+                }
             }
         }
 
@@ -133,6 +149,7 @@ class EventSubscription(
                     val payload = eventWithVersion.event.eventData as ViewCreatedEvent
                     return when (payload.game) {
                         Game.LOL -> {
+                            syncLolCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
                             val viewCharacters = payload.characters.mapNotNull {
                                 charactersService.get(
                                     it,
@@ -144,6 +161,7 @@ class EventSubscription(
                         }
 
                         Game.WOW -> {
+                            syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
                     }
@@ -153,6 +171,7 @@ class EventSubscription(
                     val payload = eventWithVersion.event.eventData as ViewEditedEvent
                     return when (payload.game) {
                         Game.LOL -> {
+                            syncLolCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
                             val viewCharacters = payload.characters.mapNotNull {
                                 charactersService.get(
                                     it,
@@ -164,6 +183,7 @@ class EventSubscription(
                         }
 
                         Game.WOW -> {
+                            syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
                     }
@@ -173,6 +193,7 @@ class EventSubscription(
                     val payload = eventWithVersion.event.eventData as ViewPatchedEvent
                     return when (payload.game) {
                         Game.LOL -> {
+                            syncLolCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
                             payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
                                 it as List<LolCharacter>
                                 dataCacheService.cache(it, payload.game)
@@ -181,12 +202,20 @@ class EventSubscription(
                         }
 
                         Game.WOW -> {
+                            syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
                     }
                 }
 
-                else -> Either.Right(Unit)
+                else -> {
+                    syncLolCharactersProcessorLogger.debug(
+                        "skipping event v{} ({})",
+                        eventWithVersion.version,
+                        eventWithVersion.event.eventData.eventType
+                    )
+                    Either.Right(Unit)
+                }
             }
         }
     }

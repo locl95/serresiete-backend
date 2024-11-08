@@ -238,6 +238,47 @@ class EventSubscriptionTest {
                 assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
             }
         }
+
+        @Test
+        fun `processPendingEvents retries to process the events even when in FAILED state`() {
+            runBlocking {
+                val eventData = ViewToBeCreatedEvent("id", "name", true, listOf(), Game.LOL, "owner")
+                val event = Event("root", "id", eventData)
+
+                val events = (1L..10L).map { EventWithVersion(it, event) }
+
+                val eventStore = EventStoreInMemory().withState(events)
+
+                val initialSubscriptionStateTime = OffsetDateTime.now()
+                val subscriptionState = SubscriptionState(
+                    SubscriptionStatus.FAILED,
+                    version = 2,
+                    time = initialSubscriptionStateTime
+                )
+
+                val subscriptionsRepository = SubscriptionsInMemoryRepository().withState(
+                    mapOf(
+                        "testSubscription" to subscriptionState
+                    )
+                )
+
+                val subscription = EventSubscription(
+                    subscriptionName = "testSubscription",
+                    eventStore = eventStore,
+                    subscriptionsRepository = subscriptionsRepository,
+                    retryConfig = retryConfig,
+                    process = { Either.Right(Unit) }
+                )
+
+                subscription.processPendingEvents()
+
+                val finalSubscriptionState = subscriptionsRepository.getState("testSubscription")
+
+                assertEquals(SubscriptionStatus.WAITING, finalSubscriptionState?.status)
+                assertEquals(10, finalSubscriptionState?.version)
+                assertTrue(initialSubscriptionStateTime.isBefore(finalSubscriptionState?.time))
+            }
+        }
     }
 
     @Nested

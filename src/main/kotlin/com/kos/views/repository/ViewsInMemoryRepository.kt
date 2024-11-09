@@ -12,8 +12,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun get(id: String): SimpleView? = views.find { it.id == id }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
-        val id = UUID.randomUUID().toString()
+    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
         val simpleView = SimpleView(id, name, owner, true, characterIds, game)
         views.add(simpleView)
         return simpleView

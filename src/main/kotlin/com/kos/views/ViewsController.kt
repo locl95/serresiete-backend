@@ -1,11 +1,12 @@
 package com.kos.views
 
 import arrow.core.Either
-import arrow.core.flatten
 import arrow.core.raise.either
 import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.common.*
+import com.kos.credentials.CredentialsService
+import com.kos.eventsourcing.events.Operation
 import com.kos.httpclients.domain.Data
 
 class ViewsController(
@@ -82,7 +83,7 @@ class ViewsController(
         }
     }
 
-    suspend fun createView(client: String?, request: ViewRequest, activities: Set<Activity>): Either<ControllerError, SimpleView> {
+    suspend fun createView(client: String?, request: ViewRequest, activities: Set<Activity>): Either<ControllerError, Operation> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
@@ -101,7 +102,7 @@ class ViewsController(
         request: ViewRequest,
         id: String,
         activities: Set<Activity>
-    ): Either<ControllerError, ViewModified> {
+    ): Either<ControllerError, Operation> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> when (val maybeView = viewsService.get(id)) {
@@ -110,14 +111,14 @@ class ViewsController(
                     if ((maybeView.owner == client && activities.contains(Activities.editOwnView))
                         || activities.contains(Activities.editAnyView)
                     ) {
-                        viewsService.edit(maybeView.id, client, request)
+                        viewsService.edit(client, maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }
         }
     }
 
-    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String, activities: Set<Activity>): Either<ControllerError, ViewPatched> {
+    suspend fun patchView(client: String?, request: ViewPatchRequest, id: String, activities: Set<Activity>): Either<ControllerError, Operation> {
         //TODO: We can propagate view fields to those who are optional from patch, or we can keep it like this to display which fields we modified
         return when (client) {
             null -> Either.Left(NotAuthorized)
@@ -127,7 +128,7 @@ class ViewsController(
                     if ((maybeView.owner == client && activities.contains(Activities.editOwnView))
                         || activities.contains(Activities.editAnyView)
                     ) {
-                        viewsService.patch(maybeView.id, client, request)
+                        viewsService.patch(client, maybeView.id, request)
                     } else Either.Left(NotEnoughPermissions(client))
                 }
             }

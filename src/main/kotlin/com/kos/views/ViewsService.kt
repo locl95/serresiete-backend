@@ -10,6 +10,9 @@ import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
+import com.kos.eventsourcing.events.*
+import com.kos.eventsourcing.events.ViewPatchedEvent
+import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
 import com.kos.httpclients.raiderio.RaiderIoClient
@@ -21,13 +24,15 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.UUID
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
     private val charactersService: CharactersService,
     private val dataCacheService: DataCacheService,
     private val raiderIoClient: RaiderIoClient,
-    private val credentialsService: CredentialsService
+    private val credentialsService: CredentialsService,
+    private val eventStore: EventStore
 ) {
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
@@ -52,35 +57,143 @@ class ViewsService(
 
     suspend fun getSimple(id: String): SimpleView? = viewsRepository.get(id)
 
-    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, SimpleView> {
+    suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, Operation> {
         return either {
             val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
             ensure(viewsRepository.getOwnViews(owner).size < ownerMaxViews) { TooMuchViews }
             val ownerMaxCharacters = getMaxNumberOfCharactersByRole(owner).bind()
             ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
-            val characterIds = charactersService.createAndReturnIds(request.characters, request.game).bind()
-            viewsRepository.create(request.name, owner, characterIds, request.game)
+            val operationId = UUID.randomUUID().toString()
+            val aggregateRoot = "/credentials/$owner"
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewToBeCreatedEvent(
+                    operationId,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game,
+                    owner
+                )
+            )
+            eventStore.save(event)
         }
     }
 
-    suspend fun edit(id: String, client: String, request: ViewRequest): Either<ControllerError, ViewModified> {
+    suspend fun createView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBeCreatedEvent: ViewToBeCreatedEvent
+    ): Either<InsertError, Operation> {
+        return either {
+            val characterIds =
+                charactersService.createAndReturnIds(viewToBeCreatedEvent.characters, viewToBeCreatedEvent.game).bind()
+            val view = viewsRepository.create(
+                viewToBeCreatedEvent.id,
+                viewToBeCreatedEvent.name,
+                viewToBeCreatedEvent.owner,
+                characterIds,
+                viewToBeCreatedEvent.game
+            )
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewCreatedEvent.fromSimpleView(view)
+            )
+            eventStore.save(event)
+        }
+    }
+
+    suspend fun edit(client: String, id: String, request: ViewRequest): Either<ControllerError, Operation> {
         return either {
             val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
             ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
-            val characters = charactersService.createAndReturnIds(request.characters, request.game).bind()
-            viewsRepository.edit(id, request.name, request.published, characters)
+            val aggregateRoot = "/credentials/$client"
+            val event = Event(
+                aggregateRoot,
+                id,
+                ViewToBeEditedEvent(
+                    id,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game
+                )
+            )
+            eventStore.save(event)
         }
     }
 
-    suspend fun patch(id: String, client: String, request: ViewPatchRequest): Either<ControllerError, ViewPatched> {
+    suspend fun editView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBeEditedEvent: ViewToBeEditedEvent
+    ): Either<ControllerError, Operation> {
+        return either {
+            val characters =
+                charactersService.createAndReturnIds(viewToBeEditedEvent.characters, viewToBeEditedEvent.game).bind()
+            val viewModified =
+                viewsRepository.edit(
+                    viewToBeEditedEvent.id,
+                    viewToBeEditedEvent.name,
+                    viewToBeEditedEvent.published,
+                    characters
+                )
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewEditedEvent.fromViewModified(operationId, viewToBeEditedEvent.game, viewModified)
+            )
+            eventStore.save(event)
+        }
+
+    }
+
+    suspend fun patch(client: String, id: String, request: ViewPatchRequest): Either<ControllerError, Operation> {
         return either {
             val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
-
-            val charactersToInsert = request.characters?.let { charactersToInsert ->
+            request.characters?.let { charactersToInsert ->
                 ensure(charactersToInsert.size <= ownerMaxCharacters) { TooMuchCharacters }
-                charactersService.createAndReturnIds(charactersToInsert, request.game).bind()
             }
-            viewsRepository.patch(id, request.name, request.published, charactersToInsert)
+            val aggregateRoot = "/credentials/$client"
+            val event = Event(
+                aggregateRoot,
+                id,
+                ViewToBePatchedEvent(
+                    id,
+                    request.name,
+                    request.published,
+                    request.characters,
+                    request.game
+                )
+            )
+
+            eventStore.save(event)
+        }
+    }
+
+    suspend fun patchView(
+        operationId: String,
+        aggregateRoot: String,
+        viewToBePatchedEvent: ViewToBePatchedEvent
+    ): Either<InsertError, Operation> {
+        return either {
+            val charactersToInsert = viewToBePatchedEvent.characters?.let { charactersToInsert ->
+                charactersService.createAndReturnIds(charactersToInsert, viewToBePatchedEvent.game).bind()
+            }
+            val patchedView = viewsRepository.patch(
+                viewToBePatchedEvent.id,
+                viewToBePatchedEvent.name,
+                viewToBePatchedEvent.published,
+                charactersToInsert
+            )
+            val event = Event(
+                aggregateRoot,
+                operationId,
+                ViewPatchedEvent.fromViewPatched(operationId,viewToBePatchedEvent.game, patchedView)
+            )
+            eventStore.save(event)
         }
     }
 
@@ -132,22 +245,6 @@ class ViewsService(
                 }
             }
         }
-        /*
-        TODO: This will be used in the future again. We will make usage of every call to raiderio to avoid
-        TODO: needing to retrieve data for every character again if it was called in a 1h period. This will lighten
-        TODO: the scheduled task.
-        eitherJsonErrorOrData.onRight {
-            it.forEach { data ->
-                dataCacheService.insert(
-                    DataCache(
-                        data.id,
-                        json.encodeToString(data),
-                        OffsetDateTime.now()
-                    )
-                )
-            }
-        }
-        */
         eitherJsonErrorOrData
     }
 

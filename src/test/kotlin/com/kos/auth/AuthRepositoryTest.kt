@@ -18,7 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-abstract class AuthRepositoryTestCommon {
+abstract class AuthRepositoryTest {
 
     abstract val repository: AuthRepository
 
@@ -63,7 +63,7 @@ abstract class AuthRepositoryTestCommon {
     }
 }
 
-class AuthInMemoryRepositoryTest : AuthRepositoryTestCommon() {
+class AuthInMemoryRepositoryTest : AuthRepositoryTest() {
     override val repository = AuthInMemoryRepository()
 
     @BeforeEach
@@ -73,7 +73,7 @@ class AuthInMemoryRepositoryTest : AuthRepositoryTestCommon() {
 }
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AuthDatabaseRepositoryTest : AuthRepositoryTestCommon() {
+class AuthDatabaseRepositoryTest : AuthRepositoryTest() {
 
     private val embeddedPostgres = EmbeddedPostgres.start()
 

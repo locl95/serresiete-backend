@@ -6,8 +6,8 @@ import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
 import com.kos.common.*
+import com.kos.common.Retry.retryEitherWithFixedDelay
 import com.kos.datacache.repository.DataCacheRepository
-import com.kos.httpclients.HttpUtils.retryEitherWithFixedDelay
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -25,12 +25,14 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Duration
 import java.time.OffsetDateTime
 
 data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
     private val raiderIoClient: RaiderIoClient,
-    private val riotClient: RiotClient
+    private val riotClient: RiotClient,
+    private val retryConfig: RetryConfig
 ) : WithLogger("DataCacheService") {
 
     private val ttl: Long = 24
@@ -96,6 +98,7 @@ data class DataCacheService(
                 }
         }
 
+        val start = OffsetDateTime.now()
         lolCharacters.asFlow()
             .buffer(10)
             .collect { lolCharacter ->
@@ -117,6 +120,8 @@ data class DataCacheService(
         dataCollector.join()
 
         logger.info("Finished Caching Lol characters")
+        logger.debug("cached ${lolCharacters.size} characters in ${Duration.between(start, OffsetDateTime.now()).toSeconds() / 60.0} minutes")
+        logger.debug("dynamic match cache hit rate: ${matchCache.hitRate}%")
         errorsList
     }
 
@@ -137,7 +142,7 @@ data class DataCacheService(
                 }
 
             val leagues: List<LeagueEntryResponse> =
-                retryEitherWithFixedDelay(5, 1200L, "getLeagueEntriesBySummonerId") {
+                retryEitherWithFixedDelay(retryConfig, "getLeagueEntriesBySummonerId") {
                     riotClient.getLeagueEntriesBySummonerId(lolCharacter.summonerId)
                 }.bind()
 
@@ -146,7 +151,7 @@ data class DataCacheService(
                     leagues.map { leagueEntry ->
                         async {
                             val lastMatchesForLeague: List<String> =
-                                retryEitherWithFixedDelay(5, 1200L, "getMatchesByPuuid") {
+                                retryEitherWithFixedDelay(retryConfig, "getMatchesByPuuid") {
                                     riotClient.getMatchesByPuuid(lolCharacter.puuid, leagueEntry.queueType.toInt())
                                 }.bind()
 
@@ -163,7 +168,7 @@ data class DataCacheService(
 
                             val matchResponses: List<GetMatchResponse> = matchesToRequest.map { matchId ->
                                 matchCache.get(matchId) {
-                                    retryEitherWithFixedDelay(5, 1200L, "getMatchById") {
+                                    retryEitherWithFixedDelay(retryConfig, "getMatchById") {
                                         riotClient.getMatchById(matchId)
                                     }
                                 }.bind()
@@ -190,7 +195,7 @@ data class DataCacheService(
                 val errorsAndData =
                     wowCharacters.map {
                         async {
-                            retryEitherWithFixedDelay(3, 1000L, "raiderIoGet") {
+                            retryEitherWithFixedDelay(retryConfig, "raiderIoGet") {
                                 raiderIoClient.get(it).map { r -> Pair(it.id, r) }
                             }
                         }

@@ -10,10 +10,7 @@ import com.kos.characters.CharactersTestHelper.basicWowRequest2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.common.NotEnoughPermissions
-import com.kos.common.NotFound
-import com.kos.common.TooMuchViews
-import com.kos.common.getLeftOrNull
+import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
@@ -28,6 +25,8 @@ import com.kos.datacache.RiotMockHelper.riotData
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.EventType
+import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
@@ -47,11 +46,13 @@ import kotlin.test.*
 class ViewsControllerTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
     private val viewsRepository = ViewsInMemoryRepository()
     private val charactersRepository = CharactersInMemoryRepository()
     private val dataCacheRepository = DataCacheInMemoryRepository()
     private val credentialsRepository = CredentialsInMemoryRepository()
     private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
+    private val eventStore = EventStoreInMemory()
 
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
@@ -66,7 +67,7 @@ class ViewsControllerTest {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
         val viewsService = ViewsService(
@@ -74,7 +75,8 @@ class ViewsControllerTest {
             charactersService,
             dataCacheService,
             raiderIoClient,
-            credentialsService
+            credentialsService,
+            eventStore
         )
 
         return ViewsController(viewsService)
@@ -184,7 +186,8 @@ class ViewsControllerTest {
                     .getOrNull()
 
             assertTrue(res?.id?.isNotEmpty())
-            assertEquals(listOf(), res?.characterIds)
+            assertEquals("/credentials/owner", res?.aggregateRoot)
+            assertEquals(EventType.VIEW_TO_BE_CREATED, res?.type)
         }
     }
 
@@ -317,9 +320,9 @@ class ViewsControllerTest {
 
             controller.editView("owner", viewRequest, basicSimpleWowView.id, setOf(Activities.editAnyView))
                 .onRight {
-                    assertEquals(viewRequest.name, it.name)
-                    assertEquals(viewRequest.published, it.published)
-                    assertEquals(listOf(2L), it.characters)
+                    assertTrue(it.id.isNotEmpty())
+                    assertEquals("/credentials/owner", it.aggregateRoot)
+                    assertEquals(EventType.VIEW_TO_BE_EDITED, it.type)
                 }
                 .onLeft { fail(it.toStr()) }
         }

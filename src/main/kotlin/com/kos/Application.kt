@@ -10,11 +10,16 @@ import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
 import com.kos.common.JWTConfig
+import com.kos.common.RetryConfig
+import com.kos.common.launchSubscription
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
+import com.kos.eventsourcing.events.repository.EventStoreDatabase
+import com.kos.eventsourcing.subscriptions.EventSubscription
+import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
 import com.kos.plugins.*
 import com.kos.httpclients.raiderio.RaiderIoHTTPClient
 import com.kos.httpclients.riot.RiotHTTPClient
@@ -62,6 +67,8 @@ fun Application.module() {
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
 
+    val eventStore = EventStoreDatabase(db)
+
     val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
 
     val credentialsRepository = CredentialsDatabaseRepository(db)
@@ -85,8 +92,17 @@ fun Application.module() {
 
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
-    val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient, credentialsService)
+    val dataCacheRetryConfig = RetryConfig(3, 1200)
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
+    val viewsService =
+        ViewsService(
+            viewsRepository,
+            charactersService,
+            dataCacheService,
+            raiderIoHTTPClient,
+            credentialsService,
+            eventStore
+        )
     val viewsController = ViewsController(viewsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
@@ -98,6 +114,26 @@ fun Application.module() {
     val tasksController = TasksController(tasksService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
+
+    val subscriptionsRetryConfig = RetryConfig(10, 100)
+    val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
+    val viewsEventSubscription = EventSubscription(
+        "views",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.viewsProcessor(it, viewsService) }
+
+    val syncLolEventSubscription = EventSubscription(
+        "sync-lol",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncLolCharactersProcessor(it, charactersService, dataCacheService) }
+
+    launchSubscription(viewsEventSubscription)
+    launchSubscription(syncLolEventSubscription)
+
     configureAuthentication(credentialsService, jwtConfig)
     configureCors()
     configureRouting(

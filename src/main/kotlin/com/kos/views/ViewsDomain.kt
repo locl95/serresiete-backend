@@ -50,7 +50,7 @@ data class ViewRequest(
     val name: String,
     val published: Boolean,
     val characters: List<CharacterCreateRequest>,
-    val game: Game
+    val game: Game,
 )
 
 @Serializable
@@ -77,7 +77,8 @@ data class ViewModified(val viewId: String, val name: String, val published: Boo
 }
 
 @Serializable
-data class ViewPatched(val viewId: String, val name: String?, val published: Boolean?, val characters: List<Long>?) : ViewResult {
+data class ViewPatched(val viewId: String, val name: String?, val published: Boolean?, val characters: List<Long>?) :
+    ViewResult {
     override val isSuccess: Boolean = true
 }
 

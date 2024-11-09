@@ -3,6 +3,7 @@ package com.kos.characters.repository
 import arrow.core.Either
 import com.kos.characters.*
 import com.kos.common.InsertError
+import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -10,6 +11,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
+import java.time.OffsetDateTime
 
 class CharactersDatabaseRepository(private val db: Database) : CharactersRepository {
 
@@ -156,17 +158,20 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 it[summonerLevel] = character.summonerLevel
                             })
                         }
+
                         else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                     }
                 }
+
                 Game.WOW -> when (character) {
                     is WowCharacterRequest -> {
-                        Either.Right(WowCharacters.update({WowCharacters.id eq id}) {
+                        Either.Right(WowCharacters.update({ WowCharacters.id eq id }) {
                             it[name] = character.name
                             it[region] = character.region
                             it[realm] = character.realm
                         })
                     }
+
                     else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
             }
@@ -194,6 +199,25 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
             }
         }
+
+    override suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long): List<Character> {
+
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (game) {
+                Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
+                Game.LOL -> LolCharacters
+                    .leftJoin(
+                        DataCacheDatabaseRepository.DataCaches,
+                        { id },
+                        { characterId })
+                    .select {
+                        (DataCacheDatabaseRepository.DataCaches.inserted.isNull()) or (DataCacheDatabaseRepository.DataCaches.inserted lessEq OffsetDateTime.now()
+                            .minusMinutes(olderThanMinutes).toString())}
+                    .map { resultRowToLolCharacter(it) }
+                    .distinct()
+            }
+        }
+    }
 
 
     override suspend fun state(): CharactersState {

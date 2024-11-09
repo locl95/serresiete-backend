@@ -15,4 +15,5 @@ interface CharactersRepository : WithState<CharactersState, CharactersRepository
     suspend fun update(id: Long, character: CharacterInsertRequest, game: Game): Either<InsertError, Int>
     suspend fun get(id: Long, game: Game): Character?
     suspend fun get(game: Game): List<Character>
+    suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long): List<Character>
 }

@@ -90,7 +90,7 @@ data class TasksService(
 
     suspend fun cacheDataTask(game: Game, taskType: TaskType, id: String) {
         logger.info("Running $taskType")
-        val characters = charactersService.get(game)
+        val characters = charactersService.getCharactersToSync(game, 30)
         val errors = dataCacheService.cache(characters, game)
         if (errors.isEmpty()) {
             tasksRepository.insertTask(

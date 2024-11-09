@@ -26,10 +26,10 @@ class AuthController(
         }
     }
 
-    suspend fun refresh(refreshToken: String?): Either<ControllerError, Authorization?> {
-        return when (refreshToken) {
+    suspend fun refresh(userName: String?): Either<ControllerError, String?> {
+        return when (userName) {
             null -> Either.Left(NotAuthorized)
-            else -> authService.refresh(refreshToken)
+            else -> authService.refresh(userName)
         }
     }
 }

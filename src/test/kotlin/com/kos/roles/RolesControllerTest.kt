@@ -4,8 +4,6 @@ import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.activities.ActivityRequest
 import com.kos.credentials.repository.CredentialsInMemoryRepository
-import com.kos.credentials.repository.CredentialsRepositoryState
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesInMemoryRepository
 import kotlinx.coroutines.runBlocking
@@ -19,6 +17,7 @@ class RolesControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
     private val rolesRepository = RolesInMemoryRepository()
     private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
+    private val role = Role.USER
 
     private suspend fun createController(
         rolesState: List<Role>,
@@ -43,7 +42,7 @@ class RolesControllerTest {
     fun `i can get roles`() {
         runBlocking {
             val controller = createController(
-                listOf(role),
+                listOf(Role.USER),
                 mapOf(Pair(role, setOf(Activities.getAnyRoles)))
             )
             assertEquals(
@@ -62,7 +61,7 @@ class RolesControllerTest {
                 mapOf()
             )
             assertTrue(
-                controller.createRole("owner", RoleRequest("something"), setOf(Activities.createRoles)).isRight()
+                controller.createRole("owner", RoleRequest(role), setOf(Activities.createRoles)).isRight()
             )
         }
     }
@@ -105,7 +104,7 @@ class RolesControllerTest {
                 listOf(),
                 mapOf()
             )
-            assertTrue(controller.deleteActivityFromRole("owner", Activities.deleteActivityFromRole, role, setOf(Activities.deleteActivityFromRole)).isRight())
+            assertTrue(controller.deleteActivityFromRole("owner", role, Activities.deleteActivityFromRole, setOf(Activities.deleteActivityFromRole)).isRight())
         }
     }
 

@@ -9,6 +9,7 @@ import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.JWTConfig
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper
 import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
@@ -57,7 +58,7 @@ class TasksControllerTest {
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val authService = AuthService(authRepositoryWithState, credentialsService)
+        val authService = AuthService(authRepositoryWithState, credentialsService, JWTConfig("issuer", "secret"))
         val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)
 
         return TasksController(tasksService)

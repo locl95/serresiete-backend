@@ -1,105 +1,113 @@
 package com.kos.auth
 
-import arrow.core.Either
+import com.auth0.jwt.JWT
+import com.kos.activities.Activities
+import com.kos.activities.Activity
 import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.AuthTestHelper.basicRefreshAuthorization
-import com.kos.auth.AuthTestHelper.token
 import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthInMemoryRepository
+import com.kos.common.JWTConfig
 import com.kos.common.isDefined
 import com.kos.credentials.CredentialsService
+import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.credentials.repository.CredentialsRepositoryState
+import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
-import java.time.OffsetDateTime
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Nested
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class AuthServiceTest {
-    @Test
-    fun `i can validate tokens and return the username of the owner`() {
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicAuthorization))
-            val authService = AuthService(authInMemoryRepository, credentialsService)
 
-            assertTrue(authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
-                .fold({ false }) { it == basicAuthorization.userName })
+    private fun validateToken(
+        token: String,
+        expectedMode: TokenMode,
+        expectedActivities: Set<Activity>,
+        userRole: Role
+    ) {
+        val decodedToken = JWT.decode(token)
+
+        assertEquals(expectedMode, TokenMode.fromString(decodedToken.getClaim("mode").asString()))
+        assertEquals(user, decodedToken.getClaim("username").asString())
+        assertTrue(decodedToken.issuer.isDefined())
+
+        if (expectedMode == TokenMode.ACCESS) assertEquals(
+            expectedActivities,
+            decodedToken.getClaim("activities").asList(String::class.java).toSet()
+        )
+
+        when (userRole) {
+            Role.SERVICE -> assertFalse(decodedToken.expiresAtAsInstant.isDefined())
+            else -> assertTrue(decodedToken.expiresAtAsInstant.isDefined())
         }
     }
 
-    @Test
-    fun `i can validate that a refresh token can't be used when requesting an access`() {
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository = AuthInMemoryRepository().withState(listOf(basicRefreshAuthorization))
-            val authService = AuthService(authInMemoryRepository, credentialsService)
-            val validateTokenAndReturnUsername =
-                authService.validateTokenAndReturnUsername(basicRefreshAuthorization.token, isAccessRequest = true)
+    @Nested
+    inner class BehaviorOfLogin {
+        @Test
+        fun `i can generate an access and refresh token on login`() {
+            runBlocking {
+                val credentialsRepositoryState =
+                    CredentialsRepositoryState(listOf(basicCredentials), mapOf(user to listOf(Role.USER)))
+                val credentialsRepository = CredentialsInMemoryRepository().withState(credentialsRepositoryState)
+                val expectedActivities = setOf(Activities.login, Activities.getOwnView)
+                val rolesActivitiesRepository = RolesActivitiesInMemoryRepository().withState(
+                    mapOf(
+                        Role.USER to expectedActivities,
+                        Role.ADMIN to setOf(Activities.createViews)
+                    )
+                )
+                val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+                val authInMemoryRepository = AuthInMemoryRepository()
+                val authService = AuthService(authInMemoryRepository, credentialsService, JWTConfig("issuer", "secret"))
+                val loginResponse = authService.login(user)
 
-            assertTrue(validateTokenAndReturnUsername.isLeft())
+                loginResponse.onRight {
+                    val accessToken = it.accessToken
+                    val refreshToken = it.refreshToken
+
+                    assertTrue(accessToken != null)
+                    assertTrue(refreshToken != null)
+                    validateToken(accessToken, TokenMode.ACCESS, expectedActivities, Role.USER)
+                    validateToken(refreshToken, TokenMode.REFRESH, setOf(), Role.USER)
+                }.onLeft {
+                    fail(it.toString())
+                }
+            }
         }
-    }
 
-    @Test
-    fun `i can validate that any token will not work regardless of type if they expired`() {
-        val validUntil = OffsetDateTime.now().minusHours(1)
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository =
-                AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = validUntil)))
-            val authService = AuthService(authInMemoryRepository, credentialsService)
-            val userNameOrErrorAccess = authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
-            val userNameOrErrorRefresh = authService.validateTokenAndReturnUsername(token, isAccessRequest = false)
+        @Test
+        fun `i can generate an access token on login with a service account`() {
+            runBlocking {
+                val credentialsRepositoryState =
+                    CredentialsRepositoryState(listOf(basicCredentials), mapOf(user to listOf(Role.SERVICE)))
+                val credentialsRepository = CredentialsInMemoryRepository().withState(credentialsRepositoryState)
+                val expectedActivities = setOf(Activities.login, Activities.getOwnView)
+                val rolesActivitiesRepository = RolesActivitiesInMemoryRepository().withState(
+                    mapOf(
+                        Role.SERVICE to expectedActivities,
+                        Role.ADMIN to setOf(Activities.createViews)
+                    )
+                )
+                val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+                val authInMemoryRepository = AuthInMemoryRepository()
+                val authService = AuthService(authInMemoryRepository, credentialsService, JWTConfig("issuer", "secret"))
+                val loginResponse = authService.login(user)
 
-            assertEquals(userNameOrErrorAccess, Either.Left(TokenExpired(token, validUntil)))
-            assertEquals(userNameOrErrorRefresh, Either.Left(TokenWrongMode(token, isAccess = true)))
-        }
-    }
-
-    @Test
-    fun `i can validate that a persistent token works`() {
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository =
-                AuthInMemoryRepository().withState(listOf(basicAuthorization.copy(validUntil = null)))
-            val authService = AuthService(authInMemoryRepository, credentialsService)
-            val userNameOrError = authService.validateTokenAndReturnUsername(token, isAccessRequest = true)
-
-            assertEquals(userNameOrError, Either.Right(user))
-            assertEquals(1, authInMemoryRepository.state().size)
-        }
-    }
-
-    @Test
-    fun `i can validate that login creates and returns both access and refresh tokens`() {
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository = AuthInMemoryRepository()
-            val authService = AuthService(authInMemoryRepository, credentialsService)
-            val loginResponse = authService.login(user)
-
-            assertEquals(2, authInMemoryRepository.state().size)
-
-            loginResponse.onRight {
-                assertTrue(it.accessToken.isDefined())
-                assertTrue(it.refreshToken.isDefined())
-                assertTrue(authInMemoryRepository.state().contains(it.accessToken))
-                assertTrue(authInMemoryRepository.state().contains(it.refreshToken))
-            }.onLeft {
-                fail(it.toString())
+                loginResponse.onRight {
+                    val accessToken = it.accessToken
+                    assertTrue(accessToken != null)
+                    assertFalse(it.refreshToken.isDefined())
+                    validateToken(accessToken, TokenMode.ACCESS, expectedActivities, Role.SERVICE)
+                }.onLeft {
+                    fail(it.toString())
+                }
             }
         }
     }
@@ -113,28 +121,10 @@ class AuthServiceTest {
             val authInMemoryRepository = AuthInMemoryRepository().withState(
                 listOf(basicAuthorization, basicRefreshAuthorization)
             )
-            val authService = AuthService(authInMemoryRepository, credentialsService)
+            val authService = AuthService(authInMemoryRepository, credentialsService, JWTConfig("issuer", "secret"))
             val newToken = authService.refresh("refresh")
 
-            assertEquals(3, authInMemoryRepository.state().size)
-            assertTrue(newToken.isRight { it != null && it.userName == user })
-        }
-    }
-
-    @Test
-    fun `i cant create an access token with another access token`() {
-        runBlocking {
-            val credentialsRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
-            val authInMemoryRepository = AuthInMemoryRepository().withState(
-                listOf(basicAuthorization, basicRefreshAuthorization)
-            )
-            val authService = AuthService(authInMemoryRepository, credentialsService)
-            val newToken = authService.refresh(token)
-
-            assertEquals(2, authInMemoryRepository.state().size)
-            assertTrue(newToken.isLeft())
+            assertTrue(newToken.isRight { it.isDefined() })
         }
     }
 
@@ -147,7 +137,7 @@ class AuthServiceTest {
             val authInMemoryRepository = AuthInMemoryRepository().withState(
                 listOf(basicAuthorization, basicRefreshAuthorization)
             )
-            val authService = AuthService(authInMemoryRepository, credentialsService)
+            val authService = AuthService(authInMemoryRepository, credentialsService, JWTConfig("issuer", "secret"))
 
             authService.logout(basicAuthorization.userName)
             assertEquals(0, authInMemoryRepository.state().size)

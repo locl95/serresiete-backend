@@ -1,11 +1,10 @@
 package com.kos.plugins
 
-import arrow.core.Either
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.kos.activities.Activity
-import com.kos.auth.AuthService
 import com.kos.auth.TokenMode
+import com.kos.common.JWTConfig
 import com.kos.common.toCredentials
 import com.kos.credentials.CredentialsService
 import io.ktor.server.application.*
@@ -13,13 +12,9 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import java.time.OffsetDateTime
 
-data class UserWithToken(val name: String, val token: String) : Principal
 data class UserWithActivities(val name: String, val activities: Set<Activity>) : Principal
 
-private const val secretKey: String = "toalhitasWasHere" //TODO: Both in environment
-private const val issuer: String = "http://localhost:8080"
-
-fun Application.configureAuthentication(authService: AuthService, credentialsService: CredentialsService) {
+fun Application.configureAuthentication(credentialsService: CredentialsService, jwtConfig: JWTConfig) {
     install(Authentication) {
         basic("auth-basic") {
             validate { credentials ->
@@ -28,49 +23,12 @@ fun Application.configureAuthentication(authService: AuthService, credentialsSer
             }
         }
 
-        bearer("auth-bearer") {
-            authenticate {
-                when (val eitherOwnerOrError = authService.validateTokenAndReturnUsername(
-                    it.token,
-                    isAccessRequest = true
-                )) { //TODO: validateTokenAndReturnActivities
-                    is Either.Right -> UserIdPrincipal(eitherOwnerOrError.value)
-                    else -> null
-                }
-            }
-        }
-
-        bearer("auth-bearer-jwt") {
-            authenticate {
-                when (val eitherOwnerOrError = authService.validateTokenAndReturnUsernameWithActivities(
-                    it.token,
-                    isAccessRequest = true
-                )) { //TODO: validateTokenAndReturnActivities
-                    is Either.Right -> UserWithActivities(
-                        eitherOwnerOrError.value.first,
-                        eitherOwnerOrError.value.second
-                    )
-
-                    else -> null
-                }
-            }
-        }
-
-        bearer("auth-bearer-refresh") {
-            authenticate {
-                when (val eitherOwnerOrError =
-                    authService.validateTokenAndReturnUsername(it.token, isAccessRequest = false)) {
-                    is Either.Right -> UserWithToken(eitherOwnerOrError.value, it.token)
-                    else -> null
-                }
-            }
-        }
-
         jwt("auth-jwt") {
             verifier(
-                JWT.require(Algorithm.HMAC256(secretKey))
-                    .withIssuer(issuer)
+                JWT.require(Algorithm.HMAC256(jwtConfig.secret))
+                    .withIssuer(jwtConfig.issuer) //TODO: Check issuer is valid
                     .withClaimPresence("username")
+                    .withClaimPresence("mode")
                     .withClaimPresence("activities")
                     .build()
             )
@@ -78,16 +36,34 @@ fun Application.configureAuthentication(authService: AuthService, credentialsSer
             validate { token ->
                 //TODO: Would be nice to provide why validation went wrong
                 if (TokenMode.fromString(token.payload.getClaim("mode").asString()) != TokenMode.ACCESS) null
-                //TODO: What happens with persistent tokens? How will we generate persistent tokens for services?
-                //TODO: WE CANT MERGE WITHOUT SOLVING THIS ISSUE!!!!!!
-                else if (token.payload.expiresAtAsInstant.isBefore(OffsetDateTime.now().toInstant())) null
+                //TODO: Maybe check that expiresAtAsInstant can only be null if user has service role
+                else if (token.payload.expiresAtAsInstant != null && token.payload.expiresAtAsInstant.isBefore(OffsetDateTime.now().toInstant())) null
                 else {
                     val username = token.payload.getClaim("username").asString()
                     val activities = token.payload.getClaim("activities").asList(String::class.java).toSet()
                     UserWithActivities(username, activities)
                 }
             }
+        }
 
+        jwt("auth-jwt-refresh") {
+            verifier(
+                JWT.require(Algorithm.HMAC256(jwtConfig.secret))
+                    .withIssuer(jwtConfig.issuer)
+                    .withClaimPresence("username")
+                    .withClaimPresence("mode")
+                    .build()
+            )
+
+            validate { token ->
+                //TODO: Would be nice to provide why validation went wrong
+                if (TokenMode.fromString(token.payload.getClaim("mode").asString()) != TokenMode.REFRESH) null
+                else if (token.payload.expiresAtAsInstant.isBefore(OffsetDateTime.now().toInstant())) null
+                else {
+                    val username = token.payload.getClaim("username").asString()
+                    UserIdPrincipal(username)
+                }
+            }
         }
     }
 }

@@ -77,7 +77,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return when(game) {
             Game.LOL -> when(character) {
                 is LolCharacterEnrichedRequest -> {
@@ -95,7 +95,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     lolCharacters.add(index, c)
                     Either.Right(1)
                 }
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
             Game.WOW -> when(character) {
                 is WowCharacterRequest -> {
@@ -110,7 +110,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     wowCharacters.add(index, c)
                     Either.Right(1)
                 }
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
         }
     }

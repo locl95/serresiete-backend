@@ -33,29 +33,11 @@ data class Authorization(
     val isAccess: Boolean
 )
 
-fun Authorization.isRefresh() = !isAccess
-
 @Serializable
 data class LoginResponse(
-    val accessToken: Authorization?,
-    val refreshToken: Authorization?
+    val accessToken: String?,
+    val refreshToken: String?
 )
-
-interface TokenError : AuthError {
-    val token: String
-}
-
-data class TokenNotFound(override val token: String) : TokenError {
-    override val message: String = "$token not found"
-}
-
-data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError {
-    override val message: String = "$token expired"
-}
-
-data class TokenWrongMode(override val token: String, val isAccess: Boolean) : TokenError {
-    override val message: String = "$token wrong mode"
-}
 
 data class JWTCreationError(override val message: String) : AuthError
 

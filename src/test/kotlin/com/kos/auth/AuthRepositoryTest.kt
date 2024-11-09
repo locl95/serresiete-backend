@@ -6,16 +6,14 @@ import com.kos.auth.AuthTestHelper.user
 import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.auth.repository.AuthInMemoryRepository
 import com.kos.auth.repository.AuthRepository
-import com.kos.common.DatabaseFactory
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
-import org.junit.Assert.assertTrue
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -59,8 +57,6 @@ abstract class AuthRepositoryTestCommon {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(basicAuthorization))
             val insertToken = repositoryWithState.insertToken("differentUser", token, isAccess = false)
-            (insertToken)
-            (repositoryWithState.state().toString())
             assertTrue(insertToken.isLeft())
             assertTrue(repositoryWithState.state().size == 1)
         }

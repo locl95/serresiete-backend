@@ -2,7 +2,6 @@ package com.kos.auth
 
 import com.kos.common.respondWithHandledError
 import com.kos.plugins.UserWithActivities
-import com.kos.plugins.UserWithToken
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -34,9 +33,9 @@ fun Route.authRouting(
             }
         }
         route("/refresh") {
-            authenticate("auth-bearer-refresh") {
+            authenticate("auth-jwt-refresh") {
                 post {
-                    authController.refresh(call.principal<UserWithToken>()?.token).fold({
+                    authController.refresh(call.principal<UserIdPrincipal>()?.name).fold({
                         call.respondWithHandledError(it)
                     }, {
                         when (it) {

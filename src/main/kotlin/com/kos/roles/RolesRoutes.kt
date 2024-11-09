@@ -66,13 +66,13 @@ fun Route.rolesRouting(
                         }
                     }
                     route("/{activity}") {
-                        authenticate("auth-bearer") {
+                        authenticate("auth-jwt") {
                             delete {
                                 val userWithActivities = call.principal<UserWithActivities>()
                                 rolesController.deleteActivityFromRole(
                                     userWithActivities?.name,
-                                    call.parameters["role"].orEmpty(),
                                     Role.fromString(call.parameters["role"].orEmpty()),
+                                    call.parameters["activity"].orEmpty(),
                                     userWithActivities?.activities.orEmpty()
                                 ).fold({
                                     call.respondWithHandledError(it)

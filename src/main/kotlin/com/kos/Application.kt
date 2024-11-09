@@ -9,6 +9,7 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.common.JWTConfig
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
@@ -47,6 +48,12 @@ fun main() {
 fun Application.module() {
     val riotApiKey = System.getenv("RIOT_API_KEY")
 
+
+    val jwtConfig = JWTConfig(
+        System.getenv("JWT_ISSUER"),
+        System.getenv("JWT_SECRET")
+    )
+
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     val db = DatabaseFactory.pooledDatabase()
@@ -62,7 +69,7 @@ fun Application.module() {
     val credentialsController = CredentialsController(credentialsService)
 
     val authRepository = AuthDatabaseRepository(db)
-    val authService = AuthService(authRepository, credentialsService)
+    val authService = AuthService(authRepository, credentialsService, jwtConfig)
     val authController = AuthController(authService)
 
     val activitiesRepository = ActivitiesDatabaseRepository(db)
@@ -91,7 +98,7 @@ fun Application.module() {
     val tasksController = TasksController(tasksService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
-    configureAuthentication(authService, credentialsService)
+    configureAuthentication(credentialsService, jwtConfig)
     configureCors()
     configureRouting(
         activitiesController,

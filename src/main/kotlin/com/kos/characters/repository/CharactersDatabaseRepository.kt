@@ -141,7 +141,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.LOL -> {
@@ -156,7 +156,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 it[summonerLevel] = character.summonerLevel
                             })
                         }
-                        else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                        else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                     }
                 }
                 Game.WOW -> when (character) {
@@ -167,7 +167,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             it[realm] = character.realm
                         })
                     }
-                    else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                    else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
             }
         }

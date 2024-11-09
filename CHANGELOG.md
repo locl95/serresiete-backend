@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.0.1] 10-11-2024
+### Changed
+- **League of Legends Background Sync**: Now league of legend background sync is optimized and only syncs characters that have not been synced by any other source.
+
 ## [4.0.0] 09-11-2024
 ### Added
 - **Event Sourcing Implementation**: Introduced a major architecture change with event sourcing for resource management. Previously, creating large views was not sustainable, as it required waiting for external systems to respond before proceeding. Now, when a user creates a view, an operation is queued, and an operation ID is returned, which will be used to track the status of the requested action over the resource.

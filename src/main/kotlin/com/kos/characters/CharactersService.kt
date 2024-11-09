@@ -156,4 +156,5 @@ data class CharactersService(
 
     suspend fun get(id: Long, game: Game): Character? = charactersRepository.get(id, game)
     suspend fun get(game: Game): List<Character> = charactersRepository.get(game)
+    suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long) = charactersRepository.getCharactersToSync(game, olderThanMinutes)
 }

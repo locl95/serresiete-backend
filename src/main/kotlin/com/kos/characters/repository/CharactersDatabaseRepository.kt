@@ -2,7 +2,7 @@ package com.kos.characters.repository
 
 import arrow.core.Either
 import com.kos.characters.*
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
 import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -78,7 +78,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
     override suspend fun insert(
         characters: List<CharacterInsertRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Character>> {
+    ): Either<InsertError, List<Character>> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val charsToInsert: List<Character> = characters.map {
                 when (it) {
@@ -128,10 +128,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 } catch (e: IllegalArgumentException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 }
             }
         }
@@ -141,7 +141,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.LOL -> {
@@ -156,7 +156,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 it[summonerLevel] = character.summonerLevel
                             })
                         }
-                        else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                        else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                     }
                 }
                 Game.WOW -> when (character) {
@@ -167,7 +167,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             it[realm] = character.realm
                         })
                     }
-                    else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                    else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
             }
         }

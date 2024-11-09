@@ -2,20 +2,22 @@ package com.kos.auth
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.assertFalse
+import com.kos.assertTrue
+import com.kos.auth.AuthTestHelper.basicAuthorization
 import com.kos.auth.repository.AuthInMemoryRepository
+import com.kos.common.JWTConfig
+import com.kos.common.isDefined
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
+import com.kos.views.ViewsTestHelper.owner
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import com.kos.assertTrue
-import com.kos.auth.AuthTestHelper.basicAuthorization
-import kotlin.test.assertEquals
 
 class AuthControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
@@ -31,9 +33,9 @@ class AuthControllerTest {
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
         val authRepositoryWithState = authRepository.withState(authState)
 
-        val authService = AuthService(authRepositoryWithState)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
-        return AuthController(authService, credentialsService)
+        val authService = AuthService(authRepositoryWithState, credentialsService, JWTConfig("issuer", "secret"))
+        return AuthController(authService)
     }
 
 
@@ -58,29 +60,21 @@ class AuthControllerTest {
                 listOf()
             )
             val res = controller.login("owner").getOrNull()
-            assertTrue(res?.accessToken?.isAccess)
-            assertFalse(res?.refreshToken?.isAccess)
-            assertTrue(res?.accessToken?.userName == "owner")
-            assertTrue(res?.refreshToken?.userName == "owner")
-            assertTrue(res?.accessToken?.token?.isNotEmpty())
-            assertTrue(res?.refreshToken?.token?.isNotEmpty())
+
+            assertTrue(res?.accessToken?.isNotEmpty())
+            assertTrue(res?.refreshToken?.isNotEmpty())
         }
     }
 
     @Test
     fun `i can logout`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
-
             val controller = createController(
-                credentialsState,
-                mapOf(Pair(Role.USER, setOf(Activities.logout))),
+                emptyCredentialsState,
+                mapOf(),
                 listOf(basicAuthorization.copy(userName = "owner"))
             )
-            assertTrue(controller.logout("owner").getOrNull())
+            assertTrue(controller.logout("owner", setOf(Activities.logout)).getOrNull())
         }
     }
 
@@ -98,10 +92,8 @@ class AuthControllerTest {
                 listOf(basicAuthorization.copy(userName = "owner").copy(isAccess = false))
             )
 
-            val res = controller.refresh(basicAuthorization.token).getOrNull()
-            assertTrue(res?.isAccess)
-            assertEquals("owner", res?.userName)
-            assertTrue(res?.token?.isNotEmpty())
+            val res = controller.refresh(owner).getOrNull()
+            assertTrue(res.isDefined())
         }
     }
 

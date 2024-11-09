@@ -3,7 +3,7 @@ package com.kos.characters.repository
 import arrow.core.Either
 import com.kos.characters.*
 import com.kos.common.InMemoryRepository
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
 import com.kos.views.Game
 
 class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
@@ -19,7 +19,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     override suspend fun insert(
         characters: List<CharacterInsertRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Character>> {
+    ): Either<InsertError, List<Character>> {
         val wowInitialCharacters = this.wowCharacters.toList()
         val lolInitialCharacters = this.lolCharacters.toList()
         when (game) {
@@ -30,7 +30,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                             if (this.wowCharacters.any { character -> it.same(character) }) {
                                 this.wowCharacters.clear()
                                 this.wowCharacters.addAll(wowInitialCharacters)
-                                return Either.Left(InsertCharacterError("Error inserting character $it"))
+                                return Either.Left(InsertError("Error inserting character $it"))
                             }
                             val character = it.toCharacter(nextId())
                             this.wowCharacters.add(character)
@@ -40,7 +40,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         is LolCharacterEnrichedRequest -> {
                             this.wowCharacters.clear()
                             this.wowCharacters.addAll(wowInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting character $it"))
+                            return Either.Left(InsertError("Error inserting character $it"))
                         }
                     }
                 }
@@ -53,14 +53,14 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         is WowCharacterRequest -> {
                             this.lolCharacters.clear()
                             this.lolCharacters.addAll(lolInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                            return Either.Left(InsertError("Error inserting chracter $it"))
                         }
 
                         is LolCharacterEnrichedRequest -> {
                             if (this.lolCharacters.any { character -> it.same(character) }) {
                                 this.lolCharacters.clear()
                                 this.lolCharacters.addAll(lolInitialCharacters)
-                                return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                                return Either.Left(InsertError("Error inserting chracter $it"))
                             }
                             val character = it.toCharacter(nextId())
                             this.lolCharacters.add(character)
@@ -77,7 +77,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return when(game) {
             Game.LOL -> when(character) {
                 is LolCharacterEnrichedRequest -> {
@@ -95,7 +95,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     lolCharacters.add(index, c)
                     Either.Right(1)
                 }
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
             Game.WOW -> when(character) {
                 is WowCharacterRequest -> {
@@ -110,7 +110,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     wowCharacters.add(index, c)
                     Either.Right(1)
                 }
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
         }
     }

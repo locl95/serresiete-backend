@@ -9,6 +9,7 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.common.JWTConfig
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
@@ -47,6 +48,12 @@ fun main() {
 fun Application.module() {
     val riotApiKey = System.getenv("RIOT_API_KEY")
 
+
+    val jwtConfig = JWTConfig(
+        System.getenv("JWT_ISSUER"),
+        System.getenv("JWT_SECRET")
+    )
+
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     val db = DatabaseFactory.pooledDatabase()
@@ -62,8 +69,8 @@ fun Application.module() {
     val credentialsController = CredentialsController(credentialsService)
 
     val authRepository = AuthDatabaseRepository(db)
-    val authService = AuthService(authRepository)
-    val authController = AuthController(authService, credentialsService)
+    val authService = AuthService(authRepository, credentialsService, jwtConfig)
+    val authController = AuthController(authService)
 
     val activitiesRepository = ActivitiesDatabaseRepository(db)
     val activitiesService = ActivitiesService(activitiesRepository)
@@ -71,7 +78,7 @@ fun Application.module() {
 
     val rolesRepository = RolesDatabaseRepository(db)
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
-    val rolesController = RolesController(rolesService, credentialsService)
+    val rolesController = RolesController(rolesService)
 
     val charactersRepository = CharactersDatabaseRepository(db)
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
@@ -80,7 +87,7 @@ fun Application.module() {
     val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
     val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient, credentialsService)
-    val viewsController = ViewsController(viewsService, credentialsService)
+    val viewsController = ViewsController(viewsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     val tasksRepository = TasksDatabaseRepository(db)
@@ -88,10 +95,10 @@ fun Application.module() {
         TasksService(tasksRepository, dataCacheService, charactersService, authService)
     val tasksLauncher =
         TasksLauncher(tasksService, tasksRepository, executorService, authService, dataCacheService, coroutineScope)
-    val tasksController = TasksController(tasksService, credentialsService)
+    val tasksController = TasksController(tasksService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
-    configureAuthentication(authService, credentialsService)
+    configureAuthentication(credentialsService, jwtConfig)
     configureCors()
     configureRouting(
         activitiesController,

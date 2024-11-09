@@ -6,6 +6,10 @@ import arrow.core.getOrElse
 import arrow.core.orNull
 import arrow.core.raise.either
 import com.kos.characters.repository.CharactersRepository
+import com.kos.common.InsertError
+import com.kos.common.WithLogger
+import com.kos.common.collect
+import com.kos.common.split
 import com.kos.common.*
 import com.kos.datacache.DataCache
 import com.kos.httpclients.domain.Data
@@ -31,7 +35,7 @@ data class CharactersService(
     suspend fun createAndReturnIds(
         characters: List<CharacterCreateRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Long>> {
+    ): Either<InsertError, List<Long>> {
         fun splitExistentAndNew(
             charactersRequest: List<CharacterCreateRequest>,
             currentCharacters: List<Character>

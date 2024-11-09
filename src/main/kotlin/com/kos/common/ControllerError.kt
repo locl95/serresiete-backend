@@ -9,8 +9,8 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
 
-interface ControllerError
-class NotAuthorized : ControllerError
+sealed interface ControllerError
+data object NotAuthorized : ControllerError
 data class NotEnoughPermissions(val user: String) : ControllerError
 data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
@@ -43,7 +43,11 @@ data object TooMuchCharacters : ViewsError
 data object UserWithoutRoles : ViewsError
 
 interface DatabaseError : ControllerError
-data class InsertCharacterError(val message: String) : DatabaseError
+data class InsertError(val message: String) : DatabaseError
+
+interface AuthError: ControllerError {
+    val message: String
+}
 
 suspend fun ApplicationCall.respondLogging(error: String) {
     val logger = LoggerFactory.getLogger("ktor.application")
@@ -62,7 +66,11 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is BadRequest -> respond(BadRequest, error.problem)
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
-        is InsertCharacterError -> respondLogging(error.message)
-        is InvalidQueryParameter -> respond(BadRequest, error.message)
+        is InvalidQueryParameter -> respond(HttpStatusCode.BadRequest, error.message)
+        is InsertError -> respondLogging(error.message)
+        is AuthError -> respond(HttpStatusCode.Unauthorized, error.message)
+        is DatabaseError -> respondLogging(error.toString()) //TODO: improve
+        is HttpError -> TODO()
+        is ViewsError -> TODO()
     }
 }

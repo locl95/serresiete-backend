@@ -15,7 +15,7 @@ object HttpUtils : WithLogger("retry") {
             is Either.Right -> res
             is Either.Left ->
                 if (retries > 0) {
-                    logger.info("Retries left $retries for $functionName")
+                    logger.info("Retries left $retries for $functionName because ${res.value}")
                     delay(delayTime)
                     retryEitherWithFixedDelay(retries - 1, delayTime, functionName, block)
                 } else res

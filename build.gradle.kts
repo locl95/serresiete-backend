@@ -97,6 +97,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("io.ktor:ktor-server-auth:$ktor_version")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
     implementation("io.github.resilience4j:resilience4j-kotlin:${resilience4j_version}")
     implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")

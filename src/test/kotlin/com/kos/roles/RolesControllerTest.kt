@@ -3,10 +3,7 @@ package com.kos.roles
 import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.activities.ActivityRequest
-import com.kos.credentials.CredentialsService
-import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.repository.CredentialsInMemoryRepository
-import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesInMemoryRepository
 import kotlinx.coroutines.runBlocking
@@ -20,19 +17,17 @@ class RolesControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
     private val rolesRepository = RolesInMemoryRepository()
     private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
+    private val role = Role.USER
 
     private suspend fun createController(
-        credentialsState: CredentialsRepositoryState,
         rolesState: List<Role>,
         rolesActivitiesState: Map<Role, Set<Activity>>
     ): RolesController {
         val rolesRepositoryWithState = rolesRepository.withState(rolesState)
-        val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
         val rolesService = RolesService(rolesRepositoryWithState, rolesActivitiesRepositoryWithState)
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
-        return RolesController(rolesService, credentialsService)
+        return RolesController(rolesService)
     }
 
 
@@ -46,19 +41,13 @@ class RolesControllerTest {
     @Test
     fun `i can get roles`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
-
             val controller = createController(
-                credentialsState,
                 listOf(Role.USER),
-                mapOf(Pair(Role.USER, setOf(Activities.getAnyRoles)))
+                mapOf(Pair(role, setOf(Activities.getAnyRoles)))
             )
             assertEquals(
-                listOf(Role.USER),
-                controller.getRoles("owner").getOrNull()
+                listOf(role),
+                controller.getRoles("owner", setOf(Activities.getAnyRoles)).getOrNull()
             )
         }
     }
@@ -66,70 +55,56 @@ class RolesControllerTest {
     @Test
     fun `i can create roles`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
 
             val controller = createController(
-                credentialsState,
-                listOf(Role.USER),
-                mapOf(Pair(Role.USER, setOf(Activities.createRoles)))
+                listOf(),
+                mapOf()
             )
-            assertTrue(controller.createRole("owner", RoleRequest(Role.ADMIN)).isRight())
+            assertTrue(
+                controller.createRole("owner", RoleRequest(role), setOf(Activities.createRoles)).isRight()
+            )
         }
     }
 
     @Test
     fun `i can delete roles`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
-
             val controller = createController(
-                credentialsState,
-                listOf(Role.USER),
-                mapOf(Pair(Role.USER, setOf(Activities.deleteRoles)))
+                listOf(role),
+                mapOf(Pair(role, setOf(Activities.deleteRoles)))
             )
-            assertTrue(controller.deleteRole("owner", Role.USER).isRight())
+            assertTrue(controller.deleteRole("owner", role, setOf(Activities.deleteRoles)).isRight())
         }
     }
 
     @Test
     fun `i can add activity to role`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
 
             val controller = createController(
-                credentialsState,
-                listOf(Role.USER),
-                mapOf(Pair(Role.USER, setOf(Activities.addActivityToRole)))
+                listOf(),
+                mapOf()
             )
-            assertTrue(controller.addActivityToRole("owner", ActivityRequest("something"), Role.USER).isRight())
+            assertTrue(
+                controller.addActivityToRole(
+                    "owner",
+                    ActivityRequest("something"),
+                    role,
+                    setOf(Activities.addActivityToRole)
+                ).isRight()
+            )
         }
     }
 
     @Test
     fun `i can remove activity from role`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
 
             val controller = createController(
-                credentialsState,
-                listOf(Role.USER),
-                mapOf(Pair(Role.USER, setOf(Activities.deleteActivityFromRole)))
+                listOf(),
+                mapOf()
             )
-            assertTrue(
-                controller.deleteActivityFromRole("owner", Role.USER, Activities.deleteActivityFromRole).isRight()
-            )
+            assertTrue(controller.deleteActivityFromRole("owner", role, Activities.deleteActivityFromRole, setOf(Activities.deleteActivityFromRole)).isRight())
         }
     }
 

@@ -1,48 +1,93 @@
 package com.kos.auth
 
 import arrow.core.Either
+import arrow.core.raise.either
+import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTCreator
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTCreationException
+import com.kos.activities.Activity
 import com.kos.auth.repository.AuthRepository
+import com.kos.common.ControllerError
+import com.kos.common.JWTConfig
+import com.kos.credentials.CredentialsService
+import com.kos.roles.Role
 import java.time.OffsetDateTime
 
-class AuthService(private val authRepository: AuthRepository) {
-    suspend fun login(userName: String): LoginResponse {
-        val refreshToken = authRepository.insertToken(userName, isAccess = false)
-        val accessToken = authRepository.insertToken(userName, isAccess = true)
-        return LoginResponse(accessToken, refreshToken)
+class AuthService(
+    private val authRepository: AuthRepository,
+    private val credentialsService: CredentialsService,
+    private val jwtConfig: JWTConfig
+) {
+
+    suspend fun login(userName: String): Either<ControllerError, LoginResponse> {
+
+        return if (credentialsService.getUserRoles(userName).contains(Role.SERVICE)) {
+            either {
+                LoginResponse(generateServiceToken(userName).bind(), null)
+            }
+        } else {
+            either {
+                val refreshToken = generateUserToken(userName, TokenMode.REFRESH).bind()
+                authRepository.insertToken(userName, refreshToken, isAccess = false).bind()
+                LoginResponse(
+                    generateUserToken(userName, TokenMode.ACCESS).bind(),
+                    refreshToken
+                )
+            }
+        }
     }
 
     suspend fun logout(user: String) = authRepository.deleteTokensFromUser(user)
-    suspend fun validateTokenAndReturnUsername(token: String, isAccessRequest: Boolean): Either<TokenError, String> =
-        when (val maybeAuthorization = authRepository.getAuthorization(token)) {
-            null -> Either.Left(TokenNotFound(token))
-            else -> {
-                if (isAccessRequest && maybeAuthorization.isRefresh()) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = false))
-                else if (!isAccessRequest && maybeAuthorization.isAccess) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = true))
-                else {
-                    maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                        Either.Left(TokenExpired(maybeAuthorization.token, it))
-                    } ?: Either.Right(maybeAuthorization.userName)
-                }
-            }
-        }
 
-
-
-    suspend fun refresh(refreshToken: String): Either<TokenError, Authorization?> {
-        return when (val maybeAuthorization = authRepository.getAuthorization(refreshToken)) {
-            null -> Either.Left(TokenNotFound(refreshToken))
-            else -> {
-                if (maybeAuthorization.isAccess) Either.Left(TokenWrongMode(maybeAuthorization.token, isAccess = true))
-                else {
-                    maybeAuthorization.validUntil?.takeIf { it.isBefore(OffsetDateTime.now()) }?.let {
-                        Either.Left(TokenExpired(maybeAuthorization.token, it))
-                    } ?: Either.Right(authRepository.insertToken(maybeAuthorization.userName, isAccess = true))
-                }
-            }
-        }
+    suspend fun refresh(userName: String): Either<ControllerError, String?> {
+        return generateToken(userName, TokenMode.ACCESS, expirationMinutes = 15)
     }
 
     suspend fun deleteExpiredTokens(): Int {
         return authRepository.deleteExpiredTokens()
+    }
+
+    private suspend fun generateToken(
+        userName: String,
+        tokenMode: TokenMode,
+        expirationMinutes: Long? = null
+    ): Either<JWTCreationError, String> {
+        return try {
+            val now = OffsetDateTime.now()
+            val jwtBuilder: JWTCreator.Builder = JWT.create()
+                .withClaim("username", userName)
+                .withClaim("mode", tokenMode.toString())
+                .withIssuer(jwtConfig.issuer)
+                .withIssuedAt(now.toInstant())
+
+            if (tokenMode == TokenMode.ACCESS) {
+                val userActivities: List<Activity> = credentialsService.getUserRoles(userName)
+                    .flatMap { credentialsService.getRoleActivities(it) }
+                jwtBuilder.withClaim("activities", userActivities)
+            }
+
+            if (expirationMinutes != null) jwtBuilder.withExpiresAt(now.plusMinutes(expirationMinutes).toInstant())
+
+            val token =
+                jwtBuilder.sign(Algorithm.HMAC256(jwtConfig.secret)) // TODO: Consider using a stronger encryption algorithm
+            Either.Right(token)
+
+        } catch (e: IllegalArgumentException) {
+            Either.Left(JWTCreationError(e.message ?: e.stackTraceToString()))
+        } catch (e: JWTCreationException) {
+            Either.Left(JWTCreationError(e.message ?: e.stackTraceToString()))
+        }
+    }
+
+    private suspend fun generateUserToken(userName: String, tokenMode: TokenMode): Either<JWTCreationError, String> {
+        return when (tokenMode) {
+            TokenMode.ACCESS -> generateToken(userName, tokenMode, expirationMinutes = 15)
+            TokenMode.REFRESH -> generateToken(userName, tokenMode, expirationMinutes = 30 * 24 * 60)
+        }
+    }
+
+    private suspend fun generateServiceToken(userName: String): Either<JWTCreationError, String> {
+        return generateToken(userName, TokenMode.ACCESS, expirationMinutes = null)
     }
 }

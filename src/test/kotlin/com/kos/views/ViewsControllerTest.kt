@@ -274,6 +274,10 @@ class ViewsControllerTest {
     @Test
     fun `i can get lol cached data`() {
         runBlocking {
+            val credentialsState = CredentialsRepositoryState(
+                listOf(basicCredentials.copy(userName = "owner")),
+                mapOf(Pair("owner", listOf(Role.USER)))
+            )
 
             val controller = createController(
                 credentialsState,
@@ -294,9 +298,13 @@ class ViewsControllerTest {
     @Test
     fun `i can edit wow data`() {
         runBlocking {
+            val credentialsState = CredentialsRepositoryState(
+                listOf(basicCredentials.copy(userName = "owner")),
+                mapOf(Pair("owner", listOf(Role.USER)))
+            )
 
             val controller = createController(
-                emptyCredentialsState,
+                credentialsState,
                 listOf(basicSimpleWowView),
                 CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
                 listOf(lolDataCache),

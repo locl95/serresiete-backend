@@ -47,8 +47,7 @@ data class TasksService(
                     OffsetDateTime.now()
                 )
             )
-        }
-        else {
+        } else {
             tasksRepository.insertTask(
                 Task(
                     id,
@@ -91,13 +90,14 @@ data class TasksService(
     suspend fun cacheDataTask(game: Game, taskType: TaskType, id: String) {
         logger.info("Running $taskType")
         val characters = charactersService.getCharactersToSync(game, 30)
+        logger.debug("characters to be synced: {}", characters.map { it.id }.joinToString(","))
         val errors = dataCacheService.cache(characters, game)
         if (errors.isEmpty()) {
             tasksRepository.insertTask(
                 Task(
                     id,
                     taskType,
-                    TaskStatus(Status.SUCCESSFUL, null),
+                    TaskStatus(Status.SUCCESSFUL, "characters synced: ${characters.map { it.id }.joinToString { "," }}"),
                     OffsetDateTime.now()
                 )
             )

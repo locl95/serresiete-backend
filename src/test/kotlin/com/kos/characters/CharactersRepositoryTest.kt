@@ -294,6 +294,28 @@ abstract class CharactersRepositoryTestCommon {
         }
     }
 
+    @Test
+    fun `get characters to sync should return no characters if they have been cached recently even if they have an old cached record`() {
+        runBlocking {
+            val repoWithState = repository.withState(
+                CharactersState(
+                    listOf(),
+                    listOf(basicLolCharacter)
+                )
+            )
+
+            dataCacheRepository.withState(
+                listOf(
+                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31)),
+                    DataCache(1, "", OffsetDateTime.now())
+                )
+            )
+            val res = repoWithState.getCharactersToSync(Game.LOL, 30)
+
+            assertEquals(listOf(), res.map { it.id })
+        }
+    }
+
 
 }
 

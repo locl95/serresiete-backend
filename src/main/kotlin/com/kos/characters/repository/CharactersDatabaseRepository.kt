@@ -205,16 +205,24 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
-                Game.LOL -> LolCharacters
-                    .leftJoin(
-                        DataCacheDatabaseRepository.DataCaches,
-                        { id },
-                        { characterId })
-                    .select {
-                        (DataCacheDatabaseRepository.DataCaches.inserted.isNull()) or (DataCacheDatabaseRepository.DataCaches.inserted lessEq OffsetDateTime.now()
-                            .minusMinutes(olderThanMinutes).toString())}
-                    .map { resultRowToLolCharacter(it) }
-                    .distinct()
+                Game.LOL -> {
+                    val subQuery = DataCacheDatabaseRepository.DataCaches
+                        .slice(DataCacheDatabaseRepository.DataCaches.characterId, DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted"))
+                        .selectAll()
+                        .groupBy(DataCacheDatabaseRepository.DataCaches.characterId)
+
+                    val subQueryAliased = subQuery.alias("dc")
+
+                    val thirtyMinutesAgo = OffsetDateTime.now().minusMinutes(olderThanMinutes).toString()
+                    LolCharacters
+                        .leftJoin(subQueryAliased, { id }, { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
+                        .select {
+                            // Filtering where max_inserted is NULL or more than 30 minutes ago
+                            (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted].isNull()) or
+                                    (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted] lessEq thirtyMinutesAgo)
+                        }
+                        .map { resultRowToLolCharacter(it) }
+                }
             }
         }
     }

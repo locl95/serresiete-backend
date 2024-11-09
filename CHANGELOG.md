@@ -1,10 +1,16 @@
 # Changelog
-## [4.0.0] 09-11-2024
 
+## [4.0.0] 09-11-2024
 ### Added
 - **Event Sourcing Implementation**: Introduced a major architecture change with event sourcing for resource management. Previously, creating large views was not sustainable, as it required waiting for external systems to respond before proceeding. Now, when a user creates a view, an operation is queued, and an operation ID is returned, which will be used to track the status of the requested action over the resource.
 - **View Creation Process**: Views will be created once the subscriptions process the queued events, improving the overall efficiency of resource handling and allowing for better scalability.
 - **Queue System for Syncing League of Legends Characters**: League of Legends view updates now send characters for updates via queues, in addition to the background task. This ensures that views can be populated faster, as characters receive individual updates immediately, instead of waiting for a scheduled or forced background task to run.
+
+### Changed
+- **JWT-Based Authentication System**: Replaced the existing token system with JSON Web Tokens (JWT) to enhance authentication efficiency and reduce database load.
+    - **Self-Contained Permissions**: Permissions are now embedded directly within the JWT, removing the need to query the database for permission checks on each request.
+    - **Improved Performance**: This change significantly improves response times for authenticated requests by reducing dependency on database lookups for role-based access validation.
+    - **Security Enhancements**: JWTs are securely signed, ensuring token authenticity and integrity without frequent database validation.
 
 ## [3.5.1] 04-11-2024
 

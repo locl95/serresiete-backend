@@ -85,7 +85,7 @@ class ViewsService(
         operationId: String,
         aggregateRoot: String,
         viewToBeCreatedEvent: ViewToBeCreatedEvent
-    ): Either<InsertCharacterError, Operation> {
+    ): Either<InsertError, Operation> {
         return either {
             val characterIds =
                 charactersService.createAndReturnIds(viewToBeCreatedEvent.characters, viewToBeCreatedEvent.game).bind()
@@ -177,7 +177,7 @@ class ViewsService(
         operationId: String,
         aggregateRoot: String,
         viewToBePatchedEvent: ViewToBePatchedEvent
-    ): Either<InsertCharacterError, Operation> {
+    ): Either<InsertError, Operation> {
         return either {
             val charactersToInsert = viewToBePatchedEvent.characters?.let { charactersToInsert ->
                 charactersService.createAndReturnIds(charactersToInsert, viewToBePatchedEvent.game).bind()

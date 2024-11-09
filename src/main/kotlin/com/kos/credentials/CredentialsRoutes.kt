@@ -1,6 +1,7 @@
 package com.kos.credentials
 
 import com.kos.common.respondWithHandledError
+import com.kos.plugins.UserWithActivities
 import com.kos.roles.Role
 import com.kos.roles.RoleRequest
 import io.ktor.http.*
@@ -12,40 +13,32 @@ import io.ktor.server.routing.*
 
 fun Route.credentialsRouting(credentialsController: CredentialsController) {
     route("/credentials") {
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             post {
-                credentialsController.createCredential(call.principal<UserIdPrincipal>()?.name, call.receive()).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                credentialsController.createCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.Created)
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             put {
-                credentialsController.editCredential(call.principal<UserIdPrincipal>()?.name, call.receive()).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                credentialsController.editCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.NoContent)
                 })
             }
         }
-        authenticate("auth-bearer") {
-            delete("/{user}") {
-                credentialsController.deleteCredential(
-                    call.principal<UserIdPrincipal>()?.name,
-                    call.parameters["user"].orEmpty()
-                ).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.NoContent)
-                })
-            }
-        }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get {
+                val userWithActivities = call.principal<UserWithActivities>()
                 credentialsController.getCredentials(
-                    call.principal<UserIdPrincipal>()?.name,
+                    userWithActivities?.name,
+                    userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
@@ -54,11 +47,27 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
             }
         }
         route("/{user}") {
+            authenticate("auth-jwt") {
+                delete {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.deleteCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
+                }
+            }
             route("/roles") {
-                authenticate("auth-bearer") {
+                authenticate("auth-jwt") {
                     get {
+                        val userWithActivities = call.principal<UserWithActivities>()
                         credentialsController.getUserRoles(
-                            call.principal<UserIdPrincipal>()?.name,
+                            userWithActivities?.name,
+                            userWithActivities?.activities.orEmpty(),
                             call.parameters["user"].orEmpty()
                         ).fold({
                             call.respondWithHandledError(it)
@@ -67,10 +76,12 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                         })
                     }
                 }
-                authenticate("auth-bearer") {
+                authenticate("auth-jwt") {
                     post {
+                        val userWithActivities = call.principal<UserWithActivities>()
                         credentialsController.addRoleToUser(
-                            call.principal<UserIdPrincipal>()?.name,
+                            userWithActivities?.name,
+                            userWithActivities?.activities.orEmpty(),
                             call.parameters["user"].orEmpty(),
                             call.receive<RoleRequest>().role
                         ).fold({
@@ -80,10 +91,12 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                         })
                     }
                 }
-                authenticate("auth-bearer") {
+                authenticate("auth-jwt") {
                     delete("/{role}") {
+                        val userWithActivities = call.principal<UserWithActivities>()
                         credentialsController.deleteRoleFromUser(
-                            call.principal<UserIdPrincipal>()?.name,
+                            userWithActivities?.name,
+                            userWithActivities?.activities.orEmpty(),
                             call.parameters["user"].orEmpty(),
                             Role.fromString(call.parameters["role"].orEmpty())
                         ).fold({

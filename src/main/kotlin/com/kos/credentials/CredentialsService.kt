@@ -24,12 +24,6 @@ class CredentialsService(
         credentialsRepository.getCredentials(credentials.userName)
             ?.takeIf { BCrypt.checkpw(credentials.password, it.password) }.isDefined()
 
-    suspend fun hasPermissions(user: String, requiredActivity: String): Boolean {
-        val roles = credentialsRepository.getUserRoles(user)
-        val activities = roles.flatMap { rolesActivitiesRepository.getActivitiesFromRole(it) }.toSet()
-        return activities.contains(requiredActivity)
-    }
-
 
     suspend fun editCredentials(credentials: Credentials) {
         credentialsRepository.editCredentials(

@@ -1,6 +1,7 @@
 package com.kos.views
 
 import com.kos.common.respondWithHandledError
+import com.kos.plugins.UserWithActivities
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -13,27 +14,38 @@ fun Route.viewsRouting(
     viewsController: ViewsController
 ) {
     route("/views") {
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get {
-                viewsController.getViews(call.principal<UserIdPrincipal>()?.name).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.getViews(userWithActivities?.name, userWithActivities?.activities.orEmpty()).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get("/{id}") {
-                viewsController.getView(call.principal<UserIdPrincipal>()?.name, call.parameters["id"].orEmpty()).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.getView(
+                    userWithActivities?.name,
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
+                ).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get("/{id}/data") {
-                viewsController.getViewData(call.principal<UserIdPrincipal>()?.name, call.parameters["id"].orEmpty())
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.getViewData(
+                    userWithActivities?.name,
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
+                )
                     .fold({
                         call.respondWithHandledError(it)
                     }, {
@@ -41,11 +53,13 @@ fun Route.viewsRouting(
                     })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             get("/{id}/cached-data") {
+                val userWithActivities = call.principal<UserWithActivities>()
                 viewsController.getViewCachedData(
-                    call.principal<UserIdPrincipal>()?.name,
-                    call.parameters["id"].orEmpty()
+                    userWithActivities?.name,
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
@@ -53,21 +67,28 @@ fun Route.viewsRouting(
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             post {
-                viewsController.createView(call.principal<UserIdPrincipal>()?.name, call.receive()).fold({
+                val userWithActivities = call.principal<UserWithActivities>()
+                viewsController.createView(
+                    userWithActivities?.name,
+                    call.receive(),
+                    userWithActivities?.activities.orEmpty()
+                ).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             put("/{id}") {
+                val userWithActivities = call.principal<UserWithActivities>()
                 viewsController.editView(
-                    call.principal<UserIdPrincipal>()?.name,
+                    userWithActivities?.name,
                     call.receive(),
-                    call.parameters["id"].orEmpty()
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
@@ -75,12 +96,14 @@ fun Route.viewsRouting(
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             patch("/{id}") {
+                val userWithActivities = call.principal<UserWithActivities>()
                 viewsController.patchView(
-                    call.principal<UserIdPrincipal>()?.name,
+                    userWithActivities?.name,
                     call.receive(),
-                    call.parameters["id"].orEmpty()
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
@@ -88,11 +111,13 @@ fun Route.viewsRouting(
                 })
             }
         }
-        authenticate("auth-bearer") {
+        authenticate("auth-jwt") {
             delete("/{id}") {
+                val userWithActivities = call.principal<UserWithActivities>()
                 viewsController.deleteView(
-                    call.principal<UserIdPrincipal>()?.name,
-                    call.parameters["id"].orEmpty()
+                    userWithActivities?.name,
+                    call.parameters["id"].orEmpty(),
+                    userWithActivities?.activities.orEmpty()
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {

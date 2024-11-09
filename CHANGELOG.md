@@ -1,4 +1,13 @@
 # Changelog
+## [4.0.0] 09-11-2024
+
+### Changed
+
+- **JWT-Based Authentication System**: Replaced the existing token system with JSON Web Tokens (JWT) to enhance authentication efficiency and reduce database load.
+    - **Self-Contained Permissions**: Permissions are now embedded directly within the JWT, removing the need to query the database for permission checks on each request.
+    - **Improved Performance**: This change significantly improves response times for authenticated requests by reducing dependency on database lookups for role-based access validation.
+    - **Security Enhancements**: JWTs are securely signed, ensuring token authenticity and integrity without frequent database validation.
+
 ## [3.5.1] 04-11-2024
 
 ### Added

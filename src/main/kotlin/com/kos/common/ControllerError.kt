@@ -1,6 +1,10 @@
 package com.kos.common
 
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.Forbidden
+import io.ktor.http.HttpStatusCode.Companion.NotFound
+import io.ktor.http.HttpStatusCode.Companion.Unauthorized
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
@@ -12,7 +16,7 @@ data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
 class InvalidQueryParameter(param: String, value: String, allowed: List<String>?) : ControllerError {
     private val baseMessage = "invalid query param[$param]: $value"
-    val message: String = allowed._fold({baseMessage},{"$baseMessage\nallowed values: $it"})
+    val message: String = allowed._fold({ baseMessage }, { "$baseMessage\nallowed values: $it" })
 }
 
 class InvalidTaskType(val type: String)
@@ -35,6 +39,7 @@ data class RaiderIoError(
 interface ViewsError : ControllerError
 class NotPublished(val id: String) : ViewsError
 data object TooMuchViews : ViewsError
+data object TooMuchCharacters : ViewsError
 data object UserWithoutRoles : ViewsError
 
 interface DatabaseError : ControllerError
@@ -52,12 +57,13 @@ suspend fun ApplicationCall.respondLogging(error: String) {
 
 suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
     when (error) {
-        is NotFound -> respond(HttpStatusCode.NotFound, error.id)
-        is NotAuthorized -> respond(HttpStatusCode.Unauthorized)
-        is NotEnoughPermissions -> respond(HttpStatusCode.Forbidden)
-        is NotPublished -> respond(HttpStatusCode.BadRequest, "view not published")
-        is TooMuchViews -> respond(HttpStatusCode.BadRequest, "too much views")
-        is BadRequest -> respond(HttpStatusCode.BadRequest, error.problem)
+        is NotFound -> respond(NotFound, error.id)
+        is NotAuthorized -> respond(Unauthorized)
+        is NotEnoughPermissions -> respond(Forbidden)
+        is NotPublished -> respond(BadRequest, "view not published")
+        is TooMuchViews -> respond(BadRequest, "too much views")
+        is TooMuchCharacters -> respond(BadRequest, "too many characters in a view")
+        is BadRequest -> respond(BadRequest, error.problem)
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
         is InvalidQueryParameter -> respond(HttpStatusCode.BadRequest, error.message)

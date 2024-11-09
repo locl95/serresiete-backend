@@ -34,6 +34,7 @@ object TestHelper {
         "summonerIcon": 1389,
         "summonerLevel": 499,
         "summonerName": "GTP ZeroMVPs",
+        "summonerTag": "KAKO",
         "leagues": {
             "RANKED_SOLO_5x5": {
                 "mainRole": "SUPPORT",
@@ -143,6 +144,7 @@ object TestHelper {
           "leagues": {},
           "summonerIcon": 3582,
           "summonerName": "sanxei",
+          "summonerTag": "EUW",
           "summonerLevel": 367
         }
     """
@@ -152,6 +154,7 @@ object TestHelper {
             "summonerIcon": 1,
             "summonerLevel": 30,
             "summonerName": "TestSummoner",
+            "summonerTag": "TAG",
             "leagues": {
                 "RANKED_FLEX_SR": {
                     "mainRole": "MainRole",

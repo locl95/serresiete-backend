@@ -69,7 +69,13 @@ class ViewsControllerTest {
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
-        val viewsService = ViewsService(viewsRepositoryWithState, charactersService, dataCacheService, raiderIoClient, credentialsService)
+        val viewsService = ViewsService(
+            viewsRepositoryWithState,
+            charactersService,
+            dataCacheService,
+            raiderIoClient,
+            credentialsService
+        )
 
         return ViewsController(viewsService)
     }
@@ -220,7 +226,7 @@ class ViewsControllerTest {
 
             controller.getViewData("owner", basicSimpleWowView.id, setOf(Activities.getViewData))
                 .onRight {
-                    assertEquals(raiderIoData, it)
+                    assertEquals(ViewData(basicSimpleWowView.name, raiderIoData), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -239,7 +245,7 @@ class ViewsControllerTest {
 
             controller.getViewData("owner", basicSimpleLolView.id, setOf(Activities.getViewData))
                 .onRight {
-                    assertEquals(listOf(riotData), it)
+                    assertEquals(ViewData(basicSimpleLolView.name, listOf(riotData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -259,7 +265,7 @@ class ViewsControllerTest {
 
             controller.getViewCachedData("owner", basicSimpleWowView.id, setOf(Activities.getViewCachedData))
                 .onRight {
-                    assertEquals(listOf(raiderioCachedData), it)
+                    assertEquals(ViewData(basicSimpleWowView.name, listOf(raiderioCachedData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }
@@ -270,8 +276,8 @@ class ViewsControllerTest {
         runBlocking {
 
             val controller = createController(
-                emptyCredentialsState,
-                listOf(basicSimpleWowView.copy(characterIds = listOf(2))),
+                credentialsState,
+                listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache),
                 mapOf()
@@ -279,7 +285,7 @@ class ViewsControllerTest {
 
             controller.getViewCachedData("owner", basicSimpleLolView.id, setOf(Activities.getViewCachedData))
                 .onRight {
-                    assertEquals(listOf(riotData), it)
+                    assertEquals(ViewData(basicSimpleLolView.name, listOf(riotData)), it)
                 }
                 .onLeft { fail(it.toStr()) }
         }

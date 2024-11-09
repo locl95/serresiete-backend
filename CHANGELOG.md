@@ -1,4 +1,10 @@
 # Changelog
+## [3.5.1] 04-11-2024
+
+### Added
+
+- **Character Limit by Role in Views**: Introduced a new feature that limits the maximum number of characters allowed per view based on user roles.
+
 
 ## [3.5.0] 03-11-2024
 
@@ -6,6 +12,8 @@
 - Introduced a daily update for League characters to refresh summoner details, including summoner icon, summoner level, Riot name, and Riot tag every 24 hours.
 - Optimized further the League Character's Sync by allowing the reuse of match data across multiple players in the same synchronization batch, leveraging dynamic programming to minimize calls. While this may not drastically increase capacity, it significantly improves efficiency in the synchronization process.
 
+### Changed
+- Updated the `getData` and `getCachedData` endpoints to include the `viewName` in the response. This change may break integration with existing frontends expecting the previous response format.
 
 ## [3.4.1] 01-11-2024
 

@@ -13,6 +13,8 @@ import com.kos.datacache.DataCacheService
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
 import com.kos.httpclients.raiderio.RaiderIoClient
+import com.kos.views.Game.LOL
+import com.kos.views.Game.WOW
 import com.kos.views.repository.ViewsRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -53,27 +55,32 @@ class ViewsService(
     suspend fun create(owner: String, request: ViewRequest): Either<ControllerError, SimpleView> {
         return either {
             val ownerMaxViews = getMaxNumberOfViewsByRole(owner).bind()
-            ensure (viewsRepository.getOwnViews(owner).size < ownerMaxViews)  { TooMuchViews }
+            ensure(viewsRepository.getOwnViews(owner).size < ownerMaxViews) { TooMuchViews }
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(owner).bind()
+            ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
             val characterIds = charactersService.createAndReturnIds(request.characters, request.game).bind()
             viewsRepository.create(request.name, owner, characterIds, request.game)
         }
     }
 
-    suspend fun edit(id: String, request: ViewRequest): Either<ControllerError, ViewModified> {
-        val characters = charactersService.createAndReturnIds(request.characters, request.game)
-        return characters.map { viewsRepository.edit(id, request.name, request.published, it) }
+    suspend fun edit(id: String, client: String, request: ViewRequest): Either<ControllerError, ViewModified> {
+        return either {
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
+            ensure(request.characters.size <= ownerMaxCharacters) { TooMuchCharacters }
+            val characters = charactersService.createAndReturnIds(request.characters, request.game).bind()
+            viewsRepository.edit(id, request.name, request.published, characters)
+        }
     }
 
-    suspend fun patch(id: String, request: ViewPatchRequest): Either<ControllerError, ViewPatched> {
-        return when (val characters: Either<InsertError, List<Long>>? = request.characters.fold({ null },
-            { charactersRequest ->
-                charactersService.createAndReturnIds(
-                    charactersRequest,
-                    request.game
-                )
-            })) {
-            null -> Either.Right(viewsRepository.patch(id, request.name, request.published, null))
-            else -> characters.map { viewsRepository.patch(id, request.name, request.published, it) }
+    suspend fun patch(id: String, client: String, request: ViewPatchRequest): Either<ControllerError, ViewPatched> {
+        return either {
+            val ownerMaxCharacters = getMaxNumberOfCharactersByRole(client).bind()
+
+            val charactersToInsert = request.characters?.let { charactersToInsert ->
+                ensure(charactersToInsert.size <= ownerMaxCharacters) { TooMuchCharacters }
+                charactersService.createAndReturnIds(charactersToInsert, request.game).bind()
+            }
+            viewsRepository.patch(id, request.name, request.published, charactersToInsert)
         }
     }
 
@@ -83,8 +90,8 @@ class ViewsService(
 
     suspend fun getData(view: View): Either<HttpError, List<Data>> {
         return when (view.game) {
-            Game.WOW -> getWowData(view)
-            Game.LOL -> getLolData(view)
+            WOW -> getWowData(view)
+            LOL -> getLolData(view)
         }
     }
 
@@ -151,5 +158,12 @@ class ViewsService(
         when (val maxNumberOfViews = credentialsService.getUserRoles(owner).maxOfOrNull { it.maxNumberOfViews }) {
             null -> Either.Left(UserWithoutRoles)
             else -> Either.Right(maxNumberOfViews)
+        }
+
+    private suspend fun getMaxNumberOfCharactersByRole(owner: String): Either<UserWithoutRoles, Int> =
+        when (val maxNumberOfCharacters =
+            credentialsService.getUserRoles(owner).maxOfOrNull { it.maxNumberOfCharacters }) {
+            null -> Either.Left(UserWithoutRoles)
+            else -> Either.Right(maxNumberOfCharacters)
         }
 }

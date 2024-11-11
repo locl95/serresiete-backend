@@ -40,8 +40,11 @@ class AuthService(
 
     suspend fun logout(user: String) = authRepository.deleteTokensFromUser(user)
 
-    suspend fun refresh(userName: String): Either<ControllerError, String?> {
-        return generateToken(userName, TokenMode.ACCESS, expirationMinutes = 15)
+    suspend fun refresh(userName: String): Either<ControllerError, LoginResponse?> {
+        return either {
+            LoginResponse(generateToken(userName, TokenMode.ACCESS, expirationMinutes = 15).bind(), null)
+        }
+
     }
 
     suspend fun deleteExpiredTokens(): Int {

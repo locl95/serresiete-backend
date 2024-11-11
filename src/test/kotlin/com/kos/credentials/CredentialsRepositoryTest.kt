@@ -34,9 +34,19 @@ abstract class CredentialsRepositoryTest {
     open fun `given an empty repository i can insert credentials`() {
         runBlocking {
             assertTrue(repository.state().users.isEmpty())
-            repository.insertCredentials(encryptedCredentials)
+            repository.insertCredentials(encryptedCredentials.userName, encryptedCredentials.password)
             assertTrue(repository.state().users.size == 1)
             assertTrue(repository.state().users.all { it.userName == user && it.password == encryptedCredentials.password })
+        }
+    }
+
+    @Test
+    open fun `given an empty repository i can batch insert roles to a credential`() {
+        runBlocking {
+            assertTrue(repository.state().users.isEmpty())
+            repository.insertRoles(user, setOf(Role.USER, Role.ADMIN, Role.SERVICE))
+            assertEquals(3, repository.state().credentialsRoles[user]?.size)
+            assertEquals(listOf(Role.USER, Role.ADMIN, Role.SERVICE), repository.state().credentialsRoles[user])
         }
     }
 

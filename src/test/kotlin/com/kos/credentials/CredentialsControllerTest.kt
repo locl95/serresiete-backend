@@ -7,6 +7,9 @@ import com.kos.common.getLeftOrNull
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRoles
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
+import com.kos.credentials.CredentialsTestHelper.password
+import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
@@ -59,17 +62,18 @@ class CredentialsControllerTest {
     @Test
     fun `i can create credentials`() {
         runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf()
-            )
-
             val controller = createController(
-                credentialsState,
+                emptyCredentialsState,
                 mapOf()
             )
 
-            assertTrue(controller.createCredential("owner", setOf(Activities.createCredentials), basicCredentials).isRight())
+            assertTrue(
+                controller.createCredential(
+                    "owner",
+                    setOf(Activities.createCredentials),
+                    CreateCredentialsRequest(user, password, setOf())
+                ).isRight()
+            )
         }
     }
 
@@ -86,7 +90,13 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            assertTrue(controller.editCredential("owner", setOf(Activities.editCredentials), basicCredentials.copy(password = "password")).isRight())
+            assertTrue(
+                controller.editCredential(
+                    "owner",
+                    setOf(Activities.editCredentials),
+                    basicCredentials.copy(password = "password")
+                ).isRight()
+            )
         }
     }
 
@@ -120,10 +130,22 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            assertEquals(listOf(Role.ADMIN), controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles),"owner").getOrNull())
-            assertEquals(listOf(Role.USER), controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles), "someone").getOrNull())
-            assertEquals(listOf(Role.USER), controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles),"someone").getOrNull())
-            assertEquals(NotEnoughPermissions("someone"), controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles),"owner").getLeftOrNull())
+            assertEquals(
+                listOf(Role.ADMIN),
+                controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles), "owner").getOrNull()
+            )
+            assertEquals(
+                listOf(Role.USER),
+                controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles), "someone").getOrNull()
+            )
+            assertEquals(
+                listOf(Role.USER),
+                controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles), "someone").getOrNull()
+            )
+            assertEquals(
+                NotEnoughPermissions("someone"),
+                controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles), "owner").getLeftOrNull()
+            )
         }
     }
 
@@ -140,7 +162,9 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            assertTrue(controller.addRoleToUser("owner", setOf(Activities.addRoleToUser), "owner", Role.ADMIN).isRight())
+            assertTrue(
+                controller.addRoleToUser("owner", setOf(Activities.addRoleToUser), "owner", Role.ADMIN).isRight()
+            )
         }
     }
 
@@ -157,7 +181,10 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            assertTrue(controller.deleteRoleFromUser("owner", setOf(Activities.deleteRoleFromUser), "owner", Role.USER).isRight())
+            assertTrue(
+                controller.deleteRoleFromUser("owner", setOf(Activities.deleteRoleFromUser), "owner", Role.USER)
+                    .isRight()
+            )
         }
     }
 

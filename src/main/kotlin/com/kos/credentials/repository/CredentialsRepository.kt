@@ -7,10 +7,11 @@ import com.kos.roles.Role
 interface CredentialsRepository : WithState<CredentialsRepositoryState, CredentialsRepository> {
     suspend fun getCredentials(): List<Credentials>
     suspend fun getCredentials(userName: String): Credentials?
-    suspend fun insertCredentials(credentials: Credentials)
+    suspend fun insertCredentials(userName: String, password: String)
     suspend fun editCredentials(userName: String, newPassword: String)
     suspend fun getUserRoles(userName: String): List<Role>
     suspend fun insertRole(userName: String, role: Role)
+    suspend fun insertRoles(userName: String, roles: Set<Role>)
     suspend fun deleteRole(userName: String, role: Role)
     suspend fun deleteCredentials(user: String)
 }

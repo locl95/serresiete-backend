@@ -15,8 +15,8 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         return users.find { it.userName == userName }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials) {
-        users.add(credentials)
+    override suspend fun insertCredentials(userName: String, password: String) {
+        users.add(Credentials(userName, password))
     }
 
     override suspend fun editCredentials(userName: String, newPassword: String) {
@@ -29,6 +29,10 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
 
     override suspend fun insertRole(userName: String, role: Role) {
         userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + role }
+    }
+
+    override suspend fun insertRoles(userName: String, roles: Set<Role>) {
+        userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + roles }
     }
 
     override suspend fun deleteRole(userName: String, role: Role) {

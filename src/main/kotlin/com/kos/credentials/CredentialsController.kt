@@ -13,15 +13,13 @@ class CredentialsController(val credentialsService: CredentialsService) {
     suspend fun createCredential(
         client: String?,
         activities: Set<Activity>,
-        credentials: Credentials
+        request: CreateCredentialsRequest,
     ): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
                 if (activities.contains(Activities.createCredentials)) Either.Right(
-                    credentialsService.createCredentials(
-                        credentials
-                    )
+                    credentialsService.createCredentials(request)
                 )
                 else Either.Left(NotEnoughPermissions(client))
             }

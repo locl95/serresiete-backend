@@ -47,11 +47,11 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials) {
+    override suspend fun insertCredentials(userName: String, password: String) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Users.insert {
-                it[userName] = credentials.userName
-                it[password] = credentials.password
+                it[Users.userName] = userName
+                it[Users.password] = password
             }
         }
     }
@@ -88,6 +88,15 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
             CredentialsRoles.insert {
                 it[CredentialsRoles.userName] = userName
                 it[CredentialsRoles.role] = role.toString()
+            }
+        }
+    }
+
+    override suspend fun insertRoles(userName: String, roles: Set<Role>) {
+        newSuspendedTransaction(Dispatchers.IO, db) {
+            CredentialsRoles.batchInsert(roles) {
+                this[CredentialsRoles.userName] = userName
+                this[CredentialsRoles.role] = it.toString()
             }
         }
     }

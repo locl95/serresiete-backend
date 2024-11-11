@@ -10,15 +10,16 @@ class CredentialsService(
     private val credentialsRepository: CredentialsRepository,
     private val rolesActivitiesRepository: RolesActivitiesRepository
 ) {
-    suspend fun createCredentials(credentials: Credentials): Unit =
+    suspend fun createCredentials(createCredentialsRequest: CreateCredentialsRequest): Unit {
         credentialsRepository.insertCredentials(
-            credentials.copy(
-                password = BCrypt.hashpw(
-                    credentials.password,
-                    BCrypt.gensalt(12)
-                )
+            createCredentialsRequest.userName,
+            password = BCrypt.hashpw(
+                createCredentialsRequest.password,
+                BCrypt.gensalt(12)
             )
         )
+        credentialsRepository.insertRoles(createCredentialsRequest.userName, createCredentialsRequest.roles)
+    }
 
     suspend fun validateCredentials(credentials: Credentials): Boolean =
         credentialsRepository.getCredentials(credentials.userName)

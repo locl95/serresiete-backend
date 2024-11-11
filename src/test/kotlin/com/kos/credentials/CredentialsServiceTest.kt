@@ -6,6 +6,7 @@ import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRoles
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
 import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
+import com.kos.credentials.CredentialsTestHelper.password
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.roles.Role
@@ -37,7 +38,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.createCredentials(basicCredentials)
+            credentialsService.createCredentials(CreateCredentialsRequest(user, password, setOf()))
             assertEquals(credentialsInMemoryRepository.state().users.map { it.userName }, listOf(user))
         }
     }

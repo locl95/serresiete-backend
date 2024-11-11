@@ -1,14 +1,24 @@
 package com.kos.tasks.repository
 
-import com.kos.common.DatabaseFactory.dbQuery
+import com.kos.common.fold
+import com.kos.common.getOrThrow
 import com.kos.tasks.Task
+import com.kos.tasks.TaskStatus
 import com.kos.tasks.TaskType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.OffsetDateTime
-import java.util.*
 
-class TasksDatabaseRepository : TasksRepository {
+class TasksDatabaseRepository(private val db: Database) : TasksRepository {
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
+
     object Tasks : Table() {
         val id = text("id")
         val type = text("type")
@@ -20,53 +30,66 @@ class TasksDatabaseRepository : TasksRepository {
 
     private fun resultRowToTask(row: ResultRow) = Task(
         row[Tasks.id],
-        TaskType.fromString(row[Tasks.type]),
-        row[Tasks.taskStatus],
+        TaskType.fromString(row[Tasks.type])
+            .getOrThrow(IllegalArgumentException("Unknown task: ${row[Tasks.type]}")), //TODO: Are we hapy with this?
+        json.decodeFromString(row[Tasks.taskStatus]),
         OffsetDateTime.parse(row[Tasks.inserted])
     )
 
     override suspend fun insertTask(task: Task) {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.insert {
                 it[id] = task.id
                 it[type] = task.type.toString()
-                it[taskStatus] = task.taskStatus
+                it[taskStatus] = json.encodeToString(task.taskStatus)
                 it[inserted] = task.inserted.toString()
             }
         }
     }
 
-    override suspend fun get(): List<Task> {
-        return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
+    override suspend fun getTasks(taskType: TaskType?): List<Task> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            val baseQuery = Tasks.selectAll()
+            val filteredQuery = taskType.fold(
+                { baseQuery },
+                { baseQuery.adjustWhere { Tasks.type eq it.toString() } }
+            )
+
+            filteredQuery.map { resultRowToTask(it) }
+        }
     }
 
-    override suspend fun get(id: String): Task? {
-        return dbQuery { Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull() }
+    override suspend fun getTask(id: String): Task? {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            Tasks.select { Tasks.id.eq(id) }.map { resultRowToTask(it) }.singleOrNull()
+        }
     }
 
     override suspend fun deleteOldTasks(olderThanDays: Long): Int {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.deleteWhere { inserted.less(OffsetDateTime.now().minusDays(olderThanDays).toString()) }
         }
     }
 
     override suspend fun getLastExecution(taskType: TaskType): Task? {
-        return dbQuery {
-            Tasks.select { Tasks.type.eq(taskType.toString()) }.orderBy(Tasks.inserted, SortOrder.DESC).limit(1)
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            Tasks.select { Tasks.type.eq(taskType.toString()) }
+                .orderBy(Tasks.inserted, SortOrder.DESC)
+                .limit(1)
                 .map { resultRowToTask(it) }.firstOrNull()
         }
     }
 
     override suspend fun state(): List<Task> {
-        return dbQuery { Tasks.selectAll().map { resultRowToTask(it) } }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Tasks.selectAll().map { resultRowToTask(it) } }
     }
 
     override suspend fun withState(initialState: List<Task>): TasksRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Tasks.batchInsert(initialState) {
                 this[Tasks.id] = it.id
                 this[Tasks.type] = it.type.toString()
-                this[Tasks.taskStatus] = it.taskStatus
+                this[Tasks.taskStatus] = json.encodeToString(it.taskStatus)
                 this[Tasks.inserted] = it.inserted.toString()
             }
         }

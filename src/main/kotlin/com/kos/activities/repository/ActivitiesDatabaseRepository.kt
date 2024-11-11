@@ -1,11 +1,12 @@
 package com.kos.activities.repository
 
 import com.kos.activities.Activity
-import com.kos.common.DatabaseFactory
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-class ActivitiesDatabaseRepository : ActivitiesRepository {
+class ActivitiesDatabaseRepository(private val db: Database) : ActivitiesRepository {
 
     object Activities : Table("activities") {
         val activity = varchar("activity", 256)
@@ -15,30 +16,30 @@ class ActivitiesDatabaseRepository : ActivitiesRepository {
 
     private fun resultRowToActivity(row: ResultRow): Activity = row[Activities.activity]
 
-    override suspend fun getActivities(): List<Activity> {
-        return DatabaseFactory.dbQuery {
-            Activities.selectAll().map { resultRowToActivity(it) }
+    override suspend fun getActivities(): Set<Activity> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            Activities.selectAll().map { resultRowToActivity(it) }.toSet()
         }
     }
 
     override suspend fun insertActivity(activity: Activity) {
-        DatabaseFactory.dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Activities.insert { it[Activities.activity] = activity }
         }
     }
 
     override suspend fun deleteActivity(activity: Activity) {
-        DatabaseFactory.dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Activities.deleteWhere { Activities.activity.eq(activity) }
         }
     }
 
-    override suspend fun state(): List<Activity> {
+    override suspend fun state(): Set<Activity> {
         return getActivities()
     }
 
-    override suspend fun withState(initialState: List<Activity>): ActivitiesRepository {
-        DatabaseFactory.dbQuery {
+    override suspend fun withState(initialState: Set<Activity>): ActivitiesRepository {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Activities.batchInsert(initialState) {
                 this[Activities.activity] = it
             }

@@ -3,14 +3,14 @@ package com.kos.credentials
 import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
+import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRoles
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
 import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.roles.Role
 import com.kos.roles.RolesTestHelper.basicRolesActivities
-import com.kos.roles.RolesTestHelper.role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
-import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -43,20 +43,6 @@ class CredentialsServiceTest {
     }
 
     @Test
-    fun `i can check permissions`() {
-        runBlocking {
-            val credentialsInMemoryRepository =
-                CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository().withState(basicRolesActivities)
-            val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
-
-            assertTrue(credentialsService.hasPermissions(user, basicActivity))
-            assertFalse(credentialsService.hasPermissions(user, "badActivity"))
-        }
-    }
-
-    @Test
     fun `i can edit credentials`() {
         runBlocking {
             val credentialsInMemoryRepository =
@@ -80,7 +66,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            assertEquals(credentialsService.getUserRoles(user), listOf(role))
+            assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
         }
     }
 
@@ -93,8 +79,8 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.addRoleToUser(user, role)
-            assertEquals(credentialsService.getUserRoles(user), listOf(role))
+            credentialsService.addRoleToUser(user, Role.USER)
+            assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
         }
     }
 
@@ -107,7 +93,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.deleteRoleFromUser(user, role)
+            credentialsService.deleteRoleFromUser(user, Role.USER)
             assertEquals(credentialsService.getUserRoles(user), listOf())
         }
     }
@@ -121,7 +107,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            assertEquals(credentialsService.getCredentials(), listOf(encryptedCredentials))
+            assertEquals(credentialsService.getCredentials(), listOf(basicCredentialsWithRoles))
         }
     }
 
@@ -148,7 +134,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            assertEquals(credentialsService.getRoleActivities(role), setOf(basicActivity))
+            assertEquals(credentialsService.getRoleActivities(Role.USER), setOf(basicActivity))
         }
     }
 }

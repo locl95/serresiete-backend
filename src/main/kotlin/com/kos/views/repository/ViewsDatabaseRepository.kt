@@ -1,18 +1,16 @@
 package com.kos.views.repository
 
-import com.kos.common.DatabaseFactory.dbQuery
-import com.kos.views.Game
-import com.kos.views.SimpleView
-import com.kos.views.ViewDeleted
-import com.kos.views.ViewModified
+import com.kos.views.*
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 
-class ViewsDatabaseRepository : ViewsRepository {
+class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
 
     override suspend fun withState(initialState: List<SimpleView>): ViewsDatabaseRepository {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Views.batchInsert(initialState) {
                 this[Views.id] = it.id
                 this[Views.name] = it.name
@@ -65,25 +63,24 @@ class ViewsDatabaseRepository : ViewsRepository {
     )
 
     override suspend fun getOwnViews(owner: String): List<SimpleView> {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Views.select { Views.owner.eq(owner) }.map { resultRowToSimpleView(it) }
         }
     }
 
     override suspend fun get(id: String): SimpleView? {
-        return dbQuery {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             Views.select { Views.id.eq(id) }.map { resultRowToSimpleView(it) }
         }.singleOrNull()
     }
 
-    override suspend fun create(name: String, owner: String, characterIds: List<Long>, game: Game): ViewModified {
-        val id = UUID.randomUUID().toString()
-        dbQuery {
+    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Views.insert {
                 it[Views.id] = id
                 it[Views.name] = name
                 it[Views.owner] = owner
-                it[Views.published] = true
+                it[published] = true
                 it[Views.game] = game.toString()
             }
             CharactersView.batchInsert(characterIds) {
@@ -91,11 +88,11 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewModified(id, characterIds)
+        return SimpleView(id, name, owner, true, characterIds, game)
     }
 
     override suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>): ViewModified {
-        dbQuery {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Views.update({ Views.id.eq(id) }) {
                 it[Views.name] = name
                 it[Views.published] = published
@@ -106,11 +103,11 @@ class ViewsDatabaseRepository : ViewsRepository {
                 this[CharactersView.characterId] = it
             }
         }
-        return ViewModified(id, characters)
+        return ViewModified(id, name, published, characters)
     }
 
-    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewModified {
-        dbQuery {
+    override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewPatched {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             Views.update({ Views.id.eq(id) }) { statement ->
                 name?.let { statement[Views.name] = it }
                 published?.let { statement[Views.published] = it }
@@ -123,19 +120,19 @@ class ViewsDatabaseRepository : ViewsRepository {
                 }
             }
         }
-        return ViewModified(id, characters.orEmpty()) //TODO: Fix this
+        return ViewPatched(id, name, published, characters)
     }
 
     override suspend fun delete(id: String): ViewDeleted {
-        dbQuery { Views.deleteWhere { Views.id.eq(id) } }
+        newSuspendedTransaction(Dispatchers.IO, db) { Views.deleteWhere { Views.id.eq(id) } }
         return ViewDeleted(id)
     }
 
     override suspend fun getViews(): List<SimpleView> {
-        return dbQuery { Views.selectAll().map { resultRowToSimpleView(it) } }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Views.selectAll().map { resultRowToSimpleView(it) } }
     }
 
     override suspend fun state(): List<SimpleView> {
-        return dbQuery { Views.selectAll().map { resultRowToSimpleView(it) } }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Views.selectAll().map { resultRowToSimpleView(it) } }
     }
 }

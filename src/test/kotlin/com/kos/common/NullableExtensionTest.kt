@@ -1,10 +1,9 @@
 package com.kos.common
 
-import junit.framework.TestCase.assertEquals
+import arrow.core.Either
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.*
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class NullableExtensionTest {
     @Test
@@ -51,6 +50,37 @@ class NullableExtensionTest {
             val result = value.fold(left = { "Left" }, right = { it.toString() })
             assertEquals(result, "Left")
         }
+    }
+
+    @Test
+    fun `recoverToEither should return right of null when value is null`() {
+        val result = null.recoverToEither({ "Recovered" }) { Either.Left("Failed") }
+        assertTrue(result is Either.Right)
+        kotlin.test.assertEquals(result, Either.Right(null))
+    }
+
+    @Test
+    fun `recoverToEither  should return left when attempt over a value fails`() {
+        val input = "Input"
+        val result = input.recoverToEither(
+            recoverWith = { "Recovered: $it" },
+            attempt = { Either.Left("Failed") }
+        )
+
+        assertTrue(result is Either.Left)
+        kotlin.test.assertEquals(result, Either.Left("Recovered: Input"))
+    }
+
+    @Test
+    fun `recoverToEither should return right with transformed value when attempt over a value succeeds`() {
+        val input = "Input"
+        val result = input.recoverToEither(
+            recoverWith = { "Recovered: $it" },
+            attempt = { Either.Right("Success") }
+        )
+
+        assertTrue(result is Either.Right)
+        kotlin.test.assertEquals(result, Either.Right("Success"))
     }
 
     data class CustomType(val value: String)

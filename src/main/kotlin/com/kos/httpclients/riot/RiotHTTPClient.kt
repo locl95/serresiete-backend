@@ -3,7 +3,11 @@ package com.kos.httpclients.riot
 import arrow.core.Either
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
+import com.kos.common.WithLogger
 import com.kos.httpclients.domain.*
+import io.github.resilience4j.kotlin.ratelimiter.RateLimiterConfig
+import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
+import io.github.resilience4j.ratelimiter.RateLimiter
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -13,116 +17,178 @@ import kotlinx.serialization.json.Json
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 
-data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClient {
+data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClient, WithLogger("riotClient") {
     val baseURI: (String) -> URI = { region -> URI("https://$region.api.riotgames.com") }
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
-    override suspend fun getPUUIDByRiotId(riotName: String, riotTag: String): Either<HttpError, GetPUUIDResponse> {
-        val encodedRiotName = URLEncoder.encode(riotName, StandardCharsets.UTF_8.toString())
-
-        val partialURI = URI("/riot/account/v1/accounts/by-riot-id/$encodedRiotName/$riotTag")
-        val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
-            headers {
-                append(HttpHeaders.Accept, "*/*")
-                append("X-Riot-Token", apiKey)
-            }
+    private val perSecondRateLimiter = RateLimiter.of(
+        "perSecondLimiter",
+        RateLimiterConfig {
+            this.limitForPeriod(20)
+                .limitRefreshPeriod(Duration.ofSeconds(1))
+                .timeoutDuration(Duration.ofSeconds(1))
+                .build()
         }
-        val jsonString = response.body<String>()
-        return try {
-            Either.Right(json.decodeFromString<GetPUUIDResponse>(jsonString))
-        } catch (e: SerializationException) {
-            Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
-        } catch (e: IllegalArgumentException) {
-            val error = json.decodeFromString<RiotError>(jsonString)
-            Either.Left(error)
+    )
+
+    private val perTwoMinuteRateLimiter = RateLimiter.of(
+        "perTwoMinuteLimiter",
+        RateLimiterConfig {
+            this.limitForPeriod(100)
+                .limitRefreshPeriod(Duration.ofMinutes(2))
+                .timeoutDuration(Duration.ofMinutes(2))
+                .build()
+        }
+    )
+
+    private suspend fun <T> throttleRequest(request: suspend () -> T): T {
+        return perSecondRateLimiter.executeSuspendFunction {
+            perTwoMinuteRateLimiter.executeSuspendFunction(request)
+        }
+    }
+
+    override suspend fun getPUUIDByRiotId(riotName: String, riotTag: String): Either<HttpError, GetPUUIDResponse> {
+        return throttleRequest {
+            val encodedRiotName = URLEncoder.encode(riotName, StandardCharsets.UTF_8.toString())
+
+            val partialURI = URI("/riot/account/v1/accounts/by-riot-id/$encodedRiotName/$riotTag")
+            val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<GetPUUIDResponse>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
+            }
         }
     }
 
     override suspend fun getSummonerByPuuid(puuid: String): Either<HttpError, GetSummonerResponse> {
-        val partialURI = URI("/lol/summoner/v4/summoners/by-puuid/$puuid")
-        val response = client.get(baseURI("euw1").toString() + partialURI.toString()) {
-            headers {
-                append(HttpHeaders.Accept, "*/*")
-                append("X-Riot-Token", apiKey)
+        return throttleRequest {
+            val partialURI = URI("/lol/summoner/v4/summoners/by-puuid/$puuid")
+
+            val response = client.get(baseURI("euw1").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
             }
-        }
-        val jsonString = response.body<String>()
-        return try {
-            Either.Right(json.decodeFromString<GetSummonerResponse>(jsonString))
-        } catch (e: SerializationException) {
-            Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
-        } catch (e: IllegalArgumentException) {
-            val error = json.decodeFromString<RiotError>(jsonString)
-            Either.Left(error)
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<GetSummonerResponse>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
+            }
         }
     }
 
     override suspend fun getMatchesByPuuid(puuid: String, queue: Int): Either<HttpError, List<String>> {
-        val partialURI = URI("/lol/match/v5/matches/by-puuid/$puuid/ids")
-        val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
-            headers {
-                append(HttpHeaders.Accept, "*/*")
-                append("X-Riot-Token", apiKey)
-            }
-            url {
-                //parameters.append("startTime", 1L) //Epoch timestamp in seconds. The matchlist started storing timestamps on June 16th, 2021. Any matches played before June 16th, 2021 won't be included in the results if the startTime filter is set.
-                //parameters.append("endTime", 1L) //Epoch timestamp in seconds.
-                parameters.append("queue", queue.toString())
-                //parameters.append("type", "type") //Filter the list of match ids by the type of match. This filter is mutually inclusive of the queue filter meaning any match ids returned must match both the queue and type filters.
-                //parameters.append("start", 1) //Defaults to 0. Start index.
-                parameters.append("count", "5") //Defaults to 20. Valid values: 0 to 100. Number of match ids to return.
-            }
+        return throttleRequest {
+            logger.debug("Getting matches for $puuid and queue $queue")
+            val partialURI = URI("/lol/match/v5/matches/by-puuid/$puuid/ids")
+            val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
+                url {
+                    parameters.append("queue", queue.toString())
+                    parameters.append(
+                        "count",
+                        "10"
+                    )
+                }
 
-        }
-        val jsonString = response.body<String>()
-        return try {
-            Either.Right(json.decodeFromString<List<String>>(jsonString))
-        } catch (e: SerializationException) {
-            Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
-        } catch (e: IllegalArgumentException) {
-            val error = json.decodeFromString<RiotError>(jsonString)
-            Either.Left(error)
+            }
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<List<String>>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
+            }
         }
     }
 
     override suspend fun getMatchById(matchId: String): Either<HttpError, GetMatchResponse> {
-        val partialURI = URI("/lol/match/v5/matches/$matchId")
-        val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
-            headers {
-                append(HttpHeaders.Accept, "*/*")
-                append("X-Riot-Token", apiKey)
+        return throttleRequest {
+            logger.debug("Getting match $matchId")
+            val partialURI = URI("/lol/match/v5/matches/$matchId")
+            val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
             }
-        }
-        val jsonString = response.body<String>()
-        return try {
-            Either.Right(json.decodeFromString<GetMatchResponse>(jsonString))
-        } catch (e: SerializationException) {
-            Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
-        } catch (e: IllegalArgumentException) {
-            val error = json.decodeFromString<RiotError>(jsonString)
-            Either.Left(error)
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<GetMatchResponse>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
+            }
         }
     }
 
     override suspend fun getLeagueEntriesBySummonerId(summonerId: String): Either<HttpError, List<LeagueEntryResponse>> {
-        val partialURI = URI("/lol/league/v4/entries/by-summoner/$summonerId")
-        val response = client.get(baseURI("euw1").toString() + partialURI.toString()) {
-            headers {
-                append(HttpHeaders.Accept, "*/*")
-                append("X-Riot-Token", apiKey)
+        return throttleRequest {
+            logger.debug("Getting league entries for $summonerId")
+            val partialURI = URI("/lol/league/v4/entries/by-summoner/$summonerId")
+            val response = client.get(baseURI("euw1").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<List<LeagueEntryResponse>>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
             }
         }
-        val jsonString = response.body<String>()
-        return try {
-            Either.Right(json.decodeFromString<List<LeagueEntryResponse>>(jsonString))
-        } catch (e: SerializationException) {
-            Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
-        } catch (e: IllegalArgumentException) {
-            val error = json.decodeFromString<RiotError>(jsonString)
-            Either.Left(error)
+    }
+
+    override suspend fun getAccountByPUUID(puuid: String): Either<HttpError, GetAccountResponse> {
+        return throttleRequest {
+            logger.debug("Getting account for $puuid")
+            val partialURI = URI("/riot/account/v1/accounts/by-puuid/$puuid")
+            val response = client.get(baseURI("europe").toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Accept, "*/*")
+                    append("X-Riot-Token", apiKey)
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                Either.Right(json.decodeFromString<GetAccountResponse>(jsonString))
+            } catch (e: SerializationException) {
+                Either.Left(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                val error = json.decodeFromString<RiotError>(jsonString)
+                Either.Left(error)
+            }
         }
     }
 

@@ -34,6 +34,7 @@ object TestHelper {
         "summonerIcon": 1389,
         "summonerLevel": 499,
         "summonerName": "GTP ZeroMVPs",
+        "summonerTag": "KAKO",
         "leagues": {
             "RANKED_SOLO_5x5": {
                 "mainRole": "SUPPORT",
@@ -44,6 +45,7 @@ object TestHelper {
                 "winrate": 0.5925925925925926,
                 "matches": [
                     {
+                        "id": "EUW1_232424252",
                         "championId": 497,
                         "championName": "Rakan",
                         "role": "SUPPORT",
@@ -61,6 +63,7 @@ object TestHelper {
                         "win": true
                     },
                     {
+                        "id": "EUW1_232424252",
                         "championId": 497,
                         "championName": "Rakan",
                         "role": "SUPPORT",
@@ -78,6 +81,7 @@ object TestHelper {
                         "win": true
                     },
                     {
+                        "id": "EUW1_232424252",
                         "championId": 12,
                         "championName": "Alistar",
                         "role": "SUPPORT",
@@ -95,6 +99,7 @@ object TestHelper {
                         "win": true
                     },
                     {
+                        "id": "EUW1_232424252",
                         "championId": 497,
                         "championName": "Rakan",
                         "role": "SUPPORT",
@@ -112,6 +117,7 @@ object TestHelper {
                         "win": true
                     },
                     {
+                        "id": "EUW1_232424252",
                         "championId": 235,
                         "championName": "Senna",
                         "role": "SUPPORT",
@@ -138,9 +144,84 @@ object TestHelper {
           "leagues": {},
           "summonerIcon": 3582,
           "summonerName": "sanxei",
+          "summonerTag": "EUW",
           "summonerLevel": 367
         }
     """
+
+    val smartSyncDataCache = """{
+            "type": "com.kos.httpclients.domain.RiotData",
+            "summonerIcon": 1,
+            "summonerLevel": 30,
+            "summonerName": "TestSummoner",
+            "summonerTag": "TAG",
+            "leagues": {
+                "RANKED_FLEX_SR": {
+                    "mainRole": "MainRole",
+                    "tier": "Gold",
+                    "rank": "I",
+                    "leaguePoints": 100,
+                    "gamesPlayed": 20,
+                    "winrate": 50.0,
+                    "matches": [
+                        {
+                            "id": "match1",
+                            "championId": 1,
+                            "championName": "ChampionName",
+                            "role": "Role",
+                            "individualPosition": "Position",
+                            "lane": "Lane",
+                            "kills": 5,
+                            "deaths": 1,
+                            "assists": 10,
+                            "assistMePings": 0,
+                            "visionWardsBoughtInGame": 0,
+                            "enemyMissingPings": 0,
+                            "wardsPlaced": 0,
+                            "gameDuration": 1800,
+                            "totalTimeSpentDead": 300,
+                            "win": true
+                        },
+                        {
+                            "id": "match2",
+                            "championId": 1,
+                            "championName": "ChampionName",
+                            "role": "Role",
+                            "individualPosition": "Position",
+                            "lane": "Lane",
+                            "kills": 5,
+                            "deaths": 1,
+                            "assists": 10,
+                            "assistMePings": 0,
+                            "visionWardsBoughtInGame": 0,
+                            "enemyMissingPings": 0,
+                            "wardsPlaced": 0,
+                            "gameDuration": 1800,
+                            "totalTimeSpentDead": 300,
+                            "win": true
+                        },
+                        {
+                            "id": "match3",
+                            "championId": 1,
+                            "championName": "ChampionName",
+                            "role": "Role",
+                            "individualPosition": "Position",
+                            "lane": "Lane",
+                            "kills": 5,
+                            "deaths": 1,
+                            "assists": 10,
+                            "assistMePings": 0,
+                            "visionWardsBoughtInGame": 0,
+                            "enemyMissingPings": 0,
+                            "wardsPlaced": 0,
+                            "gameDuration": 1800,
+                            "totalTimeSpentDead": 300,
+                            "win": true
+                        }
+                    ]
+                }
+            }
+        }"""
 
     private val now = OffsetDateTime.now()
     val outdatedDataCache = DataCache(1, wowData, now.minusHours(25))

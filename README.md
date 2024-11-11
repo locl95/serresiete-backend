@@ -3,7 +3,7 @@
 Backend of:
 * https://alcaland-ranks.netlify.app/c1b618e0-7540-467c-b96b-34d16ee15cb8
 * https://osborno-gestiones.netlify.app/
-* _soon to come:_ correcalles.gg
+* https://correcalles.netlify.app/bb59c623-8783-4b3d-bbf8-2f55ddb5f43c
 
 Stack:
 * Main language: https://kotlinlang.org/

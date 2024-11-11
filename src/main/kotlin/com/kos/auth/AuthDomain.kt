@@ -1,25 +1,10 @@
 package com.kos.auth
 
+import com.kos.common.OffsetDateTimeSerializer
+import com.kos.common.AuthError
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import java.time.OffsetDateTime
-
-
-object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
-    override val descriptor = PrimitiveSerialDescriptor("OffsetDateTime", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): OffsetDateTime {
-        return OffsetDateTime.parse(decoder.decodeString())
-    }
-
-    override fun serialize(encoder: Encoder, value: OffsetDateTime) {
-        encoder.encodeString(value.toString())
-    }
-}
 
 @Serializable
 data class Authorization(
@@ -32,18 +17,28 @@ data class Authorization(
     val isAccess: Boolean
 )
 
-fun Authorization.isRefresh() = !isAccess
-
 @Serializable
 data class LoginResponse(
-    val accessToken: Authorization?,
-    val refreshToken: Authorization?
+    val accessToken: String?,
+    val refreshToken: String?
 )
 
-interface TokenError {
-    val token: String
-}
+data class JWTCreationError(override val message: String) : AuthError
 
-data class TokenNotFound(override val token: String) : TokenError
-data class TokenExpired(override val token: String, val validUntil: OffsetDateTime) : TokenError
-data class TokenWrongMode(override val token: String, val isAccess: Boolean) : TokenError
+enum class TokenMode {
+    ACCESS {
+        override fun toString(): String = "access"
+    },
+    REFRESH {
+        override fun toString(): String = "refresh"
+    };
+
+    companion object {
+        fun fromString(str: String): TokenMode =
+            when (str) {
+                "access" -> ACCESS
+                "refresh" -> REFRESH
+                else -> throw IllegalArgumentException("Illegal tokenMode: $str")
+            }
+    }
+}

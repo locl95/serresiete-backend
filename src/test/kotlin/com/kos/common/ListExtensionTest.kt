@@ -3,7 +3,7 @@ package com.kos.common
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ListCollectTest {
+class ListExtensionTest {
 
     private val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 

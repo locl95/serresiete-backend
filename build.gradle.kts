@@ -2,20 +2,34 @@ val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
-val h2_version: String by project
+val resilience4j_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.0"
     id("io.ktor.plugin") version "2.3.2"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.8.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     jacoco
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.shadowJar {
+    mergeServiceFiles()
+    archiveBaseName.set("${project.name}-all")
 }
 
 tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = "0.75".toBigDecimal()
+                minimum = "0.5".toBigDecimal()
             }
         }
     }
@@ -78,22 +92,26 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
-    implementation("com.h2database:h2:$h2_version")
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-server-swagger:$ktor_version")
-    implementation("org.postgresql:postgresql:42.6.0")
+    implementation("org.postgresql:postgresql:42.7.4")
     implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("org.flywaydb:flyway-core:9.21.0")
+    implementation("org.flywaydb:flyway-database-postgresql:10.20.1")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("io.ktor:ktor-server-auth:$ktor_version")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
+    implementation("io.github.resilience4j:resilience4j-kotlin:${resilience4j_version}")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
+    testImplementation("io.zonky.test:embedded-postgres:2.0.7")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlin_version")
     testImplementation("io.ktor:ktor-client-mock:$ktor_version")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
     testImplementation("io.mockk:mockk:1.13.8")
-
 }

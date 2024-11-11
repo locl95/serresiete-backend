@@ -1,6 +1,7 @@
 package com.kos.characters
 
 import com.kos.characters.repository.CharactersState
+import com.kos.httpclients.domain.GetAccountResponse
 import com.kos.httpclients.domain.GetPUUIDResponse
 import com.kos.httpclients.domain.GetSummonerResponse
 
@@ -9,6 +10,7 @@ object CharactersTestHelper {
     val basicWowRequest = WowCharacterRequest("kakarona", "eu", "zuljin")
     val basicWowRequest2 = WowCharacterRequest("layser", "eu", "zuljin")
     val basicLolCharacter = LolCharacter(1, "GTP ZeroMVPs", "WOW", "1", 1, "1", 1)
+    val basicLolCharacter2 = LolCharacter(2, "Sanxei", "EUW", "2", 2, "2", 2)
     val basicLolCharacterEnrichedRequest = LolCharacterEnrichedRequest(
         basicLolCharacter.name,
         basicLolCharacter.tag,
@@ -26,6 +28,10 @@ object CharactersTestHelper {
         2,
         25,
         29
+    )
+    val basicGetAccountResponse = GetAccountResponse(
+        "Marcnute",
+        "EUW"
     )
     val basicGetPuuidResponse = GetPUUIDResponse(
         "1",

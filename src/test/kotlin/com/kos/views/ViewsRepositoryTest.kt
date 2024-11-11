@@ -1,6 +1,5 @@
 package com.kos.views
 
-import com.kos.common.DatabaseFactory
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
@@ -9,16 +8,19 @@ import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsDatabaseRepository
 import com.kos.views.repository.ViewsInMemoryRepository
 import com.kos.views.repository.ViewsRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class ViewsRepositoryTest {
     abstract val repository: ViewsRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given a repository with views i can retrieve them`() {
@@ -46,9 +48,14 @@ abstract class ViewsRepositoryTest {
     @Test
     fun `given an empty repository i can insert views`() {
         runBlocking {
-            assert(repository.create(name, owner, listOf(), Game.WOW).isSuccess)
+            val id = UUID.randomUUID().toString()
+            val res = repository.create(id, name, owner, listOf(), Game.WOW)
+            assertEquals(owner, res.owner)
+            assertEquals(name, res.name)
+            assertEquals(listOf(), res.characterIds)
+            assertEquals(id, res.id)
+            assertEquals(Game.WOW, res.game)
             assert(repository.state().size == 1)
-            assert(repository.state().all { it.owner == owner })
         }
     }
 
@@ -57,9 +64,9 @@ abstract class ViewsRepositoryTest {
         runBlocking {
             val repo =
                 repository.withState(listOf(basicSimpleWowView))
-            val edit = repo.edit(id, "name2", published, listOf(1))
+            val res = repo.edit(id, "name2", published, listOf(1))
             val finalState = repo.state()
-            assertEquals(ViewModified(id, listOf(1)), edit)
+            assertEquals(ViewModified(id, "name2", published, listOf(1)), res)
             assertEquals(finalState, listOf(basicSimpleWowView.copy(name = "name2", characterIds = listOf(1))))
         }
     }
@@ -70,7 +77,7 @@ abstract class ViewsRepositoryTest {
             val repositoryWithState = repository.withState(listOf(basicSimpleWowView))
             val edit = repositoryWithState.edit(id, "name", published, listOf(1, 2, 3, 4))
             val finalState = repositoryWithState.state()
-            assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), edit)
+            assertEquals(ViewModified(id, "name", published, listOf(1, 2, 3, 4)), edit)
             assertEquals(finalState, listOf(basicSimpleWowView.copy(characterIds = listOf(1, 2, 3, 4))))
         }
     }
@@ -93,7 +100,7 @@ abstract class ViewsRepositoryTest {
             val patchedName = "new-name"
             val patch = repo.patch(basicSimpleWowView.id, patchedName, null, null)
             val patchedView = repo.state().first()
-            assertEquals(ViewModified(basicSimpleWowView.id, basicSimpleWowView.characterIds), patch)
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, null, null), patch)
             assertEquals(basicSimpleWowView.id, patchedView.id)
             assertEquals(basicSimpleWowView.published, patchedView.published)
             assertEquals(basicSimpleWowView.characterIds, patchedView.characterIds)
@@ -110,7 +117,7 @@ abstract class ViewsRepositoryTest {
             val patchedPublish = false
             val patch = repo.patch(basicSimpleWowView.id, patchedName, patchedPublish, characters)
             val patchedView = repo.state().first()
-            assertEquals(ViewModified(basicSimpleWowView.id, characters), patch)
+            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, patchedPublish, characters), patch)
             assertEquals(basicSimpleWowView.id, patchedView.id)
             assertEquals(patchedPublish, patchedView.published)
             assertEquals(characters, patchedView.characterIds)
@@ -121,14 +128,34 @@ abstract class ViewsRepositoryTest {
 
 class ViewsInMemoryRepositoryTest : ViewsRepositoryTest() {
     override val repository = ViewsInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ViewsDatabaseRepositoryTest : ViewsRepositoryTest() {
-    override val repository = ViewsDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = ViewsDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

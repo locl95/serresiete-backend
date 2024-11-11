@@ -2,6 +2,7 @@ package com.kos.views
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
+import com.kos.httpclients.domain.Data
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -49,7 +50,7 @@ data class ViewRequest(
     val name: String,
     val published: Boolean,
     val characters: List<CharacterCreateRequest>,
-    val game: Game
+    val game: Game,
 )
 
 @Serializable
@@ -71,6 +72,15 @@ data class ViewDeleted(val viewId: String) : ViewResult {
 }
 
 @Serializable
-data class ViewModified(val viewId: String, val characters: List<Long>) : ViewResult {
+data class ViewModified(val viewId: String, val name: String, val published: Boolean, val characters: List<Long>) : ViewResult {
     override val isSuccess: Boolean = true
 }
+
+@Serializable
+data class ViewPatched(val viewId: String, val name: String?, val published: Boolean?, val characters: List<Long>?) :
+    ViewResult {
+    override val isSuccess: Boolean = true
+}
+
+@Serializable
+data class ViewData(val viewName: String, val data: List<Data>)

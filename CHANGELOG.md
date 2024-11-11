@@ -1,5 +1,66 @@
 # Changelog
 
+## [4.0.1] 10-11-2024
+### Changed
+- **League of Legends Background Sync**: Now league of legend background sync is optimized and only syncs characters that have not been synced by any other source.
+
+## [4.0.0] 09-11-2024
+### Added
+- **Event Sourcing Implementation**: Introduced a major architecture change with event sourcing for resource management. Previously, creating large views was not sustainable, as it required waiting for external systems to respond before proceeding. Now, when a user creates a view, an operation is queued, and an operation ID is returned, which will be used to track the status of the requested action over the resource.
+- **View Creation Process**: Views will be created once the subscriptions process the queued events, improving the overall efficiency of resource handling and allowing for better scalability.
+- **Queue System for Syncing League of Legends Characters**: League of Legends view updates now send characters for updates via queues, in addition to the background task. This ensures that views can be populated faster, as characters receive individual updates immediately, instead of waiting for a scheduled or forced background task to run.
+
+### Changed
+- **JWT-Based Authentication System**: Replaced the existing token system with JSON Web Tokens (JWT) to enhance authentication efficiency and reduce database load.
+    - **Self-Contained Permissions**: Permissions are now embedded directly within the JWT, removing the need to query the database for permission checks on each request.
+    - **Improved Performance**: This change significantly improves response times for authenticated requests by reducing dependency on database lookups for role-based access validation.
+    - **Security Enhancements**: JWTs are securely signed, ensuring token authenticity and integrity without frequent database validation.
+
+## [3.5.1] 04-11-2024
+
+### Added
+- **Character Limit by Role in Views**: Introduced a new feature that limits the maximum number of characters allowed per view based on user roles.
+
+## [3.5.0] 03-11-2024
+
+### Added
+- Introduced a daily update for League characters to refresh summoner details, including summoner icon, summoner level, Riot name, and Riot tag every 24 hours.
+- Optimized further the League Character's Sync by allowing the reuse of match data across multiple players in the same synchronization batch, leveraging dynamic programming to minimize calls. While this may not drastically increase capacity, it significantly improves efficiency in the synchronization process.
+
+### Changed
+- Updated the `getData` and `getCachedData` endpoints to include the `viewName` in the response. This change may break integration with existing frontends expecting the previous response format.
+
+## [3.4.1] 01-11-2024
+
+### Improved
+- Implemented a mechanism to reuse cached matches, significantly reducing unnecessary API calls and improving League caching time.
+
+## [3.4.0] 31-10-2024
+
+### Improved
+- Enhanced caching service for League characters, allowing for larger views with a greater number of matches per character.
+- Integrated `Flow` and `Channels` to optimize memory usage, ensuring more efficient handling of concurrent data streams.
+
+## [3.3.0] 30-10-2024
+
+### Added
+
+- **Task Filtering by Type**: Introduced a new feature allowing tasks to be filtered by `taskType`.
+    - This enhancement improves user control and efficiency by enabling targeted task retrieval.
+
+- **Query Parameter Validation**: Added validation for query parameters to ensure data integrity and prevent potential errors.
+
+## [3.2.0] 28-10-2024
+
+### Changed
+
+- **View Limit by Role**: Updated the view creation limit to be role-based instead of a fixed number:
+    - **Admin** now have no limit on the number of views they can create.
+    - **User** remain limited to a maximum of **2** views.
+
+  This enhancement provides greater flexibility and control, especially for administrators managing multiple views.
+
+
 ## [3.1.0] 18-10-2024
 
 ### Added

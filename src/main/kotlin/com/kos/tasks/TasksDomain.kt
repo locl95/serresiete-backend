@@ -1,34 +1,22 @@
 package com.kos.tasks
 
-import com.kos.auth.OffsetDateTimeSerializer
-import kotlinx.serialization.json.Json
-import java.time.OffsetDateTime
+import arrow.core.Either
+import com.kos.common.InvalidTaskType
+import com.kos.common.OffsetDateTimeSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import java.util.*
-
-@Serializable
-data class TaskStatus(val status: Status, val message: String?)
+import java.time.OffsetDateTime
 
 @Serializable
 data class Task(
     val id: String,
     val type: TaskType,
-    val taskStatus: String,
+    val taskStatus: TaskStatus,
     @Serializable(with = OffsetDateTimeSerializer::class)
     val inserted: OffsetDateTime
-) {
-    companion object {
-        private val json = Json {
-            ignoreUnknownKeys = true
-        }
+)
 
-        fun apply(id: String, type: TaskType, taskStatus: TaskStatus, inserted: OffsetDateTime): Task {
-            return Task(id, type, json.encodeToString(taskStatus), inserted)
-        }
-    }
-}
-
+@Serializable
+data class TaskStatus(val status: Status, val message: String?)
 
 @Serializable
 enum class Status {
@@ -61,15 +49,19 @@ enum class TaskType {
     },
     TASK_CLEANUP_TASK {
         override fun toString(): String = "taskCleanupTask"
+    },
+    UPDATE_LOL_CHARACTERS_TASK {
+        override fun toString(): String = "updateLolCharactersTask"
     };
 
     companion object {
-        fun fromString(value: String): TaskType = when (value) {
-            "cacheWowDataTask" -> CACHE_WOW_DATA_TASK
-            "cacheLolDataTask" -> CACHE_LOL_DATA_TASK
-            "tokenCleanupTask" -> TOKEN_CLEANUP_TASK
-            "taskCleanupTask" -> TASK_CLEANUP_TASK
-            else -> throw IllegalArgumentException("Unknown task: $value")
+        fun fromString(value: String): Either<InvalidTaskType, TaskType> = when (value) {
+            "cacheWowDataTask" -> Either.Right(CACHE_WOW_DATA_TASK)
+            "cacheLolDataTask" -> Either.Right(CACHE_LOL_DATA_TASK)
+            "tokenCleanupTask" -> Either.Right(TOKEN_CLEANUP_TASK)
+            "taskCleanupTask" -> Either.Right(TASK_CLEANUP_TASK)
+            "updateLolCharactersTask" -> Either.Right(UPDATE_LOL_CHARACTERS_TASK)
+            else -> Either.Left(InvalidTaskType(value))
         }
     }
 }

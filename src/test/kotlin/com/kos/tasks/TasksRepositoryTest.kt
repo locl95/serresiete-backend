@@ -1,21 +1,23 @@
 package com.kos.tasks
 
+import com.kos.tasks.TasksTestHelper.task
+import com.kos.tasks.TasksTestHelper.taskWithType
+import com.kos.tasks.repository.TasksDatabaseRepository
 import com.kos.tasks.repository.TasksInMemoryRepository
 import com.kos.tasks.repository.TasksRepository
-import com.kos.common.DatabaseFactory
-import com.kos.tasks.TasksTestHelper.task
-import com.kos.tasks.repository.TasksDatabaseRepository
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInstance
 import java.time.OffsetDateTime
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class TasksRepositoryTest {
     abstract val repository: TasksRepository
-
-    @BeforeTest
-    abstract fun beforeEach()
 
     @Test
     fun `given an empty repository I can insert a task`() {
@@ -55,10 +57,24 @@ abstract class TasksRepositoryTest {
     @Test
     fun `given a repository with tasks I can retrieve them`() {
         runBlocking {
+            val expectedTasks = listOf(task(OffsetDateTime.now()))
+            val repositoryWithState = repository.withState(expectedTasks)
+
+            assertEquals(expectedTasks, repositoryWithState.getTasks(null))
+        }
+    }
+
+    @Test
+    fun `given a repository with tasks I can retrieve them by task type`() {
+        runBlocking {
             val now = OffsetDateTime.now()
-            val task = task(now)
-            val repositoryWithState = repository.withState(listOf(task))
-            assertEquals(listOf(task), repositoryWithState.get())
+            val filteredTask = taskWithType(now, TaskType.TOKEN_CLEANUP_TASK)
+            val expectedTasks = listOf(filteredTask)
+            val actualTasks = listOf(task(now), filteredTask)
+
+            val repositoryWithState = repository.withState(actualTasks)
+
+            assertEquals(expectedTasks, repositoryWithState.getTasks(TaskType.TOKEN_CLEANUP_TASK))
         }
     }
 
@@ -69,21 +85,41 @@ abstract class TasksRepositoryTest {
             val knownId = "1"
             val task = task(now).copy(id = knownId)
             val repositoryWithState = repository.withState(listOf(task))
-            assertEquals(task, repositoryWithState.get(knownId))
+            assertEquals(task, repositoryWithState.getTask(knownId))
         }
     }
 }
 
 class TasksInMemoryRepositoryTest : TasksRepositoryTest() {
     override val repository = TasksInMemoryRepository()
-    override fun beforeEach() {
+
+    @BeforeEach
+    fun beforeEach() {
         repository.clear()
     }
 }
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TasksDatabaseRepositoryTest : TasksRepositoryTest() {
-    override val repository = TasksDatabaseRepository()
-    override fun beforeEach() {
-        DatabaseFactory.init(mustClean = true)
+    private val embeddedPostgres = EmbeddedPostgres.start()
+
+    private val flyway = Flyway
+        .configure()
+        .locations("db/migration/test")
+        .dataSource(embeddedPostgres.postgresDatabase)
+        .cleanDisabled(false)
+        .load()
+
+    override val repository = TasksDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+
+    @BeforeEach
+    fun beforeEach() {
+        flyway.clean()
+        flyway.migrate()
+    }
+
+    @AfterAll
+    fun afterAll() {
+        embeddedPostgres.close()
     }
 }

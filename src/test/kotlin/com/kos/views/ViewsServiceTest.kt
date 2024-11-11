@@ -1,20 +1,45 @@
 package com.kos.views
 
+import arrow.core.Either
+import com.kos.activities.Activity
+import com.kos.characters.CharacterCreateRequest
 import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
+import com.kos.characters.CharactersTestHelper.basicLolCharacter2
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.LolCharacterRequest
 import com.kos.characters.WowCharacterRequest
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.RetryConfig
+import com.kos.common.TooMuchCharacters
+import com.kos.common.TooMuchViews
+import com.kos.common.UserWithoutRoles
+import com.kos.credentials.Credentials
+import com.kos.credentials.CredentialsService
+import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsInitialState
+import com.kos.credentials.CredentialsTestHelper.password
+import com.kos.credentials.repository.CredentialsInMemoryRepository
+import com.kos.credentials.repository.CredentialsRepositoryState
+import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.RiotMockHelper.anotherRiotData
 import com.kos.datacache.TestHelper.anotherLolDataCache
 import com.kos.datacache.TestHelper.lolDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.eventsourcing.events.*
+import com.kos.eventsourcing.events.repository.EventStore
+import com.kos.eventsourcing.events.repository.EventStoreInMemory
+import com.kos.eventsourcing.subscriptions.EventSubscription
+import com.kos.httpclients.domain.GetPUUIDResponse
+import com.kos.httpclients.domain.GetSummonerResponse
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.Role
+import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
@@ -22,11 +47,16 @@ import com.kos.views.ViewsTestHelper.name
 import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsInMemoryRepository
-import junit.framework.TestCase.assertTrue
+import io.mockk.InternalPlatformDsl.toStr
+import io.mockk.coVerify
+import io.mockk.mockk
+import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
+import org.mockito.Mockito.*
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -39,264 +69,822 @@ import kotlin.test.fail
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
 
-    @Test
-    fun `i can get own views`() {
-        runBlocking {
-            val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleWowView))
-            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertEquals(listOf(basicSimpleWowView), service.getOwnViews(owner))
-        }
-    }
+    private val aggregateRoot = "/credentials/owner"
+    private val defaultCredentialsState = CredentialsRepositoryState(
+        listOf(Credentials(owner, password)),
+        mapOf(owner to listOf(Role.USER))
+    )
 
-    @Test
-    fun `i can get a simple view`() {
-        runBlocking {
-            val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleWowView))
-            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertEquals(basicSimpleWowView, service.getSimple("1"))
-        }
-    }
-
-    @Test
-    fun `i can create views`() {
-        runBlocking {
-            val viewsRepository = ViewsInMemoryRepository()
-            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isRight())
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.game == Game.WOW })
-        }
-    }
-
-    @Test
-    fun `i can create a lol view`() {
-        runBlocking {
-            val viewsRepository = ViewsInMemoryRepository()
-            val charactersRepository = CharactersInMemoryRepository().withState(emptyCharactersState)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository().withState(listOf())
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().isEmpty())
-            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.LOL)).isRight())
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.game == Game.LOL })
-        }
-    }
-
-    @Test
-    fun `i can edit a lol view`() {
-        runBlocking {
-            val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleLolView))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            val newName = "new-name"
-            assertTrue(
-                service.edit(basicSimpleLolView.id, ViewRequest(newName, published, listOf(), Game.LOL)).isRight()
-            )
-            assertTrue(viewsRepository.state().size == 1)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(viewsRepository.state().all { it.name == newName })
-            assertTrue(viewsRepository.state().all { it.game == Game.LOL })
-        }
-    }
-
-    @Test
-    fun `i cant create more than maximum views`() {
-        runBlocking {
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView, basicSimpleWowView.copy(id = "2")))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-
-            assertTrue(viewsRepository.state().size == 2)
-            assertTrue(viewsRepository.state().all { it.owner == owner })
-            assertTrue(service.create(owner, ViewRequest(name, published, listOf(), Game.WOW)).isLeft())
-            assertTrue(viewsRepository.state().size == 2)
-        }
-    }
-
-    @Test
-    fun `i can edit a view modifying more than one character`(): Unit {
-        runBlocking {
-
-            val request1 = WowCharacterRequest("a", "r", "r")
-            val request2 = WowCharacterRequest("b", "r", "r")
-            val request3 = WowCharacterRequest("c", "r", "r")
-            val request4 = WowCharacterRequest("d", "r", "r")
-
-            `when`(raiderIoClient.exists(request1)).thenReturn(true)
-            `when`(raiderIoClient.exists(request2)).thenReturn(true)
-            `when`(raiderIoClient.exists(request3)).thenReturn(true)
-            `when`(raiderIoClient.exists(request4)).thenReturn(true)
-
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().all { it.characterIds.isEmpty() })
-
-            service.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
-        }
-    }
-
-    @Test
-    fun `when editing a view, I return the actual characters of the view`() {
-        runBlocking {
-            val request1 = WowCharacterRequest("a", "r", "r")
-            val request2 = WowCharacterRequest("b", "r", "r")
-            val request3 = WowCharacterRequest("c", "r", "r")
-            val request4 = WowCharacterRequest("d", "r", "r")
-
-            `when`(raiderIoClient.exists(request1)).thenReturn(true)
-            `when`(raiderIoClient.exists(request2)).thenReturn(true)
-            `when`(raiderIoClient.exists(request3)).thenReturn(true)
-            `when`(raiderIoClient.exists(request4)).thenReturn(true)
-
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository().withState(
-                CharactersState(
-                    listOf(basicWowCharacter, basicWowCharacter2),
-                    listOf()
+    @Nested
+    inner class BehaviorOfGetViews {
+        @Test
+        fun `i can get own views`() {
+            runBlocking {
+                val (_, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    emptyCredentialsInitialState,
+                    mapOf()
                 )
-            )
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
 
-            service.edit(
-                id, ViewRequest(name, published, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(3, 4, 5, 6)), it) }
-
-            assertEquals(listOf<Long>(3, 4, 5, 6), viewsRepository.state().first().characterIds)
+                assertEquals(listOf(basicSimpleWowView), viewsService.getOwnViews(owner))
+            }
         }
-    }
 
-    @Test
-    fun `i can delete a view`(): Unit {
-        runBlocking {
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().size == 1)
-            assertEquals(service.delete("1"), ViewDeleted("1"))
-            assertTrue(viewsRepository.state().isEmpty())
-        }
-    }
-
-    @Test
-    fun `i can patch a view`() {
-        runBlocking {
-            val patchedName = "new-name"
-            val viewsRepository = ViewsInMemoryRepository().withState(listOf(basicSimpleWowView))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().size == 1)
-            val patch = service.patch(basicSimpleWowView.id, ViewPatchRequest(patchedName, null, null, Game.WOW))
-            val patchedView = viewsRepository.state().first()
-            assertEquals(patchedName, patchedView.name)
-            assertEquals(patch.getOrNull(), ViewModified(basicSimpleWowView.id, basicSimpleWowView.characterIds))
-        }
-    }
-
-    @Test
-    fun `i can patch a view modifying more than one character`(): Unit {
-        runBlocking {
-
-            val request1 = WowCharacterRequest("a", "r", "r")
-            val request2 = WowCharacterRequest("b", "r", "r")
-            val request3 = WowCharacterRequest("c", "r", "r")
-            val request4 = WowCharacterRequest("d", "r", "r")
-
-            `when`(raiderIoClient.exists(request1)).thenReturn(true)
-            `when`(raiderIoClient.exists(request2)).thenReturn(true)
-            `when`(raiderIoClient.exists(request3)).thenReturn(true)
-            `when`(raiderIoClient.exists(request4)).thenReturn(true)
-
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(basicSimpleWowView.copy(characterIds = listOf(1))))
-            val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 1 })
-
-            service.patch(
-                id, ViewPatchRequest(null, null, listOf(request1, request2, request3, request4), Game.WOW)
-            ).fold({ fail() }) { assertEquals(ViewModified(id, listOf(1, 2, 3, 4)), it) }
-
-            assertTrue(viewsRepository.state().all { it.characterIds.size == 4 })
-        }
-    }
-
-    @Test
-    fun `lol view data returns newest cached data`() {
-        runBlocking {
-            val simpleView = basicSimpleLolView.copy(characterIds = listOf(1))
-            val view = View(
-                simpleView.id, simpleView.name, simpleView.owner, simpleView.published, listOf(
-                    basicLolCharacter
-                ), simpleView.game
-            )
-            val viewsRepository =
-                ViewsInMemoryRepository().withState(listOf(simpleView))
-            val charactersRepository = CharactersInMemoryRepository().withState(
-                CharactersState(listOf(), listOf(basicLolCharacter))
-            )
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-            val moreRecentDataCache =
-                anotherLolDataCache.copy(characterId = 1, inserted = OffsetDateTime.now().plusHours(2))
-            val dataCacheRepository = DataCacheInMemoryRepository().withState(
-                listOf(
-                    lolDataCache.copy(characterId = 1),
-                    moreRecentDataCache
+        @Test
+        fun `i can get a simple view`() {
+            runBlocking {
+                val (_, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    emptyCredentialsInitialState,
+                    mapOf()
                 )
-            )
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient)
-            val service = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoClient)
-            service.getData(view)
-                .onLeft { fail(it.error()) }
-                .onRight { assertEquals(listOf(anotherRiotData), it) }
+
+                assertEquals(basicSimpleWowView, viewsService.getSimple("1"))
+            }
         }
+    }
+
+    @Nested
+    inner class BehaviorOfCreateView {
+
+        @Test
+        fun `create a wow view stores a create view event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, listOf(), Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_CREATED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    aggregateRoot,
+                    name,
+                    published,
+                    listOf(),
+                    Game.WOW
+                )
+            }
+        }
+
+        @Test
+        fun `create a lol view stores a create view event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, listOf(), Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_CREATED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    aggregateRoot,
+                    name,
+                    published,
+                    listOf(),
+                    Game.LOL
+                )
+            }
+        }
+
+        @Test
+        fun `create a lol view with some characters stores a create view event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                val charactersRequest = (1..10).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, charactersRequest, Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_CREATED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    aggregateRoot,
+                    name,
+                    published,
+                    charactersRequest,
+                    Game.LOL
+                )
+
+            }
+        }
+
+        @Test
+        fun `trying to exceed the maximum number of views allowed does not store an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView, basicSimpleLolView),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, listOf(), Game.WOW)
+                ).onRight {
+                    fail()
+                }.onLeft {
+                    assertTrue(it is TooMuchViews)
+                }
+
+                assertNoEventsStored(eventStore)
+            }
+        }
+
+        @Test
+        fun `create a lol view with too many characters does not store an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                viewsService.create(owner, ViewRequest(name, published, charactersRequest, Game.WOW)).onRight {
+                    fail()
+                }.onLeft {
+                    assertTrue(it is TooMuchCharacters)
+                }
+
+                assertNoEventsStored(eventStore)
+            }
+        }
+
+        @Test
+        fun `admins can create a huge amount of views and an event gets stored`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    (1..100).map { SimpleView(it.toStr(), it.toStr(), owner, true, listOf(), Game.WOW) },
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(
+                        listOf(Credentials(owner, password)),
+                        mapOf(owner to listOf(Role.ADMIN))
+                    ),
+                    mapOf()
+                )
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, listOf(), Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_CREATED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    aggregateRoot,
+                    name,
+                    published,
+                    listOf(),
+                    Game.WOW
+                )
+            }
+        }
+
+        @Test
+        fun `user without role trying to create a view does not store an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf())),
+                    mapOf()
+                )
+
+                viewsService.create(
+                    owner,
+                    ViewRequest(name, published, listOf(), Game.WOW)
+                ).onRight {
+                    fail()
+                }.onLeft {
+                    assertTrue(it is UserWithoutRoles)
+                }
+
+                assertNoEventsStored(eventStore)
+            }
+        }
+
+        @Test
+        fun `create view processing view to be created event stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                createViewFromEventAndAssert(
+                    viewsService,
+                    ViewToBeCreatedEvent(id, name, published, listOf(), Game.LOL, owner)
+                )
+
+                assertEventStoredCorrectly(eventStore, ViewCreatedEvent(id, name, owner, listOf(), published, Game.LOL))
+            }
+        }
+
+        private suspend fun createViewFromEventAndAssert(
+            viewsService: ViewsService,
+            viewToBeCreatedEvent: ViewToBeCreatedEvent
+        ) {
+            viewsService.createView(
+                id,
+                aggregateRoot,
+                viewToBeCreatedEvent
+            ).onRight {
+                assertOperation(it, EventType.VIEW_CREATED)
+            }.onLeft {
+                fail(it.message)
+            }
+        }
+    }
+
+    @Nested
+    inner class BehaviorOfEditView {
+
+        @Test
+        fun `editing a lol view stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                val newName = "new-name"
+                viewsService.edit(
+                    owner,
+                    id,
+                    ViewRequest(newName, published, listOf(), Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_EDITED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(eventStore, ViewToBeEditedEvent(id, newName, published, listOf(), Game.LOL))
+            }
+        }
+
+        @Test
+        fun `editing a lol view with too many characters does not store an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+                val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                viewsService.edit(
+                    owner, id,
+                    ViewRequest(name, published, charactersRequest, Game.LOL)
+                ).onRight {
+                    fail()
+                }.onLeft {
+                    assertTrue(it is TooMuchCharacters)
+                }
+
+                assertNoEventsStored(eventStore)
+            }
+        }
+
+        @Test
+        fun `editing a wow view with more than one character stores an event`() {
+            runBlocking {
+
+                val request1 = WowCharacterRequest("a", "r", "r")
+                val request2 = WowCharacterRequest("b", "r", "r")
+                val request3 = WowCharacterRequest("c", "r", "r")
+                val request4 = WowCharacterRequest("d", "r", "r")
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                val charactersRequest = listOf(request1, request2, request3, request4)
+                viewsService.edit(
+                    owner,
+                    id,
+                    ViewRequest(name, published, charactersRequest, Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_EDITED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewToBeEditedEvent(id, name, published, charactersRequest, Game.WOW)
+                )
+
+            }
+        }
+
+        @Test
+        fun `editing a lol view processing view to be edited stores an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView),
+                    emptyCharactersState,
+                    listOf(),
+                    defaultCredentialsState,
+                    mapOf()
+                )
+
+                val newName = "new-name"
+                viewsService.editView(
+                    id,
+                    aggregateRoot,
+                    ViewToBeEditedEvent(id, newName, published, listOf(), Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_EDITED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(eventStore, ViewEditedEvent(id, newName, listOf(), published, Game.LOL))
+            }
+        }
+
+        @Test
+        fun `editing a view processing view to be edited, an event is stored with the actual characters of the view`() {
+            runBlocking {
+                val request1 = WowCharacterRequest("a", "r", "r")
+                val request2 = WowCharacterRequest("b", "r", "r")
+                val request3 = WowCharacterRequest("c", "r", "r")
+                val request4 = WowCharacterRequest("d", "r", "r")
+
+                `when`(raiderIoClient.exists(request1)).thenReturn(true)
+                `when`(raiderIoClient.exists(request2)).thenReturn(true)
+                `when`(raiderIoClient.exists(request3)).thenReturn(true)
+                `when`(raiderIoClient.exists(request4)).thenReturn(true)
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
+                    CharactersState(
+                        listOf(basicWowCharacter, basicWowCharacter2),
+                        listOf()
+                    ),
+                    listOf(),
+                    basicCredentialsWithRolesInitialState,
+                    mapOf()
+                )
+
+                viewsService.editView(
+                    id,
+                    aggregateRoot,
+                    ViewToBeEditedEvent(id, name, published, listOf(request1, request2, request3, request4), Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_EDITED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewEditedEvent(id, name, listOf(3, 4, 5, 6), published, Game.WOW)
+                )
+            }
+        }
+
+        @Test
+        fun `editing a lol view processing view to be edited, an event is stored with the actual characters of the view`() {
+            runBlocking {
+                val charactersRequest = (3..6).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
+                    CharactersState(
+                        listOf(),
+                        listOf(basicLolCharacter, basicLolCharacter2)
+                    ),
+                    listOf(),
+                    basicCredentialsWithRolesInitialState,
+                    mapOf()
+                )
+
+                `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
+                    val name = invocation.getArgument<String>(0)
+                    val tag = invocation.getArgument<String>(1)
+                    Either.Right(GetPUUIDResponse(UUID.randomUUID().toString(), name, tag))
+                }
+
+                `when`(riotClient.getSummonerByPuuid(anyString())).thenAnswer { invocation ->
+                    val puuid = invocation.getArgument<String>(0)
+                    Either.Right(
+                        GetSummonerResponse(
+                            UUID.randomUUID().toString(),
+                            UUID.randomUUID().toString(),
+                            puuid,
+                            10,
+                            10L,
+                            200
+                        )
+                    )
+                }
+
+                viewsService.editView(
+                    id,
+                    aggregateRoot,
+                    ViewToBeEditedEvent(id, name, published, charactersRequest, Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_EDITED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewEditedEvent(id, name, listOf(3, 4, 5, 6), published, Game.LOL)
+                )
+            }
+        }
+    }
+
+    @Nested
+    inner class BehaviorOfDeleteView {
+        @Test
+        fun `i can delete a view`() {
+            runBlocking {
+
+                val (_, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    emptyCredentialsInitialState,
+                    mapOf()
+                )
+
+                assertEquals(viewsService.delete("1"), ViewDeleted("1"))
+            }
+        }
+    }
+
+    @Nested
+    inner class BehaviorOfPatchView {
+        @Test
+        fun `patch a view stores an event`() {
+            runBlocking {
+                val patchedName = "new-name"
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+
+                viewsService.patch(
+                    owner,
+                    id,
+                    ViewPatchRequest(patchedName, null, null, Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_PATCHED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(eventStore, ViewToBePatchedEvent(id, patchedName, null, null, Game.WOW))
+            }
+        }
+
+        @Test
+        fun `trying to patch a view with too many characters fails without storing an event`() {
+            runBlocking {
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleWowView),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+
+                val id = UUID.randomUUID().toString()
+
+                val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                viewsService.patch(
+                    owner,
+                    id,
+                    ViewPatchRequest(null, null, charactersRequest, Game.WOW)
+                ).onRight {
+                    fail()
+                }.onLeft {
+                    assertTrue(it is TooMuchCharacters)
+                }
+
+                assertNoEventsStored(eventStore)
+            }
+        }
+
+        @Test
+        fun `patching a view patching more than one character stores an event`() {
+            runBlocking {
+
+                val request1 = WowCharacterRequest("a", "r", "r")
+                val request2 = WowCharacterRequest("b", "r", "r")
+                val request3 = WowCharacterRequest("c", "r", "r")
+                val request4 = WowCharacterRequest("d", "r", "r")
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+
+                val characterRequests = listOf(request1, request2, request3, request4)
+                viewsService.patch(
+                    owner,
+                    id,
+                    ViewPatchRequest(null, null, characterRequests, Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_TO_BE_PATCHED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                val expectedEvent = Event(
+                    aggregateRoot,
+                    id,
+                    ViewToBePatchedEvent(id, null, null, characterRequests, Game.WOW)
+                )
+
+                val events = eventStore.getEvents(null).toList()
+
+                assertEquals(1, events.size)
+                assertEquals(EventWithVersion(1, expectedEvent), events.first())
+
+            }
+        }
+
+        @Test
+        fun `patching a lol view processing event stores an event`() {
+            runBlocking {
+                val charactersRequest = (3..6).map { LolCharacterRequest(it.toString(), it.toString()) }
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+
+                `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
+                    val name = invocation.getArgument<String>(0)
+                    val tag = invocation.getArgument<String>(1)
+                    Either.Right(GetPUUIDResponse(UUID.randomUUID().toString(), name, tag))
+                }
+
+                `when`(riotClient.getSummonerByPuuid(anyString())).thenAnswer { invocation ->
+                    val puuid = invocation.getArgument<String>(0)
+                    Either.Right(
+                        GetSummonerResponse(
+                            UUID.randomUUID().toString(),
+                            UUID.randomUUID().toString(),
+                            puuid,
+                            10,
+                            10L,
+                            200
+                        )
+                    )
+                }
+
+                viewsService.patchView(
+                    id,
+                    aggregateRoot,
+                    ViewToBePatchedEvent(id, null, null, charactersRequest, Game.LOL)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_PATCHED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewPatchedEvent(id, null, listOf(1, 2, 3, 4), null, Game.LOL)
+                )
+            }
+        }
+
+        @Test
+        fun `patching a wow view processing event stores an event`() {
+            runBlocking {
+
+                val request1 = WowCharacterRequest("a", "r", "r")
+                val request2 = WowCharacterRequest("b", "r", "r")
+                val request3 = WowCharacterRequest("c", "r", "r")
+                val request4 = WowCharacterRequest("d", "r", "r")
+
+                `when`(raiderIoClient.exists(request1)).thenReturn(true)
+                `when`(raiderIoClient.exists(request2)).thenReturn(true)
+                `when`(raiderIoClient.exists(request3)).thenReturn(true)
+                `when`(raiderIoClient.exists(request4)).thenReturn(true)
+
+
+                val (eventStore, viewsService) = createService(
+                    listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
+                    emptyCharactersState,
+                    listOf(),
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
+                    mapOf()
+                )
+
+                val charactersRequest = listOf(request1, request2, request3, request4)
+
+                viewsService.patchView(
+                    id,
+                    aggregateRoot,
+                    ViewToBePatchedEvent(id, null, null, charactersRequest, Game.WOW)
+                ).onRight {
+                    assertOperation(it, EventType.VIEW_PATCHED)
+                }.onLeft {
+                    fail(it.toStr())
+                }
+
+                assertEventStoredCorrectly(
+                    eventStore,
+                    ViewPatchedEvent(id, null, listOf(1, 2, 3, 4), null, Game.WOW)
+                )
+            }
+        }
+    }
+
+    @Nested
+    inner class BehaviorOfGetData {
+        @Test
+        fun `lol view data returns newest cached data`() {
+            runBlocking {
+
+                val simpleView = basicSimpleLolView.copy(characterIds = listOf(1))
+                val view = View(
+                    simpleView.id, simpleView.name, simpleView.owner, simpleView.published, listOf(
+                        basicLolCharacter
+                    ), simpleView.game
+                )
+                val moreRecentDataCache =
+                    anotherLolDataCache.copy(characterId = 1, inserted = OffsetDateTime.now().plusHours(2))
+
+                val (_, viewsService) = createService(
+                    listOf(simpleView),
+                    CharactersState(listOf(), listOf(basicLolCharacter)),
+                    listOf(
+                        lolDataCache.copy(characterId = 1),
+                        moreRecentDataCache
+                    ),
+                    emptyCredentialsInitialState,
+                    mapOf()
+                )
+
+                viewsService.getData(view)
+                    .onLeft { fail(it.error()) }
+                    .onRight { assertEquals(listOf(anotherRiotData), it) }
+            }
+        }
+    }
+
+    private suspend fun createService(
+        viewsState: List<SimpleView>,
+        charactersState: CharactersState,
+        dataCacheState: List<DataCache>,
+        credentialState: CredentialsRepositoryState,
+        rolesActivitiesState: Map<Role, Set<Activity>>
+    ): Pair<EventStore, ViewsService> {
+        val viewsRepository = ViewsInMemoryRepository()
+            .withState(viewsState)
+        val charactersRepository = CharactersInMemoryRepository()
+            .withState(charactersState)
+        val dataCacheRepository = DataCacheInMemoryRepository()
+            .withState(dataCacheState)
+        val credentialsRepository = CredentialsInMemoryRepository()
+            .withState(credentialState)
+        val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
+            .withState(rolesActivitiesState)
+        val eventStore = EventStoreInMemory()
+
+        val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+        val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+        val service =
+            ViewsService(
+                viewsRepository,
+                charactersService,
+                dataCacheService,
+                raiderIoClient,
+                credentialsService,
+                eventStore
+            )
+
+        return Pair(eventStore, service)
+    }
+
+    private fun assertOperation(operation: Operation, expectedType: EventType) {
+        assertTrue(operation.id.isNotEmpty())
+        assertEquals(aggregateRoot, operation.aggregateRoot)
+        assertEquals(expectedType, operation.type)
+    }
+
+    private suspend fun assertEventStoredCorrectly(
+        eventStore: EventStore,
+        aggregateRoot: String,
+        viewName: String,
+        published: Boolean,
+        characters: List<CharacterCreateRequest>,
+        game: Game
+    ) {
+        val events = eventStore.getEvents(null).toList()
+        assertEquals(1, events.size)
+        val actual = events.first().event
+        val data = actual.eventData as ViewToBeCreatedEvent
+
+        assertTrue(actual.operationId.isNotEmpty())
+        assertEquals(aggregateRoot, actual.aggregateRoot)
+        assertEquals(data.id, actual.operationId)
+        assertEquals(viewName, data.name)
+        assertEquals(published, data.published)
+        assertEquals(characters, data.characters)
+        assertEquals(game, data.game)
+        assertEquals(owner, data.owner)
+    }
+
+    private suspend fun assertEventStoredCorrectly(eventStore: EventStore, eventData: EventData) {
+        val events = eventStore.getEvents(null).toList()
+
+        val expectedEvent = Event(
+            aggregateRoot,
+            id,
+            eventData
+        )
+
+        assertEquals(1, events.size)
+        assertEquals(EventWithVersion(1, expectedEvent), events.first())
+    }
+
+    private suspend fun assertNoEventsStored(eventStore: EventStore) {
+        val events = eventStore.getEvents(null).toList()
+        assertEquals(0, events.size)
     }
 }

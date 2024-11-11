@@ -15,11 +15,11 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         return users.find { it.userName == userName }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials): Unit {
+    override suspend fun insertCredentials(credentials: Credentials) {
         users.add(credentials)
     }
 
-    override suspend fun editCredentials(userName: String, newPassword: String): Unit {
+    override suspend fun editCredentials(userName: String, newPassword: String) {
         val index = users.map { it.userName }.indexOf(userName)
         users[index] = Credentials(userName, newPassword)
     }
@@ -31,7 +31,7 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + role }
     }
 
-    override suspend fun deleteRole(userName: String, role: String) {
+    override suspend fun deleteRole(userName: String, role: Role) {
         userRoles.computeIfPresent(userName) { _, currentRoles ->
             currentRoles.toMutableList().apply { remove(role) }
         }

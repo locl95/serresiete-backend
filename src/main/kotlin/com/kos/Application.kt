@@ -9,11 +9,17 @@ import com.kos.auth.repository.AuthDatabaseRepository
 import com.kos.characters.CharactersService
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.common.DatabaseFactory
+import com.kos.common.JWTConfig
+import com.kos.common.RetryConfig
+import com.kos.common.launchSubscription
 import com.kos.credentials.CredentialsController
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.repository.CredentialsDatabaseRepository
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheDatabaseRepository
+import com.kos.eventsourcing.events.repository.EventStoreDatabase
+import com.kos.eventsourcing.subscriptions.EventSubscription
+import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
 import com.kos.plugins.*
 import com.kos.httpclients.raiderio.RaiderIoHTTPClient
 import com.kos.httpclients.riot.RiotHTTPClient
@@ -47,53 +53,97 @@ fun main() {
 fun Application.module() {
     val riotApiKey = System.getenv("RIOT_API_KEY")
 
+
+    val jwtConfig = JWTConfig(
+        System.getenv("JWT_ISSUER"),
+        System.getenv("JWT_SECRET")
+    )
+
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    DatabaseFactory.init(mustClean = false)
+    val db = DatabaseFactory.pooledDatabase()
 
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
 
-    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository()
+    val eventStore = EventStoreDatabase(db)
 
-    val credentialsRepository = CredentialsDatabaseRepository()
+    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
+
+    val credentialsRepository = CredentialsDatabaseRepository(db)
     val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
     val credentialsController = CredentialsController(credentialsService)
 
-    val authRepository = AuthDatabaseRepository()
-    val authService = AuthService(authRepository)
-    val authController = AuthController(authService, credentialsService)
+    val authRepository = AuthDatabaseRepository(db)
+    val authService = AuthService(authRepository, credentialsService, jwtConfig)
+    val authController = AuthController(authService)
 
-    val activitiesRepository = ActivitiesDatabaseRepository()
+    val activitiesRepository = ActivitiesDatabaseRepository(db)
     val activitiesService = ActivitiesService(activitiesRepository)
     val activitiesController = ActivitiesController(activitiesService, credentialsService)
 
-    val rolesRepository = RolesDatabaseRepository()
+    val rolesRepository = RolesDatabaseRepository(db)
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
-    val rolesController = RolesController(rolesService, credentialsService)
+    val rolesController = RolesController(rolesService)
 
-    val charactersRepository = CharactersDatabaseRepository()
+    val charactersRepository = CharactersDatabaseRepository(db)
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
 
-    val viewsRepository = ViewsDatabaseRepository()
-    val dataCacheRepository = DataCacheDatabaseRepository()
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient)
-    val viewsService = ViewsService(viewsRepository, charactersService, dataCacheService, raiderIoHTTPClient)
-    val viewsController = ViewsController(viewsService, credentialsService)
+    val viewsRepository = ViewsDatabaseRepository(db)
+    val dataCacheRepository = DataCacheDatabaseRepository(db)
+    val dataCacheRetryConfig = RetryConfig(3, 1200)
+    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
+    val viewsService =
+        ViewsService(
+            viewsRepository,
+            charactersService,
+            dataCacheService,
+            raiderIoHTTPClient,
+            credentialsService,
+            eventStore
+        )
+    val viewsController = ViewsController(viewsService)
 
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-    val tasksRepository = TasksDatabaseRepository()
+    val tasksRepository = TasksDatabaseRepository(db)
     val tasksService =
         TasksService(tasksRepository, dataCacheService, charactersService, authService)
     val tasksLauncher =
         TasksLauncher(tasksService, tasksRepository, executorService, authService, dataCacheService, coroutineScope)
-    val tasksController = TasksController(tasksService, credentialsService)
+    val tasksController = TasksController(tasksService)
 
     coroutineScope.launch { tasksLauncher.launchTasks() }
-    configureAuthentication(authService, credentialsService)
+
+    val subscriptionsRetryConfig = RetryConfig(10, 100)
+    val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
+    val viewsEventSubscription = EventSubscription(
+        "views",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.viewsProcessor(it, viewsService) }
+
+    val syncLolEventSubscription = EventSubscription(
+        "sync-lol",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncLolCharactersProcessor(it, charactersService, dataCacheService) }
+
+    launchSubscription(viewsEventSubscription)
+    launchSubscription(syncLolEventSubscription)
+
+    configureAuthentication(credentialsService, jwtConfig)
     configureCors()
-    configureRouting(activitiesController, authController, credentialsController, rolesController, viewsController, tasksController)
+    configureRouting(
+        activitiesController,
+        authController,
+        credentialsController,
+        rolesController,
+        viewsController,
+        tasksController
+    )
     configureSerialization()
     configureLogging()
 }

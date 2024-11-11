@@ -7,6 +7,7 @@ import com.kos.characters.CharactersTestHelper.basicWowCharacter2
 import com.kos.characters.CharactersTestHelper.basicWowRequest
 import com.kos.characters.CharactersTestHelper.basicWowRequest2
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
+import com.kos.characters.CharactersTestHelper.gigaLolCharacterList
 import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
@@ -19,7 +20,10 @@ import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 abstract class CharactersRepositoryTestCommon {
 
@@ -79,6 +83,43 @@ abstract class CharactersRepositoryTestCommon {
             val repo = repository.withState(CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)))
             assertEquals(basicWowCharacter, repo.get(basicWowCharacter.id, Game.WOW))
             assertEquals(basicLolCharacter, repo.get(basicLolCharacter.id, Game.LOL))
+        }
+    }
+
+    @Test
+    fun `given a repository of characters i can retrieve a character by a character request`() {
+        runBlocking {
+            val repo = repository.withState(CharactersState(listOf(basicWowCharacter), gigaLolCharacterList))
+
+            val wowCharacterRequest =
+                WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
+            assertEquals(basicWowCharacter, repo.get(wowCharacterRequest as CharacterCreateRequest, Game.WOW))
+
+            val lolCharacter = gigaLolCharacterList[3]
+            val lolCharacterRequest = LolCharacterRequest(lolCharacter.name, lolCharacter.tag)
+            assertEquals(lolCharacter, repo.get(lolCharacterRequest, Game.LOL))
+        }
+    }
+
+    @Test
+    fun `given a repository of characters i can retrieve a character by a character insert`() {
+        runBlocking {
+            val repo = repository.withState(CharactersState(listOf(basicWowCharacter), gigaLolCharacterList))
+
+            val wowCharacterRequest =
+                WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
+            assertEquals(basicWowCharacter, repo.get(wowCharacterRequest as CharacterInsertRequest, Game.WOW))
+
+            val lolCharacter = gigaLolCharacterList[3]
+            val lolCharacterRequest = LolCharacterEnrichedRequest(
+                lolCharacter.name,
+                lolCharacter.tag,
+                lolCharacter.puuid,
+                lolCharacter.summonerIcon,
+                lolCharacter.id.toString(),
+                lolCharacter.summonerLevel
+            )
+            assertEquals(lolCharacter, repo.get(lolCharacterRequest, Game.LOL))
         }
     }
 

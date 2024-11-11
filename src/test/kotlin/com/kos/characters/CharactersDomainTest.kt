@@ -3,6 +3,7 @@ package com.kos.characters
 import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.characters.CharactersTestHelper.basicLolCharacterEnrichedRequest
+import com.kos.characters.CharactersTestHelper.gigaLolCharacterList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

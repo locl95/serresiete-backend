@@ -156,17 +156,20 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 it[summonerLevel] = character.summonerLevel
                             })
                         }
+
                         else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
                     }
                 }
+
                 Game.WOW -> when (character) {
                     is WowCharacterRequest -> {
-                        Either.Right(WowCharacters.update({WowCharacters.id eq id}) {
+                        Either.Right(WowCharacters.update({ WowCharacters.id eq id }) {
                             it[name] = character.name
                             it[region] = character.region
                             it[realm] = character.realm
                         })
                     }
+
                     else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
                 }
             }
@@ -188,11 +191,49 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
     }
 
     override suspend fun get(request: CharacterCreateRequest, game: Game): Character? {
-        TODO("Not yet implemented")
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (game) {
+                Game.WOW -> {
+                    request as WowCharacterRequest
+                    WowCharacters.select {
+                        WowCharacters.name.eq(request.name)
+                            .and(WowCharacters.realm.eq(request.realm))
+                            .and(WowCharacters.region.eq(request.region))
+                    }.map { resultRowToWowCharacter(it) }
+                }
+
+                Game.LOL -> {
+                    request as LolCharacterRequest
+                    LolCharacters.select {
+                        LolCharacters.tag.eq(request.tag)
+                            .and(LolCharacters.name.eq(request.name))
+                    }.map { resultRowToLolCharacter(it) }
+                }
+            }
+        }.singleOrNull()
     }
 
     override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
-        TODO("Not yet implemented")
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (game) {
+                Game.WOW -> {
+                    character as WowCharacterRequest
+                    WowCharacters.select {
+                        WowCharacters.name.eq(character.name)
+                            .and(WowCharacters.realm.eq(character.realm))
+                            .and(WowCharacters.region.eq(character.region))
+                    }.map { resultRowToWowCharacter(it) }
+                }
+
+                Game.LOL -> {
+                    character as LolCharacterEnrichedRequest
+                    LolCharacters.select {
+                        LolCharacters.puuid.eq(character.puuid)
+                            .and(LolCharacters.summonerId.eq(character.summonerId))
+                    }.map { resultRowToLolCharacter(it) }
+                }
+            }
+        }.singleOrNull()
     }
 
     override suspend fun get(game: Game): List<Character> =

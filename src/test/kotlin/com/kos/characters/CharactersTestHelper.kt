@@ -38,9 +38,9 @@ object CharactersTestHelper {
         "EUW"
     )
     val gigaLolCharacterRequestList = List(14) { index ->
-        LolCharacterRequest("sanxei$index", "euw100$index")
+        LolCharacterRequest("sanxei$index", "euw$index")
     }
     val gigaLolCharacterList = List(7) { index ->
-        LolCharacter(index.toLong(), "sanxei$index", "euw100$index", "puuid", index, "summonerId", 400)
+        LolCharacter(index.toLong(), "sanxei$index", "euw$index", index.toString(), index, index.toString(), 400)
     }
 }

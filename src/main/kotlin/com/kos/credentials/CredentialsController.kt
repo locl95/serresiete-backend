@@ -3,10 +3,7 @@ package com.kos.credentials
 import arrow.core.Either
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.common.ControllerError
-import com.kos.common.NotAuthorized
-import com.kos.common.NotEnoughPermissions
-import com.kos.common.NotFound
+import com.kos.common.*
 import com.kos.roles.Role
 
 class CredentialsController(val credentialsService: CredentialsService) {
@@ -66,9 +63,9 @@ class CredentialsController(val credentialsService: CredentialsService) {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.deleteCredentials)) {
-                    Either.Right(credentialsService.deleteCredentials(userToDelete))
-                } else Either.Left(NotEnoughPermissions(client))
+                if(!activities.contains(Activities.deleteCredentials)) Either.Left(NotEnoughPermissions(client))
+                else if (client == userToDelete) Either.Left(CantDeleteYourself(client, userToDelete))
+                else Either.Right(credentialsService.deleteCredentials(userToDelete))
             }
         }
     }

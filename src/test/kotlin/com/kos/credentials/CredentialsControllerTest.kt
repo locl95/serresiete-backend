@@ -2,6 +2,7 @@ package com.kos.credentials
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
+import com.kos.common.CantDeleteYourself
 import com.kos.common.NotEnoughPermissions
 import com.kos.common.getLeftOrNull
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
@@ -15,10 +16,7 @@ import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 
 class CredentialsControllerTest {
@@ -186,6 +184,25 @@ class CredentialsControllerTest {
                 controller.deleteRoleFromUser("owner", setOf(Activities.deleteRoleFromUser), "owner", Role.USER)
                     .isRight()
             )
+        }
+    }
+
+    @Test
+    fun `i cant remove my own credentials`() {
+        runBlocking {
+            val credentialsState = CredentialsRepositoryState(
+                listOf(basicCredentials.copy(userName = "owner"), basicCredentials),
+                mapOf()
+            )
+
+            val controller = createController(
+                credentialsState,
+                mapOf()
+            )
+
+            controller.deleteCredential("owner", setOf(Activities.deleteCredentials), "owner")
+                .onRight { fail("expected failure") }
+                .onLeft { assertTrue(it is CantDeleteYourself) }
         }
     }
 

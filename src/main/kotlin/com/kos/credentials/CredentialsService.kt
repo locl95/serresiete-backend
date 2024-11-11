@@ -10,15 +10,15 @@ class CredentialsService(
     private val credentialsRepository: CredentialsRepository,
     private val rolesActivitiesRepository: RolesActivitiesRepository
 ) {
-    suspend fun createCredentials(createCredentialsRequest: CreateCredentialsRequest): Unit {
+    suspend fun createCredentials(createCredentialRequest: CreateCredentialRequest): Unit {
         credentialsRepository.insertCredentials(
-            createCredentialsRequest.userName,
+            createCredentialRequest.userName,
             password = BCrypt.hashpw(
-                createCredentialsRequest.password,
+                createCredentialRequest.password,
                 BCrypt.gensalt(12)
             )
         )
-        credentialsRepository.insertRoles(createCredentialsRequest.userName, createCredentialsRequest.roles)
+        credentialsRepository.insertRoles(createCredentialRequest.userName, createCredentialRequest.roles)
     }
 
     suspend fun validateCredentials(credentials: Credentials): Boolean =
@@ -26,11 +26,13 @@ class CredentialsService(
             ?.takeIf { BCrypt.checkpw(credentials.password, it.password) }.isDefined()
 
 
-    suspend fun editCredentials(credentials: Credentials) {
+    suspend fun editCredential(userName: String, request: EditCredentialRequest) {
         credentialsRepository.editCredentials(
-            credentials.userName,
-            BCrypt.hashpw(credentials.password, BCrypt.gensalt(12))
+            userName,
+            BCrypt.hashpw(request.password, BCrypt.gensalt(12))
         )
+        credentialsRepository.deleteRoles(userName)
+        credentialsRepository.insertRoles(userName, request.roles)
     }
 
     suspend fun getUserRoles(userName: String): List<Role> = credentialsRepository.getUserRoles(userName)
@@ -49,4 +51,11 @@ class CredentialsService(
         credentialsRepository.getCredentials(user)?.let {
             CredentialsWithRoles(it.userName, getUserRoles(it.userName))
         }
+
+    suspend fun patchCredential(userName: String, request: PatchCredentialRequest) {
+        credentialsRepository.patch(
+            userName,
+            request.copy(password = request.password?.let { BCrypt.hashpw(it, BCrypt.gensalt(12)) })
+        )
+    }
 }

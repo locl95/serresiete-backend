@@ -2,6 +2,7 @@ package com.kos.credentials.repository
 
 import com.kos.common.WithState
 import com.kos.credentials.Credentials
+import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
 
 interface CredentialsRepository : WithState<CredentialsRepositoryState, CredentialsRepository> {
@@ -13,7 +14,9 @@ interface CredentialsRepository : WithState<CredentialsRepositoryState, Credenti
     suspend fun insertRole(userName: String, role: Role)
     suspend fun insertRoles(userName: String, roles: Set<Role>)
     suspend fun deleteRole(userName: String, role: Role)
+    suspend fun deleteRoles(userName: String)
     suspend fun deleteCredentials(user: String)
+    suspend fun patch(userName: String, request: PatchCredentialRequest)
 }
 
 data class CredentialsRepositoryState(

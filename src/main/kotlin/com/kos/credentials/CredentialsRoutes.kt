@@ -16,20 +16,14 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
         authenticate("auth-jwt") {
             post {
                 val userWithActivities = call.principal<UserWithActivities>()
-                credentialsController.createCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
+                credentialsController.createCredential(
+                    userWithActivities?.name,
+                    userWithActivities?.activities.orEmpty(),
+                    call.receive()
+                ).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.Created)
-                })
-            }
-        }
-        authenticate("auth-jwt") {
-            put {
-                val userWithActivities = call.principal<UserWithActivities>()
-                credentialsController.editCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.NoContent)
                 })
             }
         }
@@ -72,6 +66,36 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                         call.respondWithHandledError(it)
                     }, {
                         call.respond(HttpStatusCode.OK, it)
+                    })
+                }
+            }
+            authenticate("auth-jwt") {
+                put {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.editCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty(),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
+                }
+            }
+            authenticate("auth-jwt") {
+                put {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.patchCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty(),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
                     })
                 }
             }

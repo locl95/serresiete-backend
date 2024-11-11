@@ -1,6 +1,8 @@
 package com.kos.credentials
 
+import com.kos.common.isDefined
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
+import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRolesInitialState
 import com.kos.credentials.CredentialsTestHelper.encryptedCredentials
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsDatabaseRepository
@@ -12,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
@@ -111,6 +114,30 @@ abstract class CredentialsRepositoryTest {
             assertEquals(listOf(Role.USER, Role.SERVICE), initialRolesUser2.orEmpty())
             assertEquals(listOf(Role.USER), finalRolesUser)
             assertEquals(initialRolesUser2, finalRolesUser2)
+        }
+    }
+
+    @Test
+    open fun `given a repository with users and roles i can delete all role`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(
+                basicCredentialsInitialState.copy(
+                    credentialsRoles = mapOf(user to listOf(Role.USER, Role.ADMIN), "user2" to listOf(Role.USER, Role.SERVICE)))
+            )
+
+            repositoryWithState.deleteRoles("user2")
+            assertEquals(null, repositoryWithState.state().credentialsRoles["user2"])
+            assertEquals(listOf(Role.USER, Role.ADMIN), repositoryWithState.state().credentialsRoles[user])
+        }
+    }
+
+    @Test
+    open fun `given a repository with credentials and roles i can patch them`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsWithRolesInitialState)
+            repositoryWithState.patch(user, PatchCredentialRequest("newPassword", setOf()))
+            assertTrue(repositoryWithState.state().users.contains(Credentials(user, "newPassword")))
+            assertFalse(repositoryWithState.state().credentialsRoles[user].isDefined())
         }
     }
 }

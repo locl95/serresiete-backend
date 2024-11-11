@@ -13,7 +13,7 @@ class CredentialsController(val credentialsService: CredentialsService) {
     suspend fun createCredential(
         client: String?,
         activities: Set<Activity>,
-        request: CreateCredentialsRequest,
+        request: CreateCredentialRequest,
     ): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
@@ -29,13 +29,30 @@ class CredentialsController(val credentialsService: CredentialsService) {
     suspend fun editCredential(
         client: String?,
         activities: Set<Activity>,
-        credentials: Credentials
+        userName: String,
+        request: EditCredentialRequest
     ): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
                 if (activities.contains(Activities.editCredentials)) {
-                    Either.Right(credentialsService.editCredentials(credentials))
+                    Either.Right(credentialsService.editCredential(userName, request))
+                } else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
+    suspend fun patchCredential(
+        client: String?,
+        activities: Set<Activity>,
+        username: String,
+        credentials: PatchCredentialRequest
+    ): Either<ControllerError, Unit> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized)
+            else -> {
+                if (activities.contains(Activities.patchCredentials)) {
+                    Either.Right(credentialsService.patchCredential(username, credentials))
                 } else Either.Left(NotEnoughPermissions(client))
             }
         }

@@ -2,7 +2,11 @@ package com.kos.credentials.repository
 
 import com.kos.common.InMemoryRepository
 import com.kos.credentials.Credentials
+import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
+import com.kos.views.SimpleView
+import com.kos.views.ViewPatched
+import org.jetbrains.exposed.sql.ushortParam
 
 class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository {
     private val users = mutableListOf<Credentials>()
@@ -41,9 +45,27 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         }
     }
 
+    override suspend fun deleteRoles(userName: String) {
+        userRoles.remove(userName)
+    }
+
     override suspend fun deleteCredentials(user: String) {
         val index = users.map { it.userName }.indexOf(user)
         users.removeAt(index)
+    }
+
+    override suspend fun patch(userName: String, request: PatchCredentialRequest) {
+        request.password?.let { password ->
+            val userIndex = users.indexOfFirst { it.userName == userName }
+            users.removeAt(userIndex)
+            val newCredential = Credentials(userName, password)
+            users.add(userIndex, newCredential)
+        }
+
+        request.roles?.let { roles ->
+            if(roles.isEmpty()) userRoles.remove(userName)
+            else userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + roles }
+        }
     }
 
     override suspend fun state(): CredentialsRepositoryState {

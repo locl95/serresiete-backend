@@ -38,7 +38,7 @@ class CredentialsServiceTest {
             val credentialsService =
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
-            credentialsService.createCredentials(CreateCredentialsRequest(user, password, setOf()))
+            credentialsService.createCredentials(CreateCredentialRequest(user, password, setOf()))
             assertEquals(credentialsInMemoryRepository.state().users.map { it.userName }, listOf(user))
         }
     }
@@ -53,7 +53,7 @@ class CredentialsServiceTest {
                 CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
 
             assertEquals(credentialsInMemoryRepository.getCredentials(user), encryptedCredentials)
-            credentialsService.editCredentials(basicCredentials.copy(password = "newPassword"))
+            credentialsService.editCredential(user, EditCredentialRequest("newPassword", setOf()))
             assertNotEquals(credentialsInMemoryRepository.getCredentials(user)?.password, encryptedCredentials.password)
         }
     }

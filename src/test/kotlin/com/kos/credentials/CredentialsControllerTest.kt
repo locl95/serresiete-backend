@@ -71,7 +71,7 @@ class CredentialsControllerTest {
                 controller.createCredential(
                     "owner",
                     setOf(Activities.createCredentials),
-                    CreateCredentialsRequest(user, password, setOf())
+                    CreateCredentialRequest(user, password, setOf())
                 ).isRight()
             )
         }
@@ -94,7 +94,8 @@ class CredentialsControllerTest {
                 controller.editCredential(
                     "owner",
                     setOf(Activities.editCredentials),
-                    basicCredentials.copy(password = "password")
+                    "owner",
+                    EditCredentialRequest("password", setOf())
                 ).isRight()
             )
         }

@@ -10,7 +10,11 @@ data class Credentials(val userName: String, val password: String)
 data class CredentialsWithRoles(val userName: String, val roles: List<Role>)
 
 @Serializable
-data class CreateCredentialsRequest(val userName: String, val password: String, val roles: Set<Role>)
+data class CreateCredentialRequest(val userName: String, val password: String, val roles: Set<Role>)
+@Serializable
+data class EditCredentialRequest(val password: String, val roles: Set<Role>)
+@Serializable
+data class PatchCredentialRequest(val password: String?, val roles: Set<Role>?)
 
 data class CredentialsRole(val userName: String, val role: Role)
 

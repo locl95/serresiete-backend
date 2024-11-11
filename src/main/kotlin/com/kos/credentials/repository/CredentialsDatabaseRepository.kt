@@ -2,6 +2,7 @@ package com.kos.credentials.repository
 
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsRole
+import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -103,13 +104,41 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
 
     override suspend fun deleteRole(userName: String, role: Role) {
         newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role.toString()) and CredentialsRoles.userName.eq(userName) }
+            CredentialsRoles.deleteWhere {
+                CredentialsRoles.role.eq(role.toString()) and CredentialsRoles.userName.eq(
+                    userName
+                )
+            }
+        }
+    }
+
+    override suspend fun deleteRoles(userName: String) {
+        newSuspendedTransaction(Dispatchers.IO, db) {
+            CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
         }
     }
 
     override suspend fun deleteCredentials(user: String) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Users.deleteWhere { userName.eq(user) }
+        }
+    }
+
+    override suspend fun patch(userName: String, request: PatchCredentialRequest) {
+        newSuspendedTransaction {
+            request.password?.let {
+                Users.update({ Users.userName.eq(userName) }) {
+                    it[password] = request.password
+                }
+            }
+            request.roles?.let {
+                CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
+                CredentialsRoles.deleteWhere {
+                    role.eq(role.toString()) and CredentialsRoles.userName.eq(
+                        userName
+                    )
+                }
+            }
         }
     }
 

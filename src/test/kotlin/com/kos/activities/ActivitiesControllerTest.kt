@@ -59,42 +59,6 @@ class ActivitiesControllerTest {
     }
 
     @Test
-    fun `i can create activities`() {
-        runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
-
-            val controller = createController(
-                credentialsState,
-                setOf(),
-                mapOf(Pair(Role.USER, setOf(Activities.createActivities)))
-            )
-            assertTrue(controller.createActivity("owner", ActivityRequest("do this"), setOf(Activities.createActivities)).isRight())
-            assertEquals(setOf("do this"), activitiesRepository.state())
-        }
-    }
-
-    @Test
-    fun `i can delete activities`() {
-        runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
-
-            val controller = createController(
-                credentialsState,
-                setOf("do this"),
-                mapOf(Pair(Role.USER, setOf(Activities.deleteActivities)))
-            )
-            assertTrue(controller.deleteActivity("owner", "do this", setOf(Activities.deleteActivities)).isRight())
-            assertEquals(setOf(), activitiesRepository.state())
-        }
-    }
-
-    @Test
     fun `i can get activities from a role`() {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(

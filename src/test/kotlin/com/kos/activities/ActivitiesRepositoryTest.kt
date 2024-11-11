@@ -25,24 +25,6 @@ abstract class ActivitiesRepositoryTestCommon {
             assertEquals(repositoryWithState.getActivities(), basicActivities)
         }
     }
-
-    @Test
-    fun `given an empty repository i can insert an activity`() {
-        runBlocking {
-            repository.insertActivity(basicActivity)
-            val state = repository.state()
-            assertContains(state, basicActivity)
-        }
-    }
-
-    @Test
-    fun `given a repository with one activity i can delete it`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(setOf(basicActivity))
-            repositoryWithState.deleteActivity(basicActivity)
-            assertTrue(repositoryWithState.state().isEmpty())
-        }
-    }
 }
 
 class ActivitiesInMemoryRepositoryTest : ActivitiesRepositoryTestCommon() {

@@ -53,31 +53,6 @@ class RolesControllerTest {
     }
 
     @Test
-    fun `i can create roles`() {
-        runBlocking {
-
-            val controller = createController(
-                listOf(),
-                mapOf()
-            )
-            assertTrue(
-                controller.createRole("owner", RoleRequest(role), setOf(Activities.createRoles)).isRight()
-            )
-        }
-    }
-
-    @Test
-    fun `i can delete roles`() {
-        runBlocking {
-            val controller = createController(
-                listOf(role),
-                mapOf(Pair(role, setOf(Activities.deleteRoles)))
-            )
-            assertTrue(controller.deleteRole("owner", role, setOf(Activities.deleteRoles)).isRight())
-        }
-    }
-
-    @Test
     fun `i can add activity to role`() {
         runBlocking {
 

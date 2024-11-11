@@ -22,36 +22,6 @@ class ActivitiesController(
         }
     }
 
-    suspend fun createActivity(
-        client: String?,
-        activityRequest: ActivityRequest,
-        activities: Set<Activity>
-    ): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.createActivities))
-                    Either.Right(activitiesService.createActivity(activityRequest))
-                else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun deleteActivity(
-        client: String?,
-        activity: Activity,
-        activities: Set<Activity>
-    ): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.deleteActivities))
-                    Either.Right(activitiesService.deleteActivity(activity))
-                else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
     suspend fun getActivitiesFromRole(
         client: String?,
         role: Role,

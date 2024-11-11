@@ -25,36 +25,6 @@ fun Route.activitiesRouting(
                     })
             }
         }
-
-        authenticate("auth-jwt") {
-            post {
-                val userWithActivities = call.principal<UserWithActivities>()
-                activitiesController.createActivity(
-                    userWithActivities?.name,
-                    call.receive(),
-                    userWithActivities?.activities.orEmpty()
-                ).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.Created)
-                })
-            }
-        }
-        authenticate("auth-jwt") {
-            delete("/{id}") {
-                val userWithActivities = call.principal<UserWithActivities>()
-                activitiesController.deleteActivity(
-                    userWithActivities?.name,
-                    call.parameters["activity"].orEmpty(),
-                    userWithActivities?.activities.orEmpty()
-                ).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.NoContent)
-                })
-            }
-        }
-
         authenticate("auth-jwt") {
             get("/{role}") {
                 val userWithActivities = call.principal<UserWithActivities>()

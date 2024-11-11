@@ -22,18 +22,6 @@ class ActivitiesDatabaseRepository(private val db: Database) : ActivitiesReposit
         }
     }
 
-    override suspend fun insertActivity(activity: Activity) {
-        return newSuspendedTransaction(Dispatchers.IO, db) {
-            Activities.insert { it[Activities.activity] = activity }
-        }
-    }
-
-    override suspend fun deleteActivity(activity: Activity) {
-        return newSuspendedTransaction(Dispatchers.IO, db) {
-            Activities.deleteWhere { Activities.activity.eq(activity) }
-        }
-    }
-
     override suspend fun state(): Set<Activity> {
         return getActivities()
     }

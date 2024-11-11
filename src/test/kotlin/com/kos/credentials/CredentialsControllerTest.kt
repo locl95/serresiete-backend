@@ -112,7 +112,7 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            assertTrue(controller.deleteCredential("owner", setOf(Activities.deleteCredentials), "owner").isRight())
+            assertTrue(controller.deleteCredential("owner", setOf(Activities.deleteCredentials), user).isRight())
         }
     }
 

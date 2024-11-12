@@ -85,7 +85,7 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                 }
             }
             authenticate("auth-jwt") {
-                put {
+                patch {
                     val userWithActivities = call.principal<UserWithActivities>()
                     credentialsController.patchCredential(
                         userWithActivities?.name,

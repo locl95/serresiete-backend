@@ -122,6 +122,22 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
         }
     }
 
+    override suspend fun get(request: CharacterCreateRequest, game: Game): Character? =
+        when (game) {
+            Game.WOW -> wowCharacters.find {
+                request as WowCharacterRequest
+                it.name == request.name &&
+                        it.realm == request.realm &&
+                        it.region == request.region
+            }
+
+            Game.LOL -> lolCharacters.find {
+                request as LolCharacterRequest
+                it.name == request.name &&
+                        it.tag == request.tag
+            }
+        }
+
     override suspend fun get(id: Long, game: Game): Character? =
         when (game) {
             Game.WOW -> wowCharacters.find { it.id == id }
@@ -133,6 +149,13 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
             Game.WOW -> wowCharacters
             Game.LOL -> lolCharacters
         }
+
+    override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
+        return when (game) {
+            Game.WOW -> wowCharacters.find { character.same(it) }
+            Game.LOL -> lolCharacters.find { character.same(it) }
+        }
+    }
 
 
     override suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long): List<Character> {

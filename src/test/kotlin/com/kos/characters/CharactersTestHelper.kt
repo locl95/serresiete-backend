@@ -38,4 +38,10 @@ object CharactersTestHelper {
         "R7 Disney Girl",
         "EUW"
     )
+    val gigaLolCharacterRequestList = List(14) { index ->
+        LolCharacterRequest("sanxei$index", "euw$index")
+    }
+    val gigaLolCharacterList = List(7) { index ->
+        LolCharacter(index.toLong(), "sanxei$index", "euw$index", index.toString(), index, index.toString(), 400)
+    }
 }

@@ -37,12 +37,20 @@ data class LolCharacterEnrichedRequest(
 
 ) : CharacterInsertRequest {
     override fun toCharacter(id: Long): LolCharacter {
-        return LolCharacter(id, this.name, this.tag, this.puuid, this.summonerIconId, this.summonerId, this.summonerLevel)
+        return LolCharacter(
+            id,
+            this.name,
+            this.tag,
+            this.puuid,
+            this.summonerIconId,
+            this.summonerId,
+            this.summonerLevel
+        )
     }
 
     override fun same(other: Character): Boolean {
         return when (other) {
-            is LolCharacter -> this.puuid === other.puuid && this.summonerId === other.summonerId
+            is LolCharacter -> this.puuid == other.puuid && this.summonerId == other.summonerId
             else -> false
         }
     }

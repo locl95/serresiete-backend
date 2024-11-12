@@ -1,0 +1,1 @@
+ALTER TABLE authorizations ALTER COLUMN token SET DATA TYPE text;

@@ -12,6 +12,11 @@ import com.kos.characters.repository.CharactersDatabaseRepository
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.datacache.DataCache
+import com.kos.datacache.DataCacheInMemoryRepositoryTest
+import com.kos.datacache.repository.DataCacheDatabaseRepository
+import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.datacache.repository.DataCacheRepository
 import com.kos.views.Game
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import kotlinx.coroutines.runBlocking
@@ -20,14 +25,13 @@ import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import java.time.OffsetDateTime
+import kotlin.test.*
 
 abstract class CharactersRepositoryTestCommon {
 
     abstract val repository: CharactersRepository
+    abstract val dataCacheRepository: DataCacheRepository
 
     @Test
     fun `given an empty repository i can insert wow characters`() {
@@ -234,15 +238,133 @@ abstract class CharactersRepositoryTestCommon {
         }
     }
 
+    @Test
+    fun `get characters to sync should return those characters who don't have a cached record or were cached before olderThanMinutes`() {
+        runBlocking {
+            val lolCharacters = (1..3).map {
+                LolCharacter(
+                    it.toLong(),
+                    it.toString(),
+                    it.toString(),
+                    it.toString(),
+                    it,
+                    it.toString(),
+                    it
+                )
+            }
+            val repoWithState = repository.withState(
+                CharactersState(
+                    listOf(),
+                    lolCharacters
+                )
+            )
+
+            dataCacheRepository.withState(
+                listOf(
+                    DataCache(1, "", OffsetDateTime.now()),
+                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31))
+                )
+            )
+            val res = repoWithState.getCharactersToSync(Game.LOL, 30)
+
+            assertEquals(listOf<Long>(2, 3), res.map { it.id })
+        }
+    }
+
+    @Test
+    fun `get characters to sync should return all characters if all records were cached before olderThanMinutes`() {
+        runBlocking {
+            val lolCharacters = (1..3).map {
+                LolCharacter(
+                    it.toLong(),
+                    it.toString(),
+                    it.toString(),
+                    it.toString(),
+                    it,
+                    it.toString(),
+                    it
+                )
+            }
+            val repoWithState = repository.withState(
+                CharactersState(
+                    listOf(),
+                    lolCharacters
+                )
+            )
+
+            dataCacheRepository.withState(
+                listOf(
+                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31)),
+                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31)),
+                    DataCache(3, "", OffsetDateTime.now().minusMinutes(31))
+                )
+            )
+            val res = repoWithState.getCharactersToSync(Game.LOL, 30)
+
+            assertEquals(setOf<Long>(1, 2, 3), res.map { it.id }.toSet())
+        }
+    }
+
+    @Test
+    fun `get characters to sync should return all characters if there's no cached records`() {
+        runBlocking {
+            val lolCharacters = (1..3).map {
+                LolCharacter(
+                    it.toLong(),
+                    it.toString(),
+                    it.toString(),
+                    it.toString(),
+                    it,
+                    it.toString(),
+                    it
+                )
+            }
+            val repoWithState = repository.withState(
+                CharactersState(
+                    listOf(),
+                    lolCharacters
+                )
+            )
+
+            val res = repoWithState.getCharactersToSync(Game.LOL, 30)
+
+            assertEquals(setOf<Long>(1, 2, 3), res.map { it.id }.toSet())
+        }
+    }
+
+    @Test
+    fun `get characters to sync should return no characters if they have been cached recently even if they have an old cached record`() {
+        runBlocking {
+            val repoWithState = repository.withState(
+                CharactersState(
+                    listOf(),
+                    listOf(basicLolCharacter)
+                )
+            )
+
+            dataCacheRepository.withState(
+                listOf(
+                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31)),
+                    DataCache(1, "", OffsetDateTime.now())
+                )
+            )
+            val res = repoWithState.getCharactersToSync(Game.LOL, 30)
+
+            assertEquals(listOf(), res.map { it.id })
+        }
+    }
+
 
 }
 
 class CharactersInMemoryRepositoryTest : CharactersRepositoryTestCommon() {
-    override val repository = CharactersInMemoryRepository()
+    override val dataCacheRepository = DataCacheInMemoryRepository()
+    override val repository = CharactersInMemoryRepository(dataCacheRepository)
 
     @BeforeEach
     fun beforeEach() {
         repository.clear()
+        dataCacheRepository.clear()
     }
 }
 
@@ -258,6 +380,7 @@ class CharactersDatabaseRepositoryTest : CharactersRepositoryTestCommon() {
         .load()
 
     override val repository = CharactersDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
+    override val dataCacheRepository = DataCacheDatabaseRepository(Database.connect(embeddedPostgres.postgresDatabase))
 
     @BeforeEach
     fun beforeEach() {

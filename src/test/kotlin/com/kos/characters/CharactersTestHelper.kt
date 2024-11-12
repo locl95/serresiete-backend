@@ -10,6 +10,7 @@ object CharactersTestHelper {
     val basicWowRequest = WowCharacterRequest("kakarona", "eu", "zuljin")
     val basicWowRequest2 = WowCharacterRequest("layser", "eu", "zuljin")
     val basicLolCharacter = LolCharacter(1, "GTP ZeroMVPs", "WOW", "1", 1, "1", 1)
+    val basicLolCharacter2 = LolCharacter(2, "Sanxei", "EUW", "2", 2, "2", 2)
     val basicLolCharacterEnrichedRequest = LolCharacterEnrichedRequest(
         basicLolCharacter.name,
         basicLolCharacter.tag,

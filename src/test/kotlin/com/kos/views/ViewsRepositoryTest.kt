@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -47,10 +48,12 @@ abstract class ViewsRepositoryTest {
     @Test
     fun `given an empty repository i can insert views`() {
         runBlocking {
-            val res = repository.create(name, owner, listOf(), Game.WOW)
+            val id = UUID.randomUUID().toString()
+            val res = repository.create(id, name, owner, listOf(), Game.WOW)
             assertEquals(owner, res.owner)
             assertEquals(name, res.name)
             assertEquals(listOf(), res.characterIds)
+            assertEquals(id, res.id)
             assertEquals(Game.WOW, res.game)
             assert(repository.state().size == 1)
         }

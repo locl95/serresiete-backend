@@ -9,8 +9,11 @@ import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.emptyCharactersState
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.common.JWTConfig
+import com.kos.common.RetryConfig
 import com.kos.credentials.CredentialsService
 import com.kos.credentials.CredentialsTestHelper
+import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
@@ -31,6 +34,8 @@ import kotlin.test.assertEquals
 class TasksControllerTest {
     private val raiderIoClient = Mockito.mock(RaiderIoClient::class.java)
     private val riotClient = Mockito.mock(RiotClient::class.java)
+    private val retryConfig = RetryConfig(1, 1)
+
     private val charactersRepository = CharactersInMemoryRepository()
     private val dataCacheRepository = DataCacheInMemoryRepository()
     private val credentialsRepository = CredentialsInMemoryRepository()
@@ -53,33 +58,30 @@ class TasksControllerTest {
         val tasksRepositoryWithState = tasksRepository.withState(tasksState)
         val authRepositoryWithState = authRepository.withState(authState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient)
-        val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val authService = AuthService(authRepositoryWithState)
-        val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)
         val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
-        return TasksController(tasksService, credentialsService)
+        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
+        val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
+        val authService = AuthService(authRepositoryWithState, credentialsService, JWTConfig("issuer", "secret"))
+        val tasksService = TasksService(tasksRepositoryWithState, dataCacheService, charactersService, authService)
+
+        return TasksController(tasksService)
     }
 
     @Test
     fun `i can get tasks`() {
         runBlocking {
             val now = OffsetDateTime.now()
-            val credentialsState = CredentialsRepositoryState(
-                listOf(CredentialsTestHelper.basicCredentials.copy(userName = "owner")),
-                mapOf(Pair("owner", listOf(Role.USER)))
-            )
 
             val task = task(now)
             val controller = createController(
-                credentialsState,
+                emptyCredentialsState,
                 listOf(task),
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(Role.USER, setOf(Activities.getTasks)))
+                mapOf()
             )
-            assertEquals(listOf(task), controller.getTasks("owner", null).getOrNull())
+            assertEquals(listOf(task), controller.getTasks("owner", setOf(Activities.getTasks), null).getOrNull())
         }
     }
 
@@ -100,9 +102,9 @@ class TasksControllerTest {
                 emptyCharactersState,
                 listOf(),
                 listOf(),
-                mapOf(Pair(Role.USER, setOf(Activities.getTask)))
+                mapOf()
             )
-            assertEquals(task, controller.getTask("owner", knownId).getOrNull())
+            assertEquals(task, controller.getTask("owner", knownId, setOf(Activities.getTask)).getOrNull())
         }
     }
 }

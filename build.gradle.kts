@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm") version "1.9.0"
     id("io.ktor.plugin") version "2.3.2"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.8.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     jacoco
 }
 
@@ -17,6 +18,11 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.shadowJar {
+    mergeServiceFiles()
+    archiveBaseName.set("${project.name}-all")
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -97,6 +103,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("io.ktor:ktor-server-auth:$ktor_version")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
     implementation("io.github.resilience4j:resilience4j-kotlin:${resilience4j_version}")
     implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4j_version}")
     testImplementation("io.zonky.test:embedded-postgres:2.0.7")
@@ -106,5 +114,4 @@ dependencies {
     testImplementation("io.ktor:ktor-client-mock:$ktor_version")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
     testImplementation("io.mockk:mockk:1.13.8")
-
 }

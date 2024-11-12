@@ -11,7 +11,6 @@ import com.kos.roles.Role
 import com.kos.roles.RolesTestHelper.basicRolesActivities
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -39,20 +38,6 @@ class CredentialsServiceTest {
 
             credentialsService.createCredentials(basicCredentials)
             assertEquals(credentialsInMemoryRepository.state().users.map { it.userName }, listOf(user))
-        }
-    }
-
-    @Test
-    fun `i can check permissions`() {
-        runBlocking {
-            val credentialsInMemoryRepository =
-                CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository().withState(basicRolesActivities)
-            val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
-
-            assertTrue(credentialsService.hasPermissions(user, basicActivity))
-            assertFalse(credentialsService.hasPermissions(user, "badActivity"))
         }
     }
 

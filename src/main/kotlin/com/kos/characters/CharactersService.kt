@@ -3,6 +3,10 @@ package com.kos.characters
 import arrow.core.Either
 import arrow.core.raise.either
 import com.kos.characters.repository.CharactersRepository
+import com.kos.common.InsertError
+import com.kos.common.WithLogger
+import com.kos.common.collect
+import com.kos.common.split
 import com.kos.common.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -22,7 +26,7 @@ data class CharactersService(
     suspend fun createAndReturnIds(
         requestedCharacters: List<CharacterCreateRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Long>> {
+    ): Either<InsertError, List<Long>> {
         suspend fun getCurrentAndNewCharacters(
             requestedCharacters: List<CharacterCreateRequest>,
             game: Game,
@@ -152,4 +156,5 @@ data class CharactersService(
 
     suspend fun get(id: Long, game: Game): Character? = charactersRepository.get(id, game)
     suspend fun get(game: Game): List<Character> = charactersRepository.get(game)
+    suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long) = charactersRepository.getCharactersToSync(game, olderThanMinutes)
 }

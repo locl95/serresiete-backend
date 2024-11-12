@@ -2,7 +2,8 @@ package com.kos.characters.repository
 
 import arrow.core.Either
 import com.kos.characters.*
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
+import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -10,6 +11,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
+import java.time.OffsetDateTime
 
 class CharactersDatabaseRepository(private val db: Database) : CharactersRepository {
 
@@ -78,7 +80,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
     override suspend fun insert(
         characters: List<CharacterInsertRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Character>> {
+    ): Either<InsertError, List<Character>> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val charsToInsert: List<Character> = characters.map {
                 when (it) {
@@ -128,10 +130,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 } catch (e: IllegalArgumentException) {
                     rollback() //TODO: I don't understand why rollback is not provided by dbQuery.
-                    Either.Left(InsertCharacterError(e.message ?: e.stackTraceToString()))
+                    Either.Left(InsertError(e.message ?: e.stackTraceToString()))
                 }
             }
         }
@@ -141,7 +143,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             when (game) {
                 Game.LOL -> {
@@ -157,7 +159,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             })
                         }
 
-                        else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                        else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                     }
                 }
 
@@ -170,7 +172,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                         })
                     }
 
-                    else -> Either.Left(InsertCharacterError("problem updating $id: $character for $game"))
+                    else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
             }
         }
@@ -243,6 +245,34 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
             }
         }
+
+    override suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long): List<Character> {
+
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            when (game) {
+                Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
+                Game.LOL -> {
+                    val subQuery = DataCacheDatabaseRepository.DataCaches
+                        .slice(DataCacheDatabaseRepository.DataCaches.characterId, DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted"))
+                        .selectAll()
+                        .groupBy(DataCacheDatabaseRepository.DataCaches.characterId)
+
+                    val subQueryAliased = subQuery.alias("dc")
+
+                    val thirtyMinutesAgo = OffsetDateTime.now().minusMinutes(olderThanMinutes).toString()
+                    LolCharacters
+                        .leftJoin(subQueryAliased, { id }, { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
+                        .select {
+                            // Filtering where max_inserted is NULL or more than 30 minutes ago
+                            (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted].isNull()) or
+                                    (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted] lessEq thirtyMinutesAgo)
+                        }
+                        .map { resultRowToLolCharacter(it) }
+                }
+            }
+        }
+    }
+
 
     override suspend fun state(): CharactersState {
         return newSuspendedTransaction(Dispatchers.IO, db) {

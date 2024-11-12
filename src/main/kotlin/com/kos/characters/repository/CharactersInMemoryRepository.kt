@@ -3,10 +3,14 @@ package com.kos.characters.repository
 import arrow.core.Either
 import com.kos.characters.*
 import com.kos.common.InMemoryRepository
-import com.kos.common.InsertCharacterError
+import com.kos.common.InsertError
+import com.kos.datacache.repository.DataCacheInMemoryRepository
+import com.kos.datacache.repository.DataCacheRepository
 import com.kos.views.Game
+import java.time.OffsetDateTime
 
-class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
+class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInMemoryRepository = DataCacheInMemoryRepository()) : CharactersRepository,
+    InMemoryRepository {
     private val wowCharacters: MutableList<WowCharacter> = mutableListOf()
     private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
 
@@ -19,7 +23,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     override suspend fun insert(
         characters: List<CharacterInsertRequest>,
         game: Game
-    ): Either<InsertCharacterError, List<Character>> {
+    ): Either<InsertError, List<Character>> {
         val wowInitialCharacters = this.wowCharacters.toList()
         val lolInitialCharacters = this.lolCharacters.toList()
         when (game) {
@@ -30,7 +34,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                             if (this.wowCharacters.any { character -> it.same(character) }) {
                                 this.wowCharacters.clear()
                                 this.wowCharacters.addAll(wowInitialCharacters)
-                                return Either.Left(InsertCharacterError("Error inserting character $it"))
+                                return Either.Left(InsertError("Error inserting character $it"))
                             }
                             val character = it.toCharacter(nextId())
                             this.wowCharacters.add(character)
@@ -40,7 +44,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         is LolCharacterEnrichedRequest -> {
                             this.wowCharacters.clear()
                             this.wowCharacters.addAll(wowInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting character $it"))
+                            return Either.Left(InsertError("Error inserting character $it"))
                         }
                     }
                 }
@@ -53,14 +57,14 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                         is WowCharacterRequest -> {
                             this.lolCharacters.clear()
                             this.lolCharacters.addAll(lolInitialCharacters)
-                            return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                            return Either.Left(InsertError("Error inserting chracter $it"))
                         }
 
                         is LolCharacterEnrichedRequest -> {
                             if (this.lolCharacters.any { character -> it.same(character) }) {
                                 this.lolCharacters.clear()
                                 this.lolCharacters.addAll(lolInitialCharacters)
-                                return Either.Left(InsertCharacterError("Error inserting chracter $it"))
+                                return Either.Left(InsertError("Error inserting chracter $it"))
                             }
                             val character = it.toCharacter(nextId())
                             this.lolCharacters.add(character)
@@ -77,7 +81,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         id: Long,
         character: CharacterInsertRequest,
         game: Game
-    ): Either<InsertCharacterError, Int> {
+    ): Either<InsertError, Int> {
         return when (game) {
             Game.LOL -> when (character) {
                 is LolCharacterEnrichedRequest -> {
@@ -96,7 +100,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     Either.Right(1)
                 }
 
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
 
             Game.WOW -> when (character) {
@@ -113,7 +117,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
                     Either.Right(1)
                 }
 
-                else -> Either.Left(InsertCharacterError("error updating $id $character for $game"))
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
         }
     }
@@ -153,6 +157,21 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
         }
     }
 
+
+    override suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long): List<Character> {
+        val now = OffsetDateTime.now()
+
+        return when (game) {
+            Game.WOW -> wowCharacters
+            Game.LOL -> {
+                lolCharacters.filter { character ->
+                    val newestCachedRecord = dataCacheRepository.get(character.id).maxByOrNull { it.inserted }
+                    newestCachedRecord == null || newestCachedRecord.inserted.isBefore(now.minusMinutes(olderThanMinutes))
+                }
+            }
+        }
+    }
+
     override suspend fun state(): CharactersState {
         return CharactersState(wowCharacters, lolCharacters)
     }
@@ -166,6 +185,7 @@ class CharactersInMemoryRepository : CharactersRepository, InMemoryRepository {
     override fun clear() {
         wowCharacters.clear()
         lolCharacters.clear()
+        dataCacheRepository.clear()
     }
 
 }

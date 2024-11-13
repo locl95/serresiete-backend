@@ -26,6 +26,14 @@ abstract class CredentialsRepositoryTest {
     abstract val repository: CredentialsRepository
 
     @Test
+    open fun `given a repository with credentials i can retrieve all of them`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsInitialState)
+            assertEquals(repositoryWithState.getCredentials(), listOf(encryptedCredentials))
+        }
+    }
+
+    @Test
     open fun `given a repository with credentials i can retrieve them`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsInitialState)
@@ -93,6 +101,15 @@ abstract class CredentialsRepositoryTest {
             repositoryWithState.patch(user, PatchCredentialRequest("newPassword", setOf()))
             assertTrue(repositoryWithState.state().users.contains(Credentials(user, "newPassword")))
             assertFalse(repositoryWithState.state().credentialsRoles[user].isDefined())
+        }
+    }
+
+    @Test
+    open fun `given a repository with credentials and roles i can update roles`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsWithRolesInitialState)
+            repositoryWithState.updateRoles(user, setOf(Role.SERVICE))
+            assertEquals(listOf(Role.SERVICE), repositoryWithState.state().credentialsRoles[user])
         }
     }
 }

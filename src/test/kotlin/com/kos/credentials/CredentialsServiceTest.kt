@@ -39,6 +39,17 @@ class CredentialsServiceTest {
     }
 
     @Test
+    fun `i can get a credential`() {
+        runBlocking {
+            val credentialsInMemoryRepository = CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
+            val credentialsService =
+                CredentialsService(credentialsInMemoryRepository)
+
+            assertEquals(CredentialsWithRoles(user, listOf()), credentialsService.getCredential(user))
+        }
+    }
+
+    @Test
     fun `i can edit credentials`() {
         runBlocking {
             val credentialsInMemoryRepository =
@@ -48,6 +59,19 @@ class CredentialsServiceTest {
 
             assertEquals(credentialsInMemoryRepository.getCredentials(user), encryptedCredentials)
             credentialsService.editCredential(user, EditCredentialRequest("newPassword", setOf()))
+            assertNotEquals(credentialsInMemoryRepository.getCredentials(user)?.password, encryptedCredentials.password)
+        }
+    }
+    @Test
+    fun `i can patch credentials`() {
+        runBlocking {
+            val credentialsInMemoryRepository =
+                CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
+            val credentialsService =
+                CredentialsService(credentialsInMemoryRepository)
+
+            assertEquals(credentialsInMemoryRepository.getCredentials(user), encryptedCredentials)
+            credentialsService.patchCredential(user, PatchCredentialRequest("newPassword", null))
             assertNotEquals(credentialsInMemoryRepository.getCredentials(user)?.password, encryptedCredentials.password)
         }
     }

@@ -86,8 +86,8 @@ class CredentialsController(val credentialsService: CredentialsService) {
 
     suspend fun getCredential(
         client: String?,
-        user: String,
-        activities: Set<Activity>
+        activities: Set<Activity>,
+        user: String
     ): Either<ControllerError, CredentialsWithRoles> {
         return when (client) {
             null -> Either.Left(NotAuthorized)

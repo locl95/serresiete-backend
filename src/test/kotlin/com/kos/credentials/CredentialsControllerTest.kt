@@ -49,6 +49,27 @@ class CredentialsControllerTest {
     }
 
     @Test
+    fun `i can get a credential`() {
+        runBlocking {
+
+            val controller = createController(basicCredentialsWithRolesInitialState)
+            val expected = CredentialsWithRoles(user, listOf(Role.USER))
+            controller.getCredential("owner", setOf(Activities.getAnyCredential), user)
+                .onLeft { fail(it.toString()) }
+                .onRight { assertEquals(expected, it) }
+        }
+    }
+
+    @Test
+    fun `i can patch a credential`() {
+        runBlocking {
+            val controller = createController(basicCredentialsWithRolesInitialState)
+            controller.patchCredential("owner", setOf(Activities.patchCredentials), user, PatchCredentialRequest("new-password", null))
+                .onLeft { fail(it.toString()) }
+        }
+    }
+
+    @Test
     fun `i can create credentials`() {
         runBlocking {
             val controller = createController(emptyCredentialsState)

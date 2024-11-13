@@ -58,8 +58,8 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                     val userWithActivities = call.principal<UserWithActivities>()
                     credentialsController.getCredential(
                         userWithActivities?.name,
-                        call.parameters["user"].orEmpty(),
-                        userWithActivities?.activities.orEmpty()
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty()
                     ).fold({
                         call.respondWithHandledError(it)
                     }, {

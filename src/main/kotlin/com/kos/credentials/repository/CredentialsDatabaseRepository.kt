@@ -96,7 +96,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
     override suspend fun updateRoles(userName: String, roles: Set<Role>) {
         //TODO: Rollback when insert goes wrong
         newSuspendedTransaction(Dispatchers.IO, db) {
-            Users.deleteWhere { Users.userName.eq(userName) }
+            CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
             CredentialsRoles.batchInsert(roles) {
                 this[CredentialsRoles.userName] = userName
                 this[CredentialsRoles.role] = it.toString()

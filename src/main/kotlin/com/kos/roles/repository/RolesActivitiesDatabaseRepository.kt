@@ -42,23 +42,6 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
         return this
     }
 
-    override suspend fun insertActivityToRole(activity: Activity, role: Role) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            RoleActivities.insert {
-                it[this.role] = role.toString()
-                it[this.activity] = activity
-            }
-        }
-    }
-
-    override suspend fun deleteActivityFromRole(activity: Activity, role: Role) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            RoleActivities.deleteWhere {
-                (RoleActivities.role eq role.toString()) and (RoleActivities.activity eq activity)
-            }
-        }
-    }
-
     override suspend fun getActivitiesFromRole(role: Role): Set<Activity> {
         return transaction {
             RoleActivities.select { RoleActivities.role eq role.toString() }.map {
@@ -67,8 +50,10 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
         }
     }
 
-    override suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>) {
+    override suspend fun updateActivitiesFromRole(role: Role, activities: Set<Activity>) {
+        //TODO: rollback when insert fails
         newSuspendedTransaction(Dispatchers.IO, db) {
+            RoleActivities.deleteWhere { RoleActivities.role.eq(role.toString()) }
             RoleActivities.batchInsert(activities) {
                 this[RoleActivities.role] = role.toString()
                 this[RoleActivities.activity] = it

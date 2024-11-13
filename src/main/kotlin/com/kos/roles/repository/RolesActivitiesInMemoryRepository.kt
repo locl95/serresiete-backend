@@ -16,21 +16,11 @@ class RolesActivitiesInMemoryRepository : RolesActivitiesRepository, InMemoryRep
         return this
     }
 
-    override suspend fun insertActivityToRole(activity: Activity, role: Role): Unit {
-        rolesActivities.compute(role) { _, currentActivities -> (currentActivities ?: mutableSetOf()) + activity }
-    }
-
-    override suspend fun deleteActivityFromRole(activity: Activity, role: Role): Unit {
-        rolesActivities.computeIfPresent(role) { _, currentActivities ->
-            currentActivities.toMutableSet().apply { remove(activity) }
-        }
-    }
-
     override suspend fun getActivitiesFromRole(role: Role): Set<Activity> {
         return rolesActivities[role].orEmpty().toSet()
     }
 
-    override suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>) {
+    override suspend fun updateActivitiesFromRole(role: Role, activities: Set<Activity>) {
         rolesActivities[role] = activities
     }
 

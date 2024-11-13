@@ -5,10 +5,8 @@ import com.kos.common.WithState
 import com.kos.roles.Role
 
 interface RolesActivitiesRepository : WithState<Map<Role, Set<Activity>>, RolesActivitiesRepository> {
-    suspend fun insertActivityToRole(activity: Activity, role: Role): Unit
-    suspend fun deleteActivityFromRole(activity: Activity, role: Role): Unit
     suspend fun getActivitiesFromRole(role: Role): Set<Activity>
-    suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>)
+    suspend fun updateActivitiesFromRole(role: Role, activities: Set<Activity>)
 
 
 }

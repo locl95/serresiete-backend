@@ -51,36 +51,4 @@ class RolesControllerTest {
             )
         }
     }
-
-    @Test
-    fun `i can add activity to role`() {
-        runBlocking {
-
-            val controller = createController(
-                listOf(),
-                mapOf()
-            )
-            assertTrue(
-                controller.addActivityToRole(
-                    "owner",
-                    ActivityRequest("something"),
-                    role,
-                    setOf(Activities.addActivityToRole)
-                ).isRight()
-            )
-        }
-    }
-
-    @Test
-    fun `i can remove activity from role`() {
-        runBlocking {
-
-            val controller = createController(
-                listOf(),
-                mapOf()
-            )
-            assertTrue(controller.deleteActivityFromRole("owner", role, Activities.deleteActivityFromRole, setOf(Activities.deleteActivityFromRole)).isRight())
-        }
-    }
-
 }

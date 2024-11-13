@@ -28,32 +28,22 @@ abstract class RolesActivitiesRepositoryTest {
     }
 
     @Test
-    fun `given a repository i can insert an activity to it`() {
+    fun `given an empty repository i can set activities of a role`() {
         runBlocking {
-            repository.insertActivityToRole(basicActivity, Role.USER)
-            assertEquals(repository.state(), basicRolesActivities)
+            repository.updateActivitiesFromRole(Role.USER, setOf(basicActivity))
+            assertEquals(setOf(basicActivity), repository.state()[Role.USER])
         }
     }
 
     @Test
-    fun `given a repository i can insert activities to it`() {
-        val anotherActivity = "another activity"
+    fun `given a repository with a role with activities i can set activities of a role`() {
         runBlocking {
-            repository.insertActivityToRole(basicActivity, Role.USER)
-            repository.insertActivityToRole(anotherActivity, Role.USER)
-            val expected = mapOf(Pair(Role.USER, setOf(basicActivity, anotherActivity)))
-            assertEquals(expected, repository.state())
+            repository.withState(mapOf(Role.USER to setOf("activity")))
+            repository.updateActivitiesFromRole(Role.USER, setOf(basicActivity))
+            assertEquals(setOf(basicActivity), repository.state()[Role.USER])
         }
     }
 
-    @Test
-    fun `given a repository with one role and 1 activity i can delete it`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(basicRolesActivities)
-            repositoryWithState.deleteActivityFromRole(basicActivity, Role.USER)
-            assertEquals(setOf(), repositoryWithState.state()[Role.USER].orEmpty())
-        }
-    }
 }
 
 class RolesActivitiesInMemoryRepositoryTest : RolesActivitiesRepositoryTest() {

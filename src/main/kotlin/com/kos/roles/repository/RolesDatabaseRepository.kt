@@ -1,6 +1,5 @@
 package com.kos.roles.repository
 
-import RolesRepository
 import com.kos.roles.Role
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -20,18 +19,6 @@ class RolesDatabaseRepository(private val db: Database) : RolesRepository {
     override suspend fun getRoles(): List<Role> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             Roles.selectAll().map { resultRowToActivity(it) }
-        }
-    }
-
-    override suspend fun insertRole(role: Role) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            Roles.insert { it[Roles.role] = role.toString() }
-        }
-    }
-
-    override suspend fun deleteRole(role: Role) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            Roles.deleteWhere { Roles.role.eq(role.toString()) }
         }
     }
 

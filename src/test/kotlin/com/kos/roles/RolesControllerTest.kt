@@ -2,7 +2,6 @@ package com.kos.roles
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.activities.ActivityRequest
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesInMemoryRepository
@@ -10,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.fail
 
 
 class RolesControllerTest {
@@ -23,10 +22,10 @@ class RolesControllerTest {
         rolesState: List<Role>,
         rolesActivitiesState: Map<Role, Set<Activity>>
     ): RolesController {
-        val rolesRepositoryWithState = rolesRepository.withState(rolesState)
-        val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
+        rolesRepository.withState(rolesState)
+        rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val rolesService = RolesService(rolesRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
         return RolesController(rolesService)
     }
 
@@ -42,13 +41,47 @@ class RolesControllerTest {
     fun `i can get roles`() {
         runBlocking {
             val controller = createController(
-                listOf(Role.USER),
+                listOf(role),
                 mapOf(Pair(role, setOf(Activities.getAnyRoles)))
             )
             assertEquals(
                 listOf(role),
                 controller.getRoles("owner", setOf(Activities.getAnyRoles)).getOrNull()
             )
+        }
+    }
+
+    @Test
+    fun `i can get role`() {
+        runBlocking {
+            val expected = Pair(role, setOf(Activities.getAnyRoles))
+            val controller = createController(
+                listOf(role),
+                mapOf(expected)
+            )
+            assertEquals(
+                expected,
+                controller.getRole("owner", setOf(Activities.getAnyRoles), role).getOrNull()
+            )
+        }
+    }
+
+    @Test
+    fun `i can set activities to role`() {
+        runBlocking {
+            val expected = Pair(role, setOf(Activities.getAnyRoles))
+            val controller = createController(
+                listOf(role),
+                mapOf(expected)
+            )
+            controller.setActivities(
+                "owner",
+                setOf(Activities.addActivityToRole),
+                role,
+                ActivitiesRequest(setOf(Activities.getAnyRoles))
+            ).onLeft {
+                fail(it.toString())
+            }
         }
     }
 }

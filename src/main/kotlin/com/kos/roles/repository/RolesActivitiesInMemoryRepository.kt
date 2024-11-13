@@ -30,6 +30,10 @@ class RolesActivitiesInMemoryRepository : RolesActivitiesRepository, InMemoryRep
         return rolesActivities[role].orEmpty().toSet()
     }
 
+    override suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>) {
+        rolesActivities[role] = activities
+    }
+
     override fun clear() {
         rolesActivities.clear()
     }

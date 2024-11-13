@@ -22,40 +22,35 @@ fun Route.rolesRouting(
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
-            route("/{role}") {
-                route("/activities") {
-                    authenticate("auth-jwt") {
-                        post {
-                            val userWithActivities = call.principal<UserWithActivities>()
-                            rolesController.addActivityToRole(
-                                userWithActivities?.name,
-                                call.receive(),
-                                Role.fromString(call.parameters["role"].orEmpty()),
-                                userWithActivities?.activities.orEmpty()
-                            ).fold({
-                                call.respondWithHandledError(it)
-                            }, {
-                                call.respond(HttpStatusCode.Created)
-                            })
-                        }
-                    }
-                    route("/{activity}") {
-                        authenticate("auth-jwt") {
-                            delete {
-                                val userWithActivities = call.principal<UserWithActivities>()
-                                rolesController.deleteActivityFromRole(
-                                    userWithActivities?.name,
-                                    Role.fromString(call.parameters["role"].orEmpty()),
-                                    call.parameters["activity"].orEmpty(),
-                                    userWithActivities?.activities.orEmpty()
-                                ).fold({
-                                    call.respondWithHandledError(it)
-                                }, {
-                                    call.respond(HttpStatusCode.NoContent)
-                                })
-                            }
-                        }
-                    }
+        }
+        route("/{role}") {
+            authenticate("auth-jwt") {
+                get {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    rolesController.getRole(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        Role.fromString(call.parameters["role"].orEmpty())
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.OK, it)
+                    })
+                }
+            }
+            authenticate("auth-jwt") {
+                put {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    rolesController.setActivities(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        Role.fromString(call.parameters["role"].orEmpty()),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
                 }
             }
         }

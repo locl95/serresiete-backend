@@ -66,4 +66,13 @@ class RolesActivitiesDatabaseRepository(private val db: Database) : RolesActivit
             }.toSet()
         }
     }
+
+    override suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>) {
+        newSuspendedTransaction(Dispatchers.IO, db) {
+            RoleActivities.batchInsert(activities) {
+                this[RoleActivities.role] = role.toString()
+                this[RoleActivities.activity] = it
+            }
+        }
+    }
 }

@@ -8,6 +8,7 @@ interface RolesActivitiesRepository : WithState<Map<Role, Set<Activity>>, RolesA
     suspend fun insertActivityToRole(activity: Activity, role: Role): Unit
     suspend fun deleteActivityFromRole(activity: Activity, role: Role): Unit
     suspend fun getActivitiesFromRole(role: Role): Set<Activity>
+    suspend fun insertActivitiesToRole(role: Role, activities: Set<Activity>)
 
 
 }

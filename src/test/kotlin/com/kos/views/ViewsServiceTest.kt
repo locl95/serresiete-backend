@@ -86,8 +86,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    emptyCredentialsInitialState,
-                    mapOf()
+                    emptyCredentialsInitialState
                 )
 
                 assertEquals(listOf(basicSimpleWowView), viewsService.getOwnViews(owner))
@@ -101,8 +100,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    emptyCredentialsInitialState,
-                    mapOf()
+                    emptyCredentialsInitialState
                 )
 
                 assertEquals(basicSimpleWowView, viewsService.getSimple("1"))
@@ -121,7 +119,6 @@ class ViewsServiceTest {
                     emptyCharactersState,
                     listOf(),
                     defaultCredentialsState,
-                    mapOf()
                 )
 
                 viewsService.create(
@@ -152,7 +149,6 @@ class ViewsServiceTest {
                     emptyCharactersState,
                     listOf(),
                     defaultCredentialsState,
-                    mapOf()
                 )
 
                 viewsService.create(
@@ -182,8 +178,7 @@ class ViewsServiceTest {
                     listOf(),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 val charactersRequest = (1..10).map { LolCharacterRequest(it.toString(), it.toString()) }
@@ -216,8 +211,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView, basicSimpleLolView),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 viewsService.create(
@@ -240,8 +234,7 @@ class ViewsServiceTest {
                     listOf(),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
@@ -266,8 +259,7 @@ class ViewsServiceTest {
                     CredentialsRepositoryState(
                         listOf(Credentials(owner, password)),
                         mapOf(owner to listOf(Role.ADMIN))
-                    ),
-                    mapOf()
+                    )
                 )
 
                 viewsService.create(
@@ -297,8 +289,7 @@ class ViewsServiceTest {
                     listOf(),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf())),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf()))
                 )
 
                 viewsService.create(
@@ -321,8 +312,7 @@ class ViewsServiceTest {
                     listOf(),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 createViewFromEventAndAssert(
@@ -360,8 +350,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 val newName = "new-name"
@@ -386,8 +375,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
                 val charactersRequest = (1..11).map { LolCharacterRequest(it.toString(), it.toString()) }
 
@@ -417,8 +405,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 val charactersRequest = listOf(request1, request2, request3, request4)
@@ -447,8 +434,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView),
                     emptyCharactersState,
                     listOf(),
-                    defaultCredentialsState,
-                    mapOf()
+                    defaultCredentialsState
                 )
 
                 val newName = "new-name"
@@ -486,8 +472,7 @@ class ViewsServiceTest {
                         listOf()
                     ),
                     listOf(),
-                    basicCredentialsWithRolesInitialState,
-                    mapOf()
+                    basicCredentialsWithRolesInitialState
                 )
 
                 viewsService.editView(
@@ -519,8 +504,7 @@ class ViewsServiceTest {
                         listOf(basicLolCharacter, basicLolCharacter2)
                     ),
                     listOf(),
-                    basicCredentialsWithRolesInitialState,
-                    mapOf()
+                    basicCredentialsWithRolesInitialState
                 )
 
                 `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
@@ -571,8 +555,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    emptyCredentialsInitialState,
-                    mapOf()
+                    emptyCredentialsInitialState
                 )
 
                 assertEquals(viewsService.delete("1"), ViewDeleted("1"))
@@ -591,8 +574,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
 
                 viewsService.patch(
@@ -616,8 +598,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
 
                 val id = UUID.randomUUID().toString()
@@ -651,8 +632,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
 
                 val characterRequests = listOf(request1, request2, request3, request4)
@@ -689,8 +669,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
 
                 `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
@@ -749,8 +728,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                     emptyCharactersState,
                     listOf(),
-                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER))),
-                    mapOf()
+                    CredentialsRepositoryState(listOf(Credentials(owner, password)), mapOf(owner to listOf(Role.USER)))
                 )
 
                 val charactersRequest = listOf(request1, request2, request3, request4)
@@ -795,8 +773,7 @@ class ViewsServiceTest {
                         lolDataCache.copy(characterId = 1),
                         moreRecentDataCache
                     ),
-                    emptyCredentialsInitialState,
-                    mapOf()
+                    emptyCredentialsInitialState
                 )
 
                 viewsService.getData(view)
@@ -811,7 +788,6 @@ class ViewsServiceTest {
         charactersState: CharactersState,
         dataCacheState: List<DataCache>,
         credentialState: CredentialsRepositoryState,
-        rolesActivitiesState: Map<Role, Set<Activity>>
     ): Pair<EventStore, ViewsService> {
         val viewsRepository = ViewsInMemoryRepository()
             .withState(viewsState)
@@ -821,11 +797,9 @@ class ViewsServiceTest {
             .withState(dataCacheState)
         val credentialsRepository = CredentialsInMemoryRepository()
             .withState(credentialState)
-        val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            .withState(rolesActivitiesState)
         val eventStore = EventStoreInMemory()
 
-        val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+        val credentialsService = CredentialsService(credentialsRepository)
         val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
         val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
         val service =

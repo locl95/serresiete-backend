@@ -12,11 +12,13 @@ import com.kos.common.ControllerError
 import com.kos.common.JWTConfig
 import com.kos.credentials.CredentialsService
 import com.kos.roles.Role
+import com.kos.roles.RolesService
 import java.time.OffsetDateTime
 
 class AuthService(
     private val authRepository: AuthRepository,
     private val credentialsService: CredentialsService,
+    private val rolesService: RolesService,
     private val jwtConfig: JWTConfig
 ) {
 
@@ -66,7 +68,7 @@ class AuthService(
 
             if (tokenMode == TokenMode.ACCESS) {
                 val userActivities: List<Activity> = credentialsService.getUserRoles(userName)
-                    .flatMap { credentialsService.getRoleActivities(it) }
+                    .flatMap { rolesService.getRole(it).second }
                 jwtBuilder.withClaim("activities", userActivities)
             }
 

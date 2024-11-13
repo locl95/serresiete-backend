@@ -69,23 +69,22 @@ fun Application.module() {
 
     val eventStore = EventStoreDatabase(db)
 
-    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
-
     val credentialsRepository = CredentialsDatabaseRepository(db)
-    val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+    val credentialsService = CredentialsService(credentialsRepository)
     val credentialsController = CredentialsController(credentialsService)
-
-    val authRepository = AuthDatabaseRepository(db)
-    val authService = AuthService(authRepository, credentialsService, jwtConfig)
-    val authController = AuthController(authService)
 
     val activitiesRepository = ActivitiesDatabaseRepository(db)
     val activitiesService = ActivitiesService(activitiesRepository)
-    val activitiesController = ActivitiesController(activitiesService, credentialsService)
+    val activitiesController = ActivitiesController(activitiesService)
 
     val rolesRepository = RolesDatabaseRepository(db)
+    val rolesActivitiesRepository = RolesActivitiesDatabaseRepository(db)
     val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
     val rolesController = RolesController(rolesService)
+
+    val authRepository = AuthDatabaseRepository(db)
+    val authService = AuthService(authRepository, credentialsService, rolesService, jwtConfig)
+    val authController = AuthController(authService)
 
     val charactersRepository = CharactersDatabaseRepository(db)
     val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)

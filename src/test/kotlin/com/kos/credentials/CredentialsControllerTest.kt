@@ -21,16 +21,13 @@ import kotlin.test.*
 
 class CredentialsControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
-    private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
 
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
-        rolesActivitiesState: Map<Role, Set<Activity>>
     ): CredentialsController {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
-        val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val credentialsService = CredentialsService(credentialsRepositoryWithState)
         return CredentialsController(credentialsService)
     }
 
@@ -38,17 +35,13 @@ class CredentialsControllerTest {
     @BeforeTest
     fun beforeEach() {
         credentialsRepository.clear()
-        rolesActivitiesRepository.clear()
     }
 
     @Test
     fun `i can get credentials`() {
         runBlocking {
 
-            val controller = createController(
-                basicCredentialsWithRolesInitialState,
-                mapOf()
-            )
+            val controller = createController(basicCredentialsWithRolesInitialState)
 
             assertEquals(
                 listOf(basicCredentialsWithRoles),
@@ -60,10 +53,7 @@ class CredentialsControllerTest {
     @Test
     fun `i can create credentials`() {
         runBlocking {
-            val controller = createController(
-                emptyCredentialsState,
-                mapOf()
-            )
+            val controller = createController(emptyCredentialsState)
 
             assertTrue(
                 controller.createCredential(
@@ -83,10 +73,7 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             assertTrue(
                 controller.editCredential(
@@ -107,10 +94,7 @@ class CredentialsControllerTest {
                 mapOf(Pair("owner", listOf(Role.USER)))
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             assertTrue(controller.deleteCredential("owner", setOf(Activities.deleteCredentials), user).isRight())
         }
@@ -124,10 +108,7 @@ class CredentialsControllerTest {
                 mapOf(Pair("owner", listOf(Role.ADMIN)), Pair("someone", listOf(Role.USER)))
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             assertEquals(
                 listOf(Role.ADMIN),
@@ -156,10 +137,7 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             assertTrue(
                 controller.addRoleToUser("owner", setOf(Activities.addRoleToUser), "owner", Role.ADMIN).isRight()
@@ -175,10 +153,7 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             assertTrue(
                 controller.deleteRoleFromUser("owner", setOf(Activities.deleteRoleFromUser), "owner", Role.USER)
@@ -195,10 +170,7 @@ class CredentialsControllerTest {
                 mapOf()
             )
 
-            val controller = createController(
-                credentialsState,
-                mapOf()
-            )
+            val controller = createController(credentialsState)
 
             controller.deleteCredential("owner", setOf(Activities.deleteCredentials), "owner")
                 .onRight { fail("expected failure") }

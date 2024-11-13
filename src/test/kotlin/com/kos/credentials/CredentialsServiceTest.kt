@@ -23,9 +23,8 @@ class CredentialsServiceTest {
     fun `i can validate credentials`() {
         runBlocking {
             val credentialsInMemoryRepository = CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
             assertTrue(credentialsService.validateCredentials(basicCredentials))
         }
     }
@@ -34,9 +33,8 @@ class CredentialsServiceTest {
     fun `i can create credentials`() {
         runBlocking {
             val credentialsInMemoryRepository = CredentialsInMemoryRepository()
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             credentialsService.createCredentials(CreateCredentialRequest(user, password, setOf()))
             assertEquals(credentialsInMemoryRepository.state().users.map { it.userName }, listOf(user))
@@ -48,9 +46,8 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             assertEquals(credentialsInMemoryRepository.getCredentials(user), encryptedCredentials)
             credentialsService.editCredential(user, EditCredentialRequest("newPassword", setOf()))
@@ -63,9 +60,8 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
         }
@@ -76,9 +72,8 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             credentialsService.addRoleToUser(user, Role.USER)
             assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
@@ -90,9 +85,8 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             credentialsService.deleteRoleFromUser(user, Role.USER)
             assertEquals(credentialsService.getUserRoles(user), listOf())
@@ -104,9 +98,8 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             assertEquals(credentialsService.getCredentials(), listOf(basicCredentialsWithRoles))
         }
@@ -117,25 +110,11 @@ class CredentialsServiceTest {
         runBlocking {
             val credentialsInMemoryRepository =
                 CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository()
             val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
+                CredentialsService(credentialsInMemoryRepository)
 
             credentialsService.deleteCredentials(user)
             assertEquals(credentialsInMemoryRepository.state().users, listOf())
-        }
-    }
-
-    @Test
-    fun `i can get activities from a role`() {
-        runBlocking {
-            val credentialsInMemoryRepository =
-                CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val rolesActivitiesInMemoryRepository = RolesActivitiesInMemoryRepository().withState(basicRolesActivities)
-            val credentialsService =
-                CredentialsService(credentialsInMemoryRepository, rolesActivitiesInMemoryRepository)
-
-            assertEquals(credentialsService.getRoleActivities(Role.USER), setOf(basicActivity))
         }
     }
 }

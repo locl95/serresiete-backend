@@ -50,4 +50,33 @@ class RolesController(private val rolesService: RolesService) {
             }
         }
     }
+
+    suspend fun getRole(
+        client: String?,
+        activities: Set<Activity>,
+        role: Role
+    ): Either<ControllerError, Pair<Role, Set<Activity>>> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized)
+            else -> {
+                if(activities.contains(Activities.getAnyRoles)) Either.Right(rolesService.getRole(role))
+                else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
+
+    suspend fun setActivities(
+        client: String?,
+        activities: Set<Activity>,
+        role: Role,
+        request: ActivitiesRequest
+    ): Either<ControllerError, Unit> {
+        return when (client) {
+            null -> Either.Left(NotAuthorized)
+            else -> {
+                if(activities.contains(Activities.addActivityToRole)) Either.Right(rolesService.addActivitiesToRole(role, request.activities))
+                else Either.Left(NotEnoughPermissions(client))
+            }
+        }
+    }
 }

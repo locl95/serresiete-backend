@@ -3,12 +3,10 @@ package com.kos.credentials
 import com.kos.common.isDefined
 import com.kos.credentials.repository.CredentialsRepository
 import com.kos.roles.Role
-import com.kos.roles.repository.RolesActivitiesRepository
 import org.mindrot.jbcrypt.BCrypt
 
 class CredentialsService(
     private val credentialsRepository: CredentialsRepository,
-    private val rolesActivitiesRepository: RolesActivitiesRepository
 ) {
     suspend fun createCredentials(createCredentialRequest: CreateCredentialRequest): Unit {
         credentialsRepository.insertCredentials(
@@ -46,7 +44,6 @@ class CredentialsService(
         }
 
     suspend fun deleteCredentials(user: String) = credentialsRepository.deleteCredentials(user)
-    suspend fun getRoleActivities(role: Role) = rolesActivitiesRepository.getActivitiesFromRole(role)
     suspend fun getCredential(user: String): CredentialsWithRoles? =
         credentialsRepository.getCredentials(user)?.let {
             CredentialsWithRoles(it.userName, getUserRoles(it.userName))

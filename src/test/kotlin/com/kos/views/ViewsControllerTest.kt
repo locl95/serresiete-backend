@@ -65,11 +65,10 @@ class ViewsControllerTest {
         val charactersRepositoryWithState = charactersRepository.withState(charactersState)
         val dataCacheRepositoryWithState = dataCacheRepository.withState(dataCacheState)
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
-        val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val credentialsService = CredentialsService(credentialsRepositoryWithState)
         val viewsService = ViewsService(
             viewsRepositoryWithState,
             charactersService,

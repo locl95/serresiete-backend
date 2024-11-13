@@ -13,7 +13,9 @@ import com.kos.credentials.CredentialsTestHelper.emptyCredentialsState
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
+import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
+import com.kos.roles.repository.RolesInMemoryRepository
 import com.kos.views.ViewsTestHelper.owner
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
@@ -21,20 +23,25 @@ import kotlin.test.Test
 
 class AuthControllerTest {
     private val credentialsRepository = CredentialsInMemoryRepository()
+    private val rolesRepository = RolesInMemoryRepository()
     private val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
     private val authRepository = AuthInMemoryRepository()
 
     private suspend fun createController(
         credentialsState: CredentialsRepositoryState,
         rolesActivitiesState: Map<Role, Set<Activity>>,
+        rolesState: List<Role>,
         authState: List<Authorization>
     ): AuthController {
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
         val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
         val authRepositoryWithState = authRepository.withState(authState)
+        val rolesRepositoryWithState = rolesRepository.withState(rolesState)
 
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
-        val authService = AuthService(authRepositoryWithState, credentialsService, JWTConfig("issuer", "secret"))
+        val rolesService = RolesService(rolesRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val credentialsService = CredentialsService(credentialsRepositoryWithState)
+        val authService =
+            AuthService(authRepositoryWithState, credentialsService, rolesService, JWTConfig("issuer", "secret"))
         return AuthController(authService)
     }
 
@@ -57,6 +64,7 @@ class AuthControllerTest {
             val controller = createController(
                 credentialsState,
                 mapOf(Pair(Role.USER, setOf(Activities.login))),
+                listOf(),
                 listOf()
             )
             val res = controller.login("owner").getOrNull()
@@ -72,6 +80,7 @@ class AuthControllerTest {
             val controller = createController(
                 emptyCredentialsState,
                 mapOf(),
+                listOf(),
                 listOf(basicAuthorization.copy(userName = "owner"))
             )
             assertTrue(controller.logout("owner", setOf(Activities.logout)).getOrNull())
@@ -89,6 +98,7 @@ class AuthControllerTest {
             val controller = createController(
                 credentialsState,
                 mapOf(),
+                listOf(),
                 listOf(basicAuthorization.copy(userName = "owner").copy(isAccess = false))
             )
 

@@ -2,8 +2,10 @@ const express = require('express')
 const {join} = require("path");
 const app = express()
 const port = 8080
+const cors = require('cors')
 
 app.use(express.json());
+app.use(cors())
 
 app.get('/api/views/:id/data', (req, res) => {
     res.sendFile(join(__dirname, 'resources', 'data.json'));

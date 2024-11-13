@@ -11,10 +11,8 @@ interface CredentialsRepository : WithState<CredentialsRepositoryState, Credenti
     suspend fun insertCredentials(userName: String, password: String)
     suspend fun editCredentials(userName: String, newPassword: String)
     suspend fun getUserRoles(userName: String): List<Role>
-    suspend fun insertRole(userName: String, role: Role)
     suspend fun insertRoles(userName: String, roles: Set<Role>)
-    suspend fun deleteRole(userName: String, role: Role)
-    suspend fun deleteRoles(userName: String)
+    suspend fun updateRoles(userName: String, roles: Set<Role>)
     suspend fun deleteCredentials(user: String)
     suspend fun patch(userName: String, request: PatchCredentialRequest)
 }

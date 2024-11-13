@@ -99,68 +99,6 @@ class CredentialsControllerTest {
     }
 
     @Test
-    fun `i can get user roles`() {
-        runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner"), basicCredentials),
-                mapOf(Pair("owner", listOf(Role.ADMIN)), Pair("someone", listOf(Role.USER)))
-            )
-
-            val controller = createController(credentialsState)
-
-            assertEquals(
-                listOf(Role.ADMIN),
-                controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles), "owner").getOrNull()
-            )
-            assertEquals(
-                listOf(Role.USER),
-                controller.getUserRoles("owner", setOf(Activities.getAnyCredentialsRoles), "someone").getOrNull()
-            )
-            assertEquals(
-                listOf(Role.USER),
-                controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles), "someone").getOrNull()
-            )
-            assertEquals(
-                NotEnoughPermissions("someone"),
-                controller.getUserRoles("someone", setOf(Activities.getOwnCredentialsRoles), "owner").getLeftOrNull()
-            )
-        }
-    }
-
-    @Test
-    fun `i can add a role to a user`() {
-        runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner"), basicCredentials),
-                mapOf()
-            )
-
-            val controller = createController(credentialsState)
-
-            assertTrue(
-                controller.addRoleToUser("owner", setOf(Activities.addRoleToUser), "owner", Role.ADMIN).isRight()
-            )
-        }
-    }
-
-    @Test
-    fun `i can delete a role from a user`() {
-        runBlocking {
-            val credentialsState = CredentialsRepositoryState(
-                listOf(basicCredentials.copy(userName = "owner"), basicCredentials),
-                mapOf()
-            )
-
-            val controller = createController(credentialsState)
-
-            assertTrue(
-                controller.deleteRoleFromUser("owner", setOf(Activities.deleteRoleFromUser), "owner", Role.USER)
-                    .isRight()
-            )
-        }
-    }
-
-    @Test
     fun `i cant remove my own credentials`() {
         runBlocking {
             val credentialsState = CredentialsRepositoryState(

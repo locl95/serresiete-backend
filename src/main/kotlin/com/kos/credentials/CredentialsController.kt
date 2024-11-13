@@ -63,14 +63,17 @@ class CredentialsController(val credentialsService: CredentialsService) {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if(!activities.contains(Activities.deleteCredentials)) Either.Left(NotEnoughPermissions(client))
+                if (!activities.contains(Activities.deleteCredentials)) Either.Left(NotEnoughPermissions(client))
                 else if (client == userToDelete) Either.Left(CantDeleteYourself(client, userToDelete))
                 else Either.Right(credentialsService.deleteCredentials(userToDelete))
             }
         }
     }
 
-    suspend fun getCredentials(client: String?, activities: Set<Activity>): Either<ControllerError, List<CredentialsWithRoles>> {
+    suspend fun getCredentials(
+        client: String?,
+        activities: Set<Activity>
+    ): Either<ControllerError, List<CredentialsWithRoles>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
@@ -81,7 +84,11 @@ class CredentialsController(val credentialsService: CredentialsService) {
         }
     }
 
-    suspend fun getCredential(client: String?, user: String, activities: Set<Activity>): Either<ControllerError, CredentialsWithRoles> {
+    suspend fun getCredential(
+        client: String?,
+        user: String,
+        activities: Set<Activity>
+    ): Either<ControllerError, CredentialsWithRoles> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
@@ -90,58 +97,6 @@ class CredentialsController(val credentialsService: CredentialsService) {
                         null -> Either.Left(NotFound(user))
                         else -> Either.Right(credential)
                     }
-                } else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun getUserRoles(
-        client: String?,
-        activities: Set<Activity>,
-        user: String
-    ): Either<ControllerError, List<Role>> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if ((user == client && activities.contains(
-                        Activities.getOwnCredentialsRoles
-                    )) || activities.contains(
-                        Activities.getAnyCredentialsRoles
-                    )
-                ) {
-                    Either.Right(credentialsService.getUserRoles(user))
-                } else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun addRoleToUser(
-        client: String?,
-        activities: Set<Activity>,
-        user: String,
-        role: Role
-    ): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.addRoleToUser)) {
-                    Either.Right(credentialsService.addRoleToUser(user, role))
-                } else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun deleteRoleFromUser(
-        client: String?,
-        activities: Set<Activity>,
-        user: String,
-        role: Role
-    ): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.deleteRoleFromUser)) {
-                    Either.Right(credentialsService.deleteRoleFromUser(user, role))
                 } else Either.Left(NotEnoughPermissions(client))
             }
         }

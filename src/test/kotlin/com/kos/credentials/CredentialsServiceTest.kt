@@ -65,32 +65,6 @@ class CredentialsServiceTest {
     }
 
     @Test
-    fun `i can add a role to a user`() {
-        runBlocking {
-            val credentialsInMemoryRepository =
-                CredentialsInMemoryRepository().withState(basicCredentialsInitialState)
-            val credentialsService =
-                CredentialsService(credentialsInMemoryRepository)
-
-            credentialsService.addRoleToUser(user, Role.USER)
-            assertEquals(credentialsService.getUserRoles(user), listOf(Role.USER))
-        }
-    }
-
-    @Test
-    fun `i can delete a role from a user`() {
-        runBlocking {
-            val credentialsInMemoryRepository =
-                CredentialsInMemoryRepository().withState(basicCredentialsWithRolesInitialState)
-            val credentialsService =
-                CredentialsService(credentialsInMemoryRepository)
-
-            credentialsService.deleteRoleFromUser(user, Role.USER)
-            assertEquals(credentialsService.getUserRoles(user), listOf())
-        }
-    }
-
-    @Test
     fun `i can get all credentials`() {
         runBlocking {
             val credentialsInMemoryRepository =

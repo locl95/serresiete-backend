@@ -28,22 +28,12 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
     override suspend fun getUserRoles(userName: String): List<Role> =
         userRoles[userName].orEmpty()
 
-    override suspend fun insertRole(userName: String, role: Role) {
-        userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + role }
-    }
-
     override suspend fun insertRoles(userName: String, roles: Set<Role>) {
         userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + roles }
     }
 
-    override suspend fun deleteRole(userName: String, role: Role) {
-        userRoles.computeIfPresent(userName) { _, currentRoles ->
-            currentRoles.toMutableList().apply { remove(role) }
-        }
-    }
-
-    override suspend fun deleteRoles(userName: String) {
-        userRoles.remove(userName)
+    override suspend fun updateRoles(userName: String, roles: Set<Role>) {
+        userRoles[userName] = roles.toList()
     }
 
     override suspend fun deleteCredentials(user: String) {

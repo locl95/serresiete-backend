@@ -84,15 +84,6 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun insertRole(userName: String, role: Role) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.insert {
-                it[CredentialsRoles.userName] = userName
-                it[CredentialsRoles.role] = role.toString()
-            }
-        }
-    }
-
     override suspend fun insertRoles(userName: String, roles: Set<Role>) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             CredentialsRoles.batchInsert(roles) {
@@ -102,19 +93,14 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun deleteRole(userName: String, role: Role) {
+    override suspend fun updateRoles(userName: String, roles: Set<Role>) {
+        //TODO: Rollback when insert goes wrong
         newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.deleteWhere {
-                CredentialsRoles.role.eq(role.toString()) and CredentialsRoles.userName.eq(
-                    userName
-                )
+            Users.deleteWhere { Users.userName.eq(userName) }
+            CredentialsRoles.batchInsert(roles) {
+                this[CredentialsRoles.userName] = userName
+                this[CredentialsRoles.role] = it.toString()
             }
-        }
-    }
-
-    override suspend fun deleteRoles(userName: String) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
         }
     }
 

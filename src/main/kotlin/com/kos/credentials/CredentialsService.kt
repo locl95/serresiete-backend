@@ -29,14 +29,10 @@ class CredentialsService(
             userName,
             BCrypt.hashpw(request.password, BCrypt.gensalt(12))
         )
-        credentialsRepository.deleteRoles(userName)
-        credentialsRepository.insertRoles(userName, request.roles)
+        credentialsRepository.updateRoles(userName, request.roles)
     }
 
     suspend fun getUserRoles(userName: String): List<Role> = credentialsRepository.getUserRoles(userName)
-    suspend fun addRoleToUser(userName: String, role: Role): Unit = credentialsRepository.insertRole(userName, role)
-    suspend fun deleteRoleFromUser(userName: String, role: Role): Unit =
-        credentialsRepository.deleteRole(userName, role)
 
     suspend fun getCredentials(): List<CredentialsWithRoles> =
         credentialsRepository.getCredentials().map {

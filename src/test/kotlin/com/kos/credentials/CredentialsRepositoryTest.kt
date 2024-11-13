@@ -87,51 +87,6 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
-    open fun `given a repository with users i can add a role`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(basicCredentialsInitialState)
-            val initialRoles = repositoryWithState.state().credentialsRoles[user]
-            repositoryWithState.insertRole(user, Role.ADMIN)
-            val finalState = repositoryWithState.state().credentialsRoles[user]
-            assertEquals(emptyList(), initialRoles.orEmpty())
-            assertEquals(listOf(Role.ADMIN), finalState.orEmpty())
-        }
-    }
-
-    @Test
-    open fun `given a repository with users and roles i can delete a role`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(
-                basicCredentialsInitialState.copy(
-                    credentialsRoles = mapOf(user to listOf(Role.USER, Role.ADMIN), "user2" to listOf(Role.USER, Role.SERVICE)))
-                )
-            val initialRolesUser = repositoryWithState.state().credentialsRoles[user]
-            val initialRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
-            repositoryWithState.deleteRole(user, Role.ADMIN)
-            val finalRolesUser = repositoryWithState.state().credentialsRoles[user]
-            val finalRolesUser2 = repositoryWithState.state().credentialsRoles["user2"]
-            assertEquals(listOf(Role.USER, Role.ADMIN), initialRolesUser.orEmpty())
-            assertEquals(listOf(Role.USER, Role.SERVICE), initialRolesUser2.orEmpty())
-            assertEquals(listOf(Role.USER), finalRolesUser)
-            assertEquals(initialRolesUser2, finalRolesUser2)
-        }
-    }
-
-    @Test
-    open fun `given a repository with users and roles i can delete all role`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(
-                basicCredentialsInitialState.copy(
-                    credentialsRoles = mapOf(user to listOf(Role.USER, Role.ADMIN), "user2" to listOf(Role.USER, Role.SERVICE)))
-            )
-
-            repositoryWithState.deleteRoles("user2")
-            assertEquals(null, repositoryWithState.state().credentialsRoles["user2"])
-            assertEquals(listOf(Role.USER, Role.ADMIN), repositoryWithState.state().credentialsRoles[user])
-        }
-    }
-
-    @Test
     open fun `given a repository with credentials and roles i can patch them`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsWithRolesInitialState)

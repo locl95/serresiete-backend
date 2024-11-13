@@ -3,7 +3,7 @@ const {join} = require("path");
 const app = express()
 const port = 8080
 
-app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.json());
 
 app.get('/api/views/:id/data', (req, res) => {
     res.sendFile(join(__dirname, 'resources', 'data.json'));

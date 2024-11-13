@@ -1,17 +1,10 @@
 package com.kos.activities
 
 import com.kos.activities.repository.ActivitiesInMemoryRepository
-import com.kos.credentials.CredentialsService
-import com.kos.credentials.CredentialsTestHelper.basicCredentials
-import com.kos.credentials.repository.CredentialsInMemoryRepository
-import com.kos.credentials.repository.CredentialsRepositoryState
-import com.kos.roles.Role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 
 class ActivitiesControllerTest {

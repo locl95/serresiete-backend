@@ -1,6 +1,5 @@
 package com.kos.datacache
 
-import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import java.time.OffsetDateTime
 
 object TestHelper {

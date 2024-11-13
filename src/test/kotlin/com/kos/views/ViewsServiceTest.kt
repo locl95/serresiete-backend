@@ -1,7 +1,6 @@
 package com.kos.views
 
 import arrow.core.Either
-import com.kos.activities.Activity
 import com.kos.characters.CharacterCreateRequest
 import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
@@ -33,13 +32,11 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
-import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.httpclients.domain.GetPUUIDResponse
 import com.kos.httpclients.domain.GetSummonerResponse
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
@@ -48,9 +45,6 @@ import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.ViewsTestHelper.published
 import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested

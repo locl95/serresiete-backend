@@ -1,7 +1,6 @@
 package com.kos.activities
 
 import com.kos.activities.ActivitiesTestHelper.basicActivities
-import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.activities.repository.ActivitiesDatabaseRepository
 import com.kos.activities.repository.ActivitiesInMemoryRepository
 import com.kos.activities.repository.ActivitiesRepository

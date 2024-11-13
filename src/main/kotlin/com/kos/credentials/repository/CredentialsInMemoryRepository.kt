@@ -4,9 +4,6 @@ import com.kos.common.InMemoryRepository
 import com.kos.credentials.Credentials
 import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
-import com.kos.views.SimpleView
-import com.kos.views.ViewPatched
-import org.jetbrains.exposed.sql.ushortParam
 
 class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository {
     private val users = mutableListOf<Credentials>()

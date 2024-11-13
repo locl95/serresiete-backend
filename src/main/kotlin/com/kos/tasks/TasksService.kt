@@ -4,7 +4,6 @@ import com.kos.auth.AuthService
 import com.kos.characters.CharactersService
 import com.kos.characters.LolCharacter
 import com.kos.common.WithLogger
-import com.kos.common.split
 import com.kos.datacache.DataCacheService
 import com.kos.tasks.repository.TasksRepository
 import com.kos.views.Game

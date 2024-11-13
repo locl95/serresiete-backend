@@ -1,6 +1,5 @@
 package com.kos.credentials
 
-import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.credentials.CredentialsTestHelper.basicCredentials
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsInitialState
 import com.kos.credentials.CredentialsTestHelper.basicCredentialsWithRoles
@@ -10,8 +9,6 @@ import com.kos.credentials.CredentialsTestHelper.password
 import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.roles.Role
-import com.kos.roles.RolesTestHelper.basicRolesActivities
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

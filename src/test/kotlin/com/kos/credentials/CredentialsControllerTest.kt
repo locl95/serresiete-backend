@@ -1,7 +1,6 @@
 package com.kos.credentials
 
 import com.kos.activities.Activities
-import com.kos.activities.Activity
 import com.kos.common.CantDeleteYourself
 import com.kos.common.NotEnoughPermissions
 import com.kos.common.getLeftOrNull
@@ -14,7 +13,6 @@ import com.kos.credentials.CredentialsTestHelper.user
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.roles.Role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 

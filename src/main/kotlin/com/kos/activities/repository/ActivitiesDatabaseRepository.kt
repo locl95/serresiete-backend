@@ -3,7 +3,6 @@ package com.kos.activities.repository
 import com.kos.activities.Activity
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 class ActivitiesDatabaseRepository(private val db: Database) : ActivitiesRepository {

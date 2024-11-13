@@ -105,6 +105,16 @@ abstract class CredentialsRepositoryTest {
     }
 
     @Test
+    open fun `given a repository with credentials and roles i can patch them updating roles`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicCredentialsWithRolesInitialState)
+            val expected = setOf(Role.ADMIN)
+            repositoryWithState.patch(user, PatchCredentialRequest(null, expected))
+            assertEquals(expected.toList(), repositoryWithState.state().credentialsRoles[user])
+        }
+    }
+
+    @Test
     open fun `given a repository with credentials and roles i can update roles`() {
         runBlocking {
             val repositoryWithState = repository.withState(basicCredentialsWithRolesInitialState)

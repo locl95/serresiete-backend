@@ -117,12 +117,11 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
                     it[password] = request.password
                 }
             }
-            request.roles?.let {
+            request.roles?.let { roles ->
                 CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
-                CredentialsRoles.deleteWhere {
-                    role.eq(role.toString()) and CredentialsRoles.userName.eq(
-                        userName
-                    )
+                CredentialsRoles.batchInsert(roles) {
+                    this[CredentialsRoles.userName] = userName
+                    this[CredentialsRoles.role] = it.toString()
                 }
             }
         }

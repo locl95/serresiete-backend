@@ -51,7 +51,7 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
 
         request.roles?.let { roles ->
             if(roles.isEmpty()) userRoles.remove(userName)
-            else userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + roles }
+            else userRoles[userName] = roles.toList()
         }
     }
 

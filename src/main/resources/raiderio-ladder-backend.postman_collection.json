@@ -587,7 +587,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userName\": \"testUser2\",\n    \"password\": \"testPassword\",\n    \"roles\": [\"USER\"]\n}",
+							"raw": "{\n    \"userName\": \"testUser3\",\n    \"password\": \"testPassword\",\n    \"roles\": [\"USER\"]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -699,15 +699,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/credentials/{{user}}/roles",
+							"raw": "{{baseUri}}/api/credentials/{{user}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
 								"credentials",
-								"{{user}}",
-								"roles"
+								"{{user}}"
 							]
 						}
 					},
@@ -747,91 +746,7 @@
 					"response": []
 				},
 				{
-					"name": "delete activity from role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles/{{role}}/activities/{{activity2}}",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles",
-								"{{role}}",
-								"activities",
-								"{{activity2}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "add activity to role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"activity\": \"aaalooool\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles/{{role}}/activities",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles",
-								"{{role}}",
-								"activities"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "activities",
-			"item": [
-				{
-					"name": "Get Activities From Role",
+					"name": "Get Role",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -846,19 +761,62 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/activities/{{role}}",
+							"raw": "{{baseUri}}/api/roles/{{role}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"activities",
+								"roles",
 								"{{role}}"
 							]
 						}
 					},
 					"response": []
 				},
+				{
+					"name": "Put activities to role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"activities\": [\n        \"aaalooool\",\n        \"add activity to role\",\n        \"add role to user\",\n        \"create a view\",\n        \"create activities\",\n        \"create credentials\",\n        \"create roles\",\n        \"delete activities\",\n        \"delete activity from role\",\n        \"delete any view\",\n        \"delete credentials\",\n        \"delete own view\",\n        \"delete role from user\",\n        \"delete roles\",\n        \"edit any view\",\n        \"edit credentials\",\n        \"edit own view\",\n        \"get all credentials\",\n        \"get all views\",\n        \"get any activities\",\n        \"get any credential\",\n        \"get any credentials\",\n        \"get any credentials roles\",\n        \"get any roles\",\n        \"get any view\",\n        \"get any views\",\n        \"get own credentials roles\",\n        \"get own view\",\n        \"get own views\",\n        \"get task\",\n        \"get tasks\",\n        \"get view cached data\",\n        \"get view data\",\n        \"get views\",\n        \"login\",\n        \"logout\",\n        \"patch credentials\",\n        \"run task\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "activities",
+			"item": [
 				{
 					"name": "Get Activities",
 					"request": {

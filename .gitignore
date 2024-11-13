@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 fly.toml
 gitLinesByAuthor
+apimock/node_modules
 
 ### STS ###
 .apt_generated

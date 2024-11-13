@@ -10,14 +10,6 @@ class ActivitiesInMemoryRepository : ActivitiesRepository, InMemoryRepository {
         return activities
     }
 
-    override suspend fun insertActivity(activity: Activity) {
-        activities.add(activity)
-    }
-
-    override suspend fun deleteActivity(activity: Activity) {
-        activities.remove(activity)
-    }
-
     override suspend fun state(): Set<Activity> {
         return activities
     }

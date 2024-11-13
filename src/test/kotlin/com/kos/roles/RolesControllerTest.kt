@@ -2,7 +2,6 @@ package com.kos.roles
 
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.activities.ActivityRequest
 import com.kos.credentials.repository.CredentialsInMemoryRepository
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.roles.repository.RolesInMemoryRepository
@@ -10,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.fail
 
 
 class RolesControllerTest {
@@ -23,10 +22,10 @@ class RolesControllerTest {
         rolesState: List<Role>,
         rolesActivitiesState: Map<Role, Set<Activity>>
     ): RolesController {
-        val rolesRepositoryWithState = rolesRepository.withState(rolesState)
-        val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
+        rolesRepository.withState(rolesState)
+        rolesActivitiesRepository.withState(rolesActivitiesState)
 
-        val rolesService = RolesService(rolesRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
         return RolesController(rolesService)
     }
 
@@ -42,7 +41,7 @@ class RolesControllerTest {
     fun `i can get roles`() {
         runBlocking {
             val controller = createController(
-                listOf(Role.USER),
+                listOf(role),
                 mapOf(Pair(role, setOf(Activities.getAnyRoles)))
             )
             assertEquals(
@@ -53,59 +52,36 @@ class RolesControllerTest {
     }
 
     @Test
-    fun `i can create roles`() {
+    fun `i can get role`() {
         runBlocking {
-
-            val controller = createController(
-                listOf(),
-                mapOf()
-            )
-            assertTrue(
-                controller.createRole("owner", RoleRequest(role), setOf(Activities.createRoles)).isRight()
-            )
-        }
-    }
-
-    @Test
-    fun `i can delete roles`() {
-        runBlocking {
+            val expected = Pair(role, setOf(Activities.getAnyRoles))
             val controller = createController(
                 listOf(role),
-                mapOf(Pair(role, setOf(Activities.deleteRoles)))
+                mapOf(expected)
             )
-            assertTrue(controller.deleteRole("owner", role, setOf(Activities.deleteRoles)).isRight())
-        }
-    }
-
-    @Test
-    fun `i can add activity to role`() {
-        runBlocking {
-
-            val controller = createController(
-                listOf(),
-                mapOf()
-            )
-            assertTrue(
-                controller.addActivityToRole(
-                    "owner",
-                    ActivityRequest("something"),
-                    role,
-                    setOf(Activities.addActivityToRole)
-                ).isRight()
+            assertEquals(
+                expected,
+                controller.getRole("owner", setOf(Activities.getAnyRoles), role).getOrNull()
             )
         }
     }
 
     @Test
-    fun `i can remove activity from role`() {
+    fun `i can set activities to role`() {
         runBlocking {
-
+            val expected = Pair(role, setOf(Activities.getAnyRoles))
             val controller = createController(
-                listOf(),
-                mapOf()
+                listOf(role),
+                mapOf(expected)
             )
-            assertTrue(controller.deleteActivityFromRole("owner", role, Activities.deleteActivityFromRole, setOf(Activities.deleteActivityFromRole)).isRight())
+            controller.setActivities(
+                "owner",
+                setOf(Activities.addActivityToRole),
+                role,
+                ActivitiesRequest(setOf(Activities.getAnyRoles))
+            ).onLeft {
+                fail(it.toString())
+            }
         }
     }
-
 }

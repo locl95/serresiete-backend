@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "3f328cfa-3cb1-4bbe-bd40-aa2029e9458a",
+		"_postman_id": "f1d6c4ec-961c-4f3c-a076-7184345bdec5",
 		"name": "raiderio-ladder-backend",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "20384788"
+		"_exporter_id": "30887858"
 	},
 	"item": [
 		{
@@ -174,7 +174,7 @@
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody)",
-									"pm.collectionVariables.set(\"viewId\", jsonData.viewId);"
+									"pm.collectionVariables.set(\"viewId\", jsonData.id);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -196,7 +196,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"lol-view-example\",\n    \"game\": \"LOL\",\n    \"published\": true,\n    \"characters\": [\n        {\n            \"name\": \"sanxei\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Handx\",\n            \"tag\": \"013\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ]\n}",
+							"raw": "{\n    \"name\": \"LEC\",\n    \"characters\": [\n        {\n            \"name\": \"Rydle\",\n            \"tag\": \"KEK\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"kaczynski\",\n            \"tag\": \"theo\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"LaianPage\",\n            \"tag\": \"KEKW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Endika Gear\",\n            \"tag\": \"EUSK\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"calla egirl\",\n            \"tag\": \"0000\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Flakked Wannabe\",\n            \"tag\": \"HRTS\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"moonata\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"greed\",\n            \"tag\": \"elo\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"ivanperez55\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"4Sueee\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"OVJ XxKeviNxX997\",\n            \"tag\": \"OJJ\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"FãƒîTø Kµþ\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Isirigal19\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"MVP VI\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Soldier Boy\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Freeze Machine\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Ruthless\",\n            \"tag\": \"1511\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Mehrrez\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"ISupZeRool\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"mohamed1112\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ],\n    \"published\": true,\n    \"game\": \"LOL\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -332,7 +332,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"characters\": [{\n        \"name\": \"kakarona\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Apohunter\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kumico\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Sanxei\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    },\n    {\n        \"name\": \"Kakarøna\",\n        \"region\": \"eu\",\n        \"realm\": \"zuljin\"\n    }\n    ],\n    \"name\": \"nice-view\"\n}",
+							"raw": "{\n    \"name\": \"LEC\",\n    \"characters\": [\n        {\n            \"name\": \"CABALLO GANADOR\",\n            \"tag\": \"CTANG\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"Wesley Warren Jr\",\n            \"tag\": \"EUW\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        },\n        {\n            \"name\": \"qrds\",\n            \"tag\": \"211\",\n            \"type\": \"com.kos.characters.LolCharacterRequest\"\n        }\n    ],\n    \"published\": true,\n    \"game\": \"LOL\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -381,6 +381,44 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Patch View",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"LEC-2\",\n    \"game\": \"LOL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/views/{{viewId}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"views",
+								"{{viewId}}"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -395,8 +433,8 @@
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody)",
-									"pm.collectionVariables.set(\"token\", jsonData.accessToken.token);",
-									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken.token);"
+									"pm.collectionVariables.set(\"token\", jsonData.accessToken);",
+									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -408,13 +446,13 @@
 							"type": "basic",
 							"basic": [
 								{
-									"key": "password",
-									"value": "{{password}}",
+									"key": "username",
+									"value": "{{user}}",
 									"type": "string"
 								},
 								{
-									"key": "username",
-									"value": "{{user}}",
+									"key": "password",
+									"value": "{{password}}",
 									"type": "string"
 								}
 							]
@@ -442,7 +480,7 @@
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody)",
-									"pm.collectionVariables.set(\"token\", jsonData.token);"
+									"pm.collectionVariables.set(\"token\", jsonData.accessToken);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -522,6 +560,18 @@
 			"item": [
 				{
 					"name": "Create Credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -537,7 +587,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"user\": \"testUser\",\n    \"password\": \"testPassword\"\n}",
+							"raw": "{\n    \"userName\": \"testUser3\",\n    \"password\": \"testPassword\",\n    \"roles\": [\"USER\"]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -545,14 +595,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUri}}/api/credentials/",
+							"raw": "{{baseUri}}/api/credentials",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"credentials",
-								""
+								"credentials"
 							]
 						}
 					},
@@ -575,7 +624,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userName\": \"oscar\",\n    \"password\": \"latarea\"\n}",
+							"raw": "{\n    \"password\": \"latarea\",\n    \"roles\": [\"ADMIN\", \"USER\"]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -583,13 +632,52 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUri}}/api/credentials",
+							"raw": "{{baseUri}}/api/credentials/{{newUser}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"credentials"
+								"credentials",
+								"{{newUser}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch Credential",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"latarea\",\n    \"roles\": [\"ADMIN\", \"USER\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/credentials/{{user}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"credentials",
+								"{{user}}"
 							]
 						}
 					},
@@ -611,101 +699,16 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/credentials/{{user}}/roles",
+							"raw": "{{baseUri}}/api/credentials/{{user}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
 								"credentials",
-								"{{user}}",
-								"roles"
+								"{{user}}"
 							]
 						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Credentials",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUri}}/api/credentials/{{userToDelete}}",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"credentials",
-								"{{userToDelete}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Credentials",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "Add Role To User",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"role\": \"testRole\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/credentials/{{user}}/roles",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"credentials",
-								"{{user}}",
-								"roles"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Role From User",
-					"request": {
-						"method": "GET",
-						"header": []
 					},
 					"response": []
 				}
@@ -743,163 +746,7 @@
 					"response": []
 				},
 				{
-					"name": "Create a Role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"role\": \"nefertiti\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete a Role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"role\": \"nefertiti\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles/{{role2}}",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles",
-								"{{role2}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add activity to role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"activity\": \"play ping pong\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles/{{role}}/activities",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles",
-								"{{role}}",
-								"activities"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete activity from role",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"role\": \"nefertiti\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/roles",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"roles"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "activities",
-			"item": [
-				{
-					"name": "Get Activities From Role",
+					"name": "Get Role",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -914,19 +761,62 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUri}}/api/activities/{{role}}",
+							"raw": "{{baseUri}}/api/roles/{{role}}",
 							"host": [
 								"{{baseUri}}"
 							],
 							"path": [
 								"api",
-								"activities",
+								"roles",
 								"{{role}}"
 							]
 						}
 					},
 					"response": []
 				},
+				{
+					"name": "Put activities to role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"activities\": [\n        \"aaalooool\",\n        \"add activity to role\",\n        \"add role to user\",\n        \"create a view\",\n        \"create activities\",\n        \"create credentials\",\n        \"create roles\",\n        \"delete activities\",\n        \"delete activity from role\",\n        \"delete any view\",\n        \"delete credentials\",\n        \"delete own view\",\n        \"delete role from user\",\n        \"delete roles\",\n        \"edit any view\",\n        \"edit credentials\",\n        \"edit own view\",\n        \"get all credentials\",\n        \"get all views\",\n        \"get any activities\",\n        \"get any credential\",\n        \"get any credentials\",\n        \"get any credentials roles\",\n        \"get any roles\",\n        \"get any view\",\n        \"get any views\",\n        \"get own credentials roles\",\n        \"get own view\",\n        \"get own views\",\n        \"get task\",\n        \"get tasks\",\n        \"get view cached data\",\n        \"get view data\",\n        \"get views\",\n        \"login\",\n        \"logout\",\n        \"patch credentials\",\n        \"run task\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUri}}/api/roles/{{role}}",
+							"host": [
+								"{{baseUri}}"
+							],
+							"path": [
+								"api",
+								"roles",
+								"{{role}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "activities",
+			"item": [
 				{
 					"name": "Get Activities",
 					"request": {
@@ -950,72 +840,6 @@
 							"path": [
 								"api",
 								"activities"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Activity",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"activity\": \"play ping pong\"}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUri}}/api/activities",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"activities"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete activity",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUri}}/api/activities/{{activity}}",
-							"host": [
-								"{{baseUri}}"
-							],
-							"path": [
-								"api",
-								"activities",
-								"{{activity}}"
 							]
 						}
 					},
@@ -1278,14 +1102,13 @@
 			"value": "fdbb48d1-b846-4912-849d-2545dfd498a2"
 		},
 		{
-			"key": "userToDelete",
-			"value": "testUser",
-			"type": "default"
+			"key": "prodUri",
+			"value": "https://raiderio-ladder-backend.fly.dev",
+			"type": "string"
 		},
 		{
-			"key": "roleToDelete",
-			"value": "testRole",
-			"type": "default"
+			"key": "newUser",
+			"value": "testUser2"
 		}
 	]
 }

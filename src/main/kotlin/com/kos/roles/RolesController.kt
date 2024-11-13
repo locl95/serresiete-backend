@@ -3,7 +3,6 @@ package com.kos.roles
 import arrow.core.Either
 import com.kos.activities.Activities
 import com.kos.activities.Activity
-import com.kos.activities.ActivityRequest
 import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
@@ -19,57 +18,30 @@ class RolesController(private val rolesService: RolesService) {
         }
     }
 
-    suspend fun createRole(
+    suspend fun getRole(
         client: String?,
-        roleRequest: RoleRequest,
-        activities: Set<Activity>
-    ): Either<ControllerError, Unit> {
+        activities: Set<Activity>,
+        role: Role
+    ): Either<ControllerError, Pair<Role, Set<Activity>>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.createRoles)) Either.Right(rolesService.createRole(roleRequest))
+                if(activities.contains(Activities.getAnyRoles)) Either.Right(rolesService.getRole(role))
                 else Either.Left(NotEnoughPermissions(client))
             }
         }
     }
 
-    suspend fun deleteRole(client: String?, role: Role, activities: Set<Activity>): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.deleteRoles)) Either.Right(rolesService.deleteRole(role))
-                else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun addActivityToRole(
+    suspend fun setActivities(
         client: String?,
-        activityRequest: ActivityRequest,
+        activities: Set<Activity>,
         role: Role,
-        activities: Set<Activity>
+        request: ActivitiesRequest
     ): Either<ControllerError, Unit> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.addActivityToRole))
-                    Either.Right(rolesService.addActivityToRole(activityRequest, role))
-                else Either.Left(NotEnoughPermissions(client))
-            }
-        }
-    }
-
-    suspend fun deleteActivityFromRole(
-        client: String?,
-        role: Role,
-        activity: Activity,
-        activities: Set<Activity>
-    ): Either<ControllerError, Unit> {
-        return when (client) {
-            null -> Either.Left(NotAuthorized)
-            else -> {
-                if (activities.contains(Activities.deleteActivityFromRole))
-                    Either.Right(rolesService.removeActivityFromRole(activity, role))
+                if(activities.contains(Activities.addActivityToRole)) Either.Right(rolesService.setActivitiesToRole(role, request.activities))
                 else Either.Left(NotEnoughPermissions(client))
             }
         }

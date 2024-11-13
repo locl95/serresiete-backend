@@ -2,8 +2,6 @@ package com.kos.credentials
 
 import com.kos.common.respondWithHandledError
 import com.kos.plugins.UserWithActivities
-import com.kos.roles.Role
-import com.kos.roles.RoleRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -16,20 +14,14 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
         authenticate("auth-jwt") {
             post {
                 val userWithActivities = call.principal<UserWithActivities>()
-                credentialsController.createCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
+                credentialsController.createCredential(
+                    userWithActivities?.name,
+                    userWithActivities?.activities.orEmpty(),
+                    call.receive()
+                ).fold({
                     call.respondWithHandledError(it)
                 }, {
                     call.respond(HttpStatusCode.Created)
-                })
-            }
-        }
-        authenticate("auth-jwt") {
-            put {
-                val userWithActivities = call.principal<UserWithActivities>()
-                credentialsController.editCredential(userWithActivities?.name, userWithActivities?.activities.orEmpty(), call.receive()).fold({
-                    call.respondWithHandledError(it)
-                }, {
-                    call.respond(HttpStatusCode.NoContent)
                 })
             }
         }
@@ -61,50 +53,48 @@ fun Route.credentialsRouting(credentialsController: CredentialsController) {
                     })
                 }
             }
-            route("/roles") {
-                authenticate("auth-jwt") {
-                    get {
-                        val userWithActivities = call.principal<UserWithActivities>()
-                        credentialsController.getUserRoles(
-                            userWithActivities?.name,
-                            userWithActivities?.activities.orEmpty(),
-                            call.parameters["user"].orEmpty()
-                        ).fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.OK, it)
-                        })
-                    }
+            authenticate("auth-jwt") {
+                get {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.getCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.OK, it)
+                    })
                 }
-                authenticate("auth-jwt") {
-                    post {
-                        val userWithActivities = call.principal<UserWithActivities>()
-                        credentialsController.addRoleToUser(
-                            userWithActivities?.name,
-                            userWithActivities?.activities.orEmpty(),
-                            call.parameters["user"].orEmpty(),
-                            call.receive<RoleRequest>().role
-                        ).fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.Created)
-                        })
-                    }
+            }
+            authenticate("auth-jwt") {
+                put {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.editCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty(),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
                 }
-                authenticate("auth-jwt") {
-                    delete("/{role}") {
-                        val userWithActivities = call.principal<UserWithActivities>()
-                        credentialsController.deleteRoleFromUser(
-                            userWithActivities?.name,
-                            userWithActivities?.activities.orEmpty(),
-                            call.parameters["user"].orEmpty(),
-                            Role.fromString(call.parameters["role"].orEmpty())
-                        ).fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.NoContent)
-                        })
-                    }
+            }
+            authenticate("auth-jwt") {
+                patch {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    credentialsController.patchCredential(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        call.parameters["user"].orEmpty(),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
                 }
             }
         }

@@ -2,7 +2,6 @@ package com.kos.eventsourcing.subscriptions.repository
 
 import com.kos.common.InMemoryRepository
 import com.kos.eventsourcing.subscriptions.SubscriptionState
-import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
 
 class SubscriptionsInMemoryRepository : SubscriptionsRepository, InMemoryRepository {
     private val subscriptions = mutableMapOf<String, SubscriptionState>()

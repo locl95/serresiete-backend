@@ -2,6 +2,7 @@ package com.kos.credentials.repository
 
 import com.kos.common.InMemoryRepository
 import com.kos.credentials.Credentials
+import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
 
 class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository {
@@ -15,8 +16,8 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
         return users.find { it.userName == userName }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials) {
-        users.add(credentials)
+    override suspend fun insertCredentials(userName: String, password: String) {
+        users.add(Credentials(userName, password))
     }
 
     override suspend fun editCredentials(userName: String, newPassword: String) {
@@ -27,19 +28,31 @@ class CredentialsInMemoryRepository : CredentialsRepository, InMemoryRepository 
     override suspend fun getUserRoles(userName: String): List<Role> =
         userRoles[userName].orEmpty()
 
-    override suspend fun insertRole(userName: String, role: Role) {
-        userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + role }
+    override suspend fun insertRoles(userName: String, roles: Set<Role>) {
+        userRoles.compute(userName) { _, currentRoles -> (currentRoles ?: mutableListOf()) + roles }
     }
 
-    override suspend fun deleteRole(userName: String, role: Role) {
-        userRoles.computeIfPresent(userName) { _, currentRoles ->
-            currentRoles.toMutableList().apply { remove(role) }
-        }
+    override suspend fun updateRoles(userName: String, roles: Set<Role>) {
+        userRoles[userName] = roles.toList()
     }
 
     override suspend fun deleteCredentials(user: String) {
         val index = users.map { it.userName }.indexOf(user)
         users.removeAt(index)
+    }
+
+    override suspend fun patch(userName: String, request: PatchCredentialRequest) {
+        request.password?.let { password ->
+            val userIndex = users.indexOfFirst { it.userName == userName }
+            users.removeAt(userIndex)
+            val newCredential = Credentials(userName, password)
+            users.add(userIndex, newCredential)
+        }
+
+        request.roles?.let { roles ->
+            if(roles.isEmpty()) userRoles.remove(userName)
+            else userRoles[userName] = roles.toList()
+        }
     }
 
     override suspend fun state(): CredentialsRepositoryState {

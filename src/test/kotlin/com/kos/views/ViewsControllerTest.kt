@@ -1,7 +1,6 @@
 package com.kos.views
 
 import com.kos.activities.Activities
-import com.kos.activities.Activity
 import com.kos.assertTrue
 import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
@@ -59,17 +58,15 @@ class ViewsControllerTest {
         viewsState: List<SimpleView>,
         charactersState: CharactersState,
         dataCacheState: List<DataCache>,
-        rolesActivitiesState: Map<Role, Set<Activity>>
     ): ViewsController {
         val viewsRepositoryWithState = viewsRepository.withState(viewsState)
         val charactersRepositoryWithState = charactersRepository.withState(charactersState)
         val dataCacheRepositoryWithState = dataCacheRepository.withState(dataCacheState)
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
-        val rolesActivitiesRepositoryWithState = rolesActivitiesRepository.withState(rolesActivitiesState)
 
         val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
         val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient)
-        val credentialsService = CredentialsService(credentialsRepositoryWithState, rolesActivitiesRepositoryWithState)
+        val credentialsService = CredentialsService(credentialsRepositoryWithState)
         val viewsService = ViewsService(
             viewsRepositoryWithState,
             charactersService,
@@ -99,8 +96,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView, basicSimpleWowView.copy(owner = "not-owner")),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
             assertEquals(
                 listOf(basicSimpleWowView),
@@ -117,8 +113,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
             assertEquals(
                 listOf(basicSimpleWowView, notOwnerView),
@@ -135,8 +130,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView, notOwnerView),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
             assertEquals(
                 basicSimpleWowView,
@@ -156,8 +150,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
             assertEquals(
                 NotFound(basicSimpleWowView.id),
@@ -174,8 +167,7 @@ class ViewsControllerTest {
                 CredentialsRepositoryState(listOf(basicCredentials.copy(userName = "owner")) , mapOf(owner to listOf(Role.USER))),
                 listOf(),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
             val res =
                 controller.createView(
@@ -198,8 +190,7 @@ class ViewsControllerTest {
                 CredentialsRepositoryState(listOf(basicCredentials.copy(userName = "owner")) , mapOf(owner to listOf(Role.USER))),
                 listOf(basicSimpleWowView, basicSimpleWowView),
                 emptyCharactersState,
-                listOf(),
-                mapOf()
+                listOf()
             )
 
             assertIs<TooMuchViews>(
@@ -220,8 +211,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
-                listOf(),
-                mapOf()
+                listOf()
             )
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
@@ -242,8 +232,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter.copy(id = 2))),
-                listOf(lolDataCache),
-                mapOf()
+                listOf(lolDataCache)
             )
 
             controller.getViewData("owner", basicSimpleLolView.id, setOf(Activities.getViewData))
@@ -262,8 +251,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf()),
-                listOf(wowDataCache),
-                mapOf()
+                listOf(wowDataCache)
             )
 
             controller.getViewCachedData("owner", basicSimpleWowView.id, setOf(Activities.getViewCachedData))
@@ -286,8 +274,7 @@ class ViewsControllerTest {
                 credentialsState,
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
                 CharactersState(listOf(), listOf(basicLolCharacter)),
-                listOf(lolDataCache),
-                mapOf()
+                listOf(lolDataCache)
             )
 
             controller.getViewCachedData("owner", basicSimpleLolView.id, setOf(Activities.getViewCachedData))
@@ -310,8 +297,7 @@ class ViewsControllerTest {
                 credentialsState,
                 listOf(basicSimpleWowView),
                 CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
-                listOf(lolDataCache),
-                mapOf()
+                listOf(lolDataCache)
             )
 
             `when`(raiderIoClient.exists(basicWowRequest2)).thenReturn(true)

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 sealed interface ControllerError
 data object NotAuthorized : ControllerError
 data class NotEnoughPermissions(val user: String) : ControllerError
+data class CantDeleteYourself(val user: String, val userToRemove: String) : ControllerError
 data class NotFound(val id: String) : ControllerError
 class BadRequest(val problem: String) : ControllerError
 class InvalidQueryParameter(param: String, value: String, allowed: List<String>?) : ControllerError {
@@ -36,11 +37,10 @@ data class RaiderIoError(
     override fun error(): String = "$message. $error: $statusCode"
 }
 
-interface ViewsError : ControllerError
-class NotPublished(val id: String) : ViewsError
-data object TooMuchViews : ViewsError
-data object TooMuchCharacters : ViewsError
-data object UserWithoutRoles : ViewsError
+class NotPublished(val id: String) : ControllerError
+data object TooMuchViews : ControllerError
+data object TooMuchCharacters : ControllerError
+data object UserWithoutRoles : ControllerError
 
 interface DatabaseError : ControllerError
 data class InsertError(val message: String) : DatabaseError
@@ -66,11 +66,12 @@ suspend fun ApplicationCall.respondWithHandledError(error: ControllerError) {
         is BadRequest -> respond(BadRequest, error.problem)
         is JsonParseError -> respondLogging(error.error())
         is RaiderIoError -> respondLogging(error.error())
-        is InvalidQueryParameter -> respond(HttpStatusCode.BadRequest, error.message)
+        is InvalidQueryParameter -> respond(BadRequest, error.message)
         is InsertError -> respondLogging(error.message)
-        is AuthError -> respond(HttpStatusCode.Unauthorized, error.message)
+        is AuthError -> respond(Unauthorized, error.message)
         is DatabaseError -> respondLogging(error.toString()) //TODO: improve
         is HttpError -> TODO()
-        is ViewsError -> TODO()
+        is CantDeleteYourself -> respond(BadRequest, "can't delete your credentials")
+        UserWithoutRoles -> TODO()
     }
 }

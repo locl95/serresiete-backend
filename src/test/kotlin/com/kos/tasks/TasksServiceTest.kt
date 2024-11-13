@@ -21,7 +21,9 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.httpclients.domain.QueueType
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
+import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
+import com.kos.roles.repository.RolesInMemoryRepository
 import com.kos.tasks.TasksTestHelper.task
 import com.kos.tasks.repository.TasksInMemoryRepository
 import com.kos.views.Game
@@ -47,8 +49,10 @@ class TasksServiceTest {
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
 
             val credentialsRepository = CredentialsInMemoryRepository()
+            val rolesRepository = RolesInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
 
             val authRepository = AuthInMemoryRepository().withState(
                 listOf(
@@ -56,7 +60,8 @@ class TasksServiceTest {
                     basicAuthorization.copy(validUntil = OffsetDateTime.now().minusHours(1))
                 )
             )
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -85,9 +90,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val now = OffsetDateTime.now()
             val expectedRemainingTask = task(now)
@@ -120,9 +128,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -155,9 +166,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -196,9 +210,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -229,9 +246,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -259,9 +279,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val credentialsService = CredentialsService(credentialsRepository)
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -291,9 +314,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
+            val credentialsService = CredentialsService(credentialsRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository()
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)
@@ -324,9 +350,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
+            val credentialsService = CredentialsService(credentialsRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
 
             val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
@@ -349,9 +378,12 @@ class TasksServiceTest {
 
             val credentialsRepository = CredentialsInMemoryRepository()
             val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val rolesRepository = RolesInMemoryRepository()
+            val rolesService = RolesService(rolesRepository, rolesActivitiesRepository)
+            val credentialsService = CredentialsService(credentialsRepository)
             val authRepository = AuthInMemoryRepository()
-            val authService = AuthService(authRepository, credentialsService, JWTConfig("issuer", "secret"))
+            val authService =
+                AuthService(authRepository, credentialsService, rolesService, JWTConfig("issuer", "secret"))
 
             val tasksRepository = TasksInMemoryRepository().withState(listOf(task))
             val service = TasksService(tasksRepository, dataCacheService, charactersService, authService)

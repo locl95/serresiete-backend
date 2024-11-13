@@ -22,66 +22,35 @@ fun Route.rolesRouting(
                     call.respond(HttpStatusCode.OK, it)
                 })
             }
-
+        }
+        route("/{role}") {
             authenticate("auth-jwt") {
-                post {
+                get {
                     val userWithActivities = call.principal<UserWithActivities>()
-                    rolesController.createRole(userWithActivities?.name, call.receive(), userWithActivities?.activities.orEmpty()).fold({
+                    rolesController.getRole(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        Role.fromString(call.parameters["role"].orEmpty())
+                    ).fold({
                         call.respondWithHandledError(it)
                     }, {
-                        call.respond(HttpStatusCode.Created)
+                        call.respond(HttpStatusCode.OK, it)
                     })
                 }
             }
-
-            route("/{role}") {
-                authenticate("auth-jwt") {
-                    delete {
-                        val userWithActivities = call.principal<UserWithActivities>()
-                        rolesController.deleteRole(
-                            userWithActivities?.name,
-                            Role.fromString(call.parameters["role"].orEmpty()),
-                            userWithActivities?.activities.orEmpty()
-                        ).fold({
-                            call.respondWithHandledError(it)
-                        }, {
-                            call.respond(HttpStatusCode.NoContent)
-                        })
-                    }
-                }
-                route("/activities") {
-                    authenticate("auth-jwt") {
-                        post {
-                            val userWithActivities = call.principal<UserWithActivities>()
-                            rolesController.addActivityToRole(
-                                userWithActivities?.name,
-                                call.receive(),
-                                Role.fromString(call.parameters["role"].orEmpty()),
-                                userWithActivities?.activities.orEmpty()
-                            ).fold({
-                                call.respondWithHandledError(it)
-                            }, {
-                                call.respond(HttpStatusCode.Created)
-                            })
-                        }
-                    }
-                    route("/{activity}") {
-                        authenticate("auth-jwt") {
-                            delete {
-                                val userWithActivities = call.principal<UserWithActivities>()
-                                rolesController.deleteActivityFromRole(
-                                    userWithActivities?.name,
-                                    Role.fromString(call.parameters["role"].orEmpty()),
-                                    call.parameters["activity"].orEmpty(),
-                                    userWithActivities?.activities.orEmpty()
-                                ).fold({
-                                    call.respondWithHandledError(it)
-                                }, {
-                                    call.respond(HttpStatusCode.NoContent)
-                                })
-                            }
-                        }
-                    }
+            authenticate("auth-jwt") {
+                put {
+                    val userWithActivities = call.principal<UserWithActivities>()
+                    rolesController.setActivities(
+                        userWithActivities?.name,
+                        userWithActivities?.activities.orEmpty(),
+                        Role.fromString(call.parameters["role"].orEmpty()),
+                        call.receive()
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(HttpStatusCode.NoContent)
+                    })
                 }
             }
         }

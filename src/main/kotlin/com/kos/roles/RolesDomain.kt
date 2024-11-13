@@ -1,5 +1,6 @@
 package com.kos.roles
 
+import com.kos.activities.Activity
 import kotlinx.serialization.Serializable
 
 enum class Role {
@@ -34,3 +35,6 @@ enum class Role {
 
 @Serializable
 data class RoleRequest(val role: Role)
+
+@Serializable
+data class ActivitiesRequest(val activities: Set<Activity>)

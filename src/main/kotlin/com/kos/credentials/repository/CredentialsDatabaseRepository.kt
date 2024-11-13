@@ -2,6 +2,7 @@ package com.kos.credentials.repository
 
 import com.kos.credentials.Credentials
 import com.kos.credentials.CredentialsRole
+import com.kos.credentials.PatchCredentialRequest
 import com.kos.roles.Role
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -38,7 +39,7 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
     )
 
     override suspend fun getCredentials(): List<Credentials> {
-        return Users.selectAll().map { resultRowToUser(it) }
+        return newSuspendedTransaction(Dispatchers.IO, db) { Users.selectAll().map { resultRowToUser(it) } }
     }
 
     override suspend fun getCredentials(userName: String): Credentials? {
@@ -47,11 +48,11 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun insertCredentials(credentials: Credentials) {
+    override suspend fun insertCredentials(userName: String, password: String) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Users.insert {
-                it[userName] = credentials.userName
-                it[password] = credentials.password
+                it[Users.userName] = userName
+                it[Users.password] = password
             }
         }
     }
@@ -83,24 +84,46 @@ class CredentialsDatabaseRepository(private val db: Database) : CredentialsRepos
         }
     }
 
-    override suspend fun insertRole(userName: String, role: Role) {
+    override suspend fun insertRoles(userName: String, roles: Set<Role>) {
         newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.insert {
-                it[CredentialsRoles.userName] = userName
-                it[CredentialsRoles.role] = role.toString()
+            CredentialsRoles.batchInsert(roles) {
+                this[CredentialsRoles.userName] = userName
+                this[CredentialsRoles.role] = it.toString()
             }
         }
     }
 
-    override suspend fun deleteRole(userName: String, role: Role) {
+    override suspend fun updateRoles(userName: String, roles: Set<Role>) {
+        //TODO: Rollback when insert goes wrong
         newSuspendedTransaction(Dispatchers.IO, db) {
-            CredentialsRoles.deleteWhere { CredentialsRoles.role.eq(role.toString()) and CredentialsRoles.userName.eq(userName) }
+            CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
+            CredentialsRoles.batchInsert(roles) {
+                this[CredentialsRoles.userName] = userName
+                this[CredentialsRoles.role] = it.toString()
+            }
         }
     }
 
     override suspend fun deleteCredentials(user: String) {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Users.deleteWhere { userName.eq(user) }
+        }
+    }
+
+    override suspend fun patch(userName: String, request: PatchCredentialRequest) {
+        newSuspendedTransaction {
+            request.password?.let {
+                Users.update({ Users.userName.eq(userName) }) {
+                    it[password] = request.password
+                }
+            }
+            request.roles?.let { roles ->
+                CredentialsRoles.deleteWhere { CredentialsRoles.userName.eq(userName) }
+                CredentialsRoles.batchInsert(roles) {
+                    this[CredentialsRoles.userName] = userName
+                    this[CredentialsRoles.role] = it.toString()
+                }
+            }
         }
     }
 

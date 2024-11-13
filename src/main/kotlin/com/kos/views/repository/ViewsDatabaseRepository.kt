@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import java.util.*
 
 class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
 

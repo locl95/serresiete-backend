@@ -444,8 +444,7 @@ class EventSubscriptionTest {
                     listOf(),
                     CharactersTestHelper.emptyCharactersState,
                     listOf(),
-                    CredentialsTestHelper.emptyCredentialsInitialState,
-                    mapOf()
+                    CredentialsTestHelper.emptyCredentialsInitialState
                 )
 
                 val spiedService = spyk(viewsService)
@@ -489,8 +488,7 @@ class EventSubscriptionTest {
                     listOf(ViewsTestHelper.basicSimpleLolView),
                     CharactersTestHelper.emptyCharactersState,
                     listOf(),
-                    CredentialsTestHelper.emptyCredentialsInitialState,
-                    mapOf()
+                    CredentialsTestHelper.emptyCredentialsInitialState
                 )
 
                 val spiedService = spyk(viewsService)
@@ -531,7 +529,6 @@ class EventSubscriptionTest {
                     CharactersTestHelper.emptyCharactersState,
                     listOf(),
                     CredentialsTestHelper.emptyCredentialsInitialState,
-                    mapOf()
                 )
 
                 val spiedService = spyk(viewsService)
@@ -569,7 +566,6 @@ class EventSubscriptionTest {
             charactersState: CharactersState,
             dataCacheState: List<DataCache>,
             credentialState: CredentialsRepositoryState,
-            rolesActivitiesState: Map<Role, Set<Activity>>
         ): Triple<EventStore, ViewsService, ViewsRepository> {
             val viewsRepository = ViewsInMemoryRepository()
                 .withState(viewsState)
@@ -579,11 +575,9 @@ class EventSubscriptionTest {
                 .withState(dataCacheState)
             val credentialsRepository = CredentialsInMemoryRepository()
                 .withState(credentialState)
-            val rolesActivitiesRepository = RolesActivitiesInMemoryRepository()
-                .withState(rolesActivitiesState)
             val eventStore = EventStoreInMemory()
 
-            val credentialsService = CredentialsService(credentialsRepository, rolesActivitiesRepository)
+            val credentialsService = CredentialsService(credentialsRepository)
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
             val service =

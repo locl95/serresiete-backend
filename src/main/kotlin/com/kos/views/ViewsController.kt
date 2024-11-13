@@ -5,9 +5,7 @@ import arrow.core.raise.either
 import com.kos.activities.Activities
 import com.kos.activities.Activity
 import com.kos.common.*
-import com.kos.credentials.CredentialsService
 import com.kos.eventsourcing.events.Operation
-import com.kos.httpclients.domain.Data
 
 class ViewsController(
     private val viewsService: ViewsService,

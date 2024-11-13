@@ -3,7 +3,6 @@ package com.kos.activities.repository
 import com.kos.activities.Activity
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 class ActivitiesDatabaseRepository(private val db: Database) : ActivitiesRepository {
@@ -19,18 +18,6 @@ class ActivitiesDatabaseRepository(private val db: Database) : ActivitiesReposit
     override suspend fun getActivities(): Set<Activity> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             Activities.selectAll().map { resultRowToActivity(it) }.toSet()
-        }
-    }
-
-    override suspend fun insertActivity(activity: Activity) {
-        return newSuspendedTransaction(Dispatchers.IO, db) {
-            Activities.insert { it[Activities.activity] = activity }
-        }
-    }
-
-    override suspend fun deleteActivity(activity: Activity) {
-        return newSuspendedTransaction(Dispatchers.IO, db) {
-            Activities.deleteWhere { Activities.activity.eq(activity) }
         }
     }
 

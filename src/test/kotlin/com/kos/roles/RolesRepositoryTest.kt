@@ -1,6 +1,6 @@
 package com.kos.roles
 
-import RolesRepository
+import com.kos.roles.repository.RolesRepository
 import com.kos.roles.repository.RolesDatabaseRepository
 import com.kos.roles.repository.RolesInMemoryRepository
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
@@ -21,24 +21,6 @@ abstract class RolesRepositoryTestCommon {
         runBlocking {
             val repositoryWithState = repository.withState(listOf(Role.USER))
             assertEquals(repositoryWithState.getRoles(), listOf(Role.USER))
-        }
-    }
-
-    @Test
-    fun `given an empty repository i can insert a role`() {
-        runBlocking {
-            repository.insertRole(Role.USER)
-            val state = repository.state()
-            assertContains(state, Role.USER)
-        }
-    }
-
-    @Test
-    fun `given a repository with one role i can delete it`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(listOf(Role.USER))
-            repositoryWithState.deleteRole(Role.USER)
-            assertTrue(repositoryWithState.state().isEmpty())
         }
     }
 }

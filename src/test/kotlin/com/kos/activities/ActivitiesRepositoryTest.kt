@@ -1,7 +1,6 @@
 package com.kos.activities
 
 import com.kos.activities.ActivitiesTestHelper.basicActivities
-import com.kos.activities.ActivitiesTestHelper.basicActivity
 import com.kos.activities.repository.ActivitiesDatabaseRepository
 import com.kos.activities.repository.ActivitiesInMemoryRepository
 import com.kos.activities.repository.ActivitiesRepository
@@ -23,24 +22,6 @@ abstract class ActivitiesRepositoryTestCommon {
         runBlocking {
             val repositoryWithState = repository.withState(basicActivities)
             assertEquals(repositoryWithState.getActivities(), basicActivities)
-        }
-    }
-
-    @Test
-    fun `given an empty repository i can insert an activity`() {
-        runBlocking {
-            repository.insertActivity(basicActivity)
-            val state = repository.state()
-            assertContains(state, basicActivity)
-        }
-    }
-
-    @Test
-    fun `given a repository with one activity i can delete it`() {
-        runBlocking {
-            val repositoryWithState = repository.withState(setOf(basicActivity))
-            repositoryWithState.deleteActivity(basicActivity)
-            assertTrue(repositoryWithState.state().isEmpty())
         }
     }
 }

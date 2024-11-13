@@ -1,4 +1,14 @@
 # Changelog
+## [4.1.0] 12-11-2024
+
+### Changed
+- **Credentials System Update**: Enhanced the credentials management system with new requirements and modifications:
+    - **Create Credential**: Now requires a set of roles to be provided in the request, ensuring that each credential is created with defined permissions.
+    - **Edit Credential**: Endpoint updated to `/credentials/{user}` (previously `/credentials`). This operation now requires both `password` and `roles` to be included in the request.
+    - **Patch Credential**: Introduced a new `PATCH` endpoint for credentials, similar to the edit functionality but with flexibility—fields such as `password` and `roles` can be optionally included.
+
+### Removed
+- **Activity and Role Management**: Removed the ability to create or delete activities and roles directly, streamlining the credential's system.
 
 ## [4.0.1] 10-11-2024
 ### Changed

@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClient, WithLogger("riotClient") {
-    val baseURI: (String) -> URI = { region -> URI("https://$region.api.riotgames.com") }
+    private val baseURI: (String) -> URI = { region -> URI("https://$region.api.riotgames.com") }
     private val json = Json {
         ignoreUnknownKeys = true
     }

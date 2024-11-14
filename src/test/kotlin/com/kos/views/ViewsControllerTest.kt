@@ -19,6 +19,7 @@ import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.RaiderIoMockHelper
 import com.kos.datacache.RaiderIoMockHelper.raiderIoData
+import com.kos.datacache.RaiderIoMockHelper.raiderIoDataString
 import com.kos.datacache.RaiderIoMockHelper.raiderioCachedData
 import com.kos.datacache.RiotMockHelper.riotData
 import com.kos.datacache.TestHelper.lolDataCache
@@ -27,6 +28,9 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.eventsourcing.events.EventType
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
 import com.kos.httpclients.blizzard.BlizzardClient
+import com.kos.httpclients.domain.Data
+import com.kos.httpclients.domain.RaiderIoData
+import com.kos.httpclients.domain.RiotData
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
@@ -37,8 +41,13 @@ import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.time.OffsetDateTime
 import kotlin.test.*
 
 //TODO: Behaviour of get cached data
@@ -66,14 +75,15 @@ class ViewsControllerTest {
         val dataCacheRepositoryWithState = dataCacheRepository.withState(dataCacheState)
         val credentialsRepositoryWithState = credentialsRepository.withState(credentialsState)
 
-        val dataCacheService = DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, retryConfig)
-        val charactersService = CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient, blizzardClient)
+        val dataCacheService =
+            DataCacheService(dataCacheRepositoryWithState, raiderIoClient, riotClient, blizzardClient, retryConfig)
+        val charactersService =
+            CharactersService(charactersRepositoryWithState, raiderIoClient, riotClient, blizzardClient)
         val credentialsService = CredentialsService(credentialsRepositoryWithState)
         val viewsService = ViewsService(
             viewsRepositoryWithState,
             charactersService,
             dataCacheService,
-            raiderIoClient,
             credentialsService,
             eventStore
         )
@@ -166,7 +176,10 @@ class ViewsControllerTest {
         runBlocking {
 
             val controller = createController(
-                CredentialsRepositoryState(listOf(basicCredentials.copy(userName = "owner")) , mapOf(owner to listOf(Role.USER))),
+                CredentialsRepositoryState(
+                    listOf(basicCredentials.copy(userName = "owner")),
+                    mapOf(owner to listOf(Role.USER))
+                ),
                 listOf(),
                 emptyCharactersState,
                 listOf()
@@ -189,7 +202,10 @@ class ViewsControllerTest {
     fun `i can't create too much views`() {
         runBlocking {
             val controller = createController(
-                CredentialsRepositoryState(listOf(basicCredentials.copy(userName = "owner")) , mapOf(owner to listOf(Role.USER))),
+                CredentialsRepositoryState(
+                    listOf(basicCredentials.copy(userName = "owner")),
+                    mapOf(owner to listOf(Role.USER))
+                ),
                 listOf(basicSimpleWowView, basicSimpleWowView),
                 emptyCharactersState,
                 listOf()
@@ -208,12 +224,11 @@ class ViewsControllerTest {
     @Test
     fun `i can get wow view data`() {
         runBlocking {
-
             val controller = createController(
                 emptyCredentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
-                CharactersState(listOf(basicWowCharacter), listOf()),
-                listOf()
+                CharactersState(listOf(basicWowCharacter), listOf(), listOf()),
+                listOf(DataCache(basicWowCharacter.id, raiderIoDataString, OffsetDateTime.now()))
             )
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
@@ -233,7 +248,7 @@ class ViewsControllerTest {
             val controller = createController(
                 emptyCredentialsState,
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
-                CharactersState(listOf(), listOf(basicLolCharacter.copy(id = 2))),
+                CharactersState(listOf(), listOf(), listOf(basicLolCharacter.copy(id = 2))),
                 listOf(lolDataCache)
             )
 
@@ -252,7 +267,7 @@ class ViewsControllerTest {
             val controller = createController(
                 emptyCredentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
-                CharactersState(listOf(basicWowCharacter), listOf()),
+                CharactersState(listOf(basicWowCharacter), listOf(), listOf()),
                 listOf(wowDataCache)
             )
 
@@ -275,7 +290,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleLolView.copy(characterIds = listOf(2))),
-                CharactersState(listOf(), listOf(basicLolCharacter)),
+                CharactersState(listOf(), listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache)
             )
 
@@ -298,7 +313,7 @@ class ViewsControllerTest {
             val controller = createController(
                 credentialsState,
                 listOf(basicSimpleWowView),
-                CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter)),
+                CharactersState(listOf(basicWowCharacter), listOf(), listOf(basicLolCharacter)),
                 listOf(lolDataCache)
             )
 

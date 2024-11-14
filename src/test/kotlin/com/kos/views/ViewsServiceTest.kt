@@ -465,6 +465,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                     CharactersState(
                         listOf(basicWowCharacter, basicWowCharacter2),
+                        listOf(),
                         listOf()
                     ),
                     listOf(),
@@ -496,6 +497,7 @@ class ViewsServiceTest {
                 val (eventStore, viewsService) = createService(
                     listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                     CharactersState(
+                        listOf(),
                         listOf(),
                         listOf(basicLolCharacter, basicLolCharacter2)
                     ),
@@ -764,7 +766,7 @@ class ViewsServiceTest {
 
                 val (_, viewsService) = createService(
                     listOf(simpleView),
-                    CharactersState(listOf(), listOf(basicLolCharacter)),
+                    CharactersState(listOf(), listOf(), listOf(basicLolCharacter)),
                     listOf(
                         lolDataCache.copy(characterId = 1),
                         moreRecentDataCache
@@ -797,13 +799,12 @@ class ViewsServiceTest {
 
         val credentialsService = CredentialsService(credentialsRepository)
         val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
-        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, blizzardClient, retryConfig)
         val service =
             ViewsService(
                 viewsRepository,
                 charactersService,
                 dataCacheService,
-                raiderIoClient,
                 credentialsService,
                 eventStore
             )

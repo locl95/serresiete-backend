@@ -3,33 +3,20 @@ package com.kos.views
 import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
-import arrow.core.sequence
-import arrow.core.traverse
 import com.kos.characters.CharactersService
-import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.eventsourcing.events.*
-import com.kos.eventsourcing.events.ViewPatchedEvent
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
-import com.kos.httpclients.domain.RaiderIoData
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.views.Game.*
 import com.kos.views.repository.ViewsRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.util.UUID
+import java.util.*
 
 class ViewsService(
     private val viewsRepository: ViewsRepository,
     private val charactersService: CharactersService,
     private val dataCacheService: DataCacheService,
-    private val raiderIoClient: RaiderIoClient,
     private val credentialsService: CredentialsService,
     private val eventStore: EventStore
 ) {
@@ -200,53 +187,8 @@ class ViewsService(
         return viewsRepository.delete(id)
     }
 
-    suspend fun getData(view: View): Either<HttpError, List<Data>> {
-        return when (view.game) {
-            WOW -> getWowData(view)
-            LOL -> getLolData(view)
-            WOW_HC -> TODO()
-        }
-    }
-
-
-    private suspend fun getLolData(view: View): Either<HttpError, List<Data>> {
-        return dataCacheService.getData(view.characters.map { it.id }, oldFirst = false)
-    }
-
-    private suspend fun getWowData(view: View): Either<HttpError, List<RaiderIoData>> = coroutineScope {
-        val eitherJsonErrorOrData = when (val cutoffOrError = raiderIoClient.cutoff()) {
-            is Either.Left -> Either.Left(cutoffOrError.value)
-            is Either.Right -> {
-                val eitherErrorOrResponse = view.characters.map { char ->
-                    async {
-                        raiderIoClient.get(char as WowCharacter).map {//TODO: Fix
-                            Pair(char.id, it)
-                        }
-                    }
-                }.awaitAll().sequence()
-                when (eitherErrorOrResponse) {
-                    is Either.Left -> eitherErrorOrResponse
-                    is Either.Right -> {
-                        eitherErrorOrResponse.value.traverse {
-                            val quantile =
-                                BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoffOrError.value.totalPopulation * 100).setScale(
-                                    2,
-                                    RoundingMode.HALF_EVEN
-                                )
-                            Either.Right(
-                                it.second.profile.toRaiderIoData(
-                                    it.first,
-                                    quantile.toDouble(),
-                                    it.second.specs
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        eitherJsonErrorOrData
-    }
+    suspend fun getData(view: View): Either<HttpError, List<Data>> =
+        dataCacheService.getData(view.characters.map { it.id }, oldFirst = false)
 
     suspend fun getCachedData(simpleView: SimpleView) =
         dataCacheService.getData(simpleView.characterIds, oldFirst = true)

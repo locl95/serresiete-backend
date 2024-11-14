@@ -8,6 +8,7 @@ import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.common.Retry.retryEitherWithFixedDelay
 import com.kos.datacache.repository.DataCacheRepository
+import com.kos.httpclients.blizzard.BlizzardClient
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
@@ -32,6 +33,7 @@ data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
     private val raiderIoClient: RaiderIoClient,
     private val riotClient: RiotClient,
+    private val blizzardClient: BlizzardClient,
     private val retryConfig: RetryConfig
 ) : WithLogger("DataCacheService") {
 
@@ -41,6 +43,7 @@ data class DataCacheService(
             polymorphic(Data::class) {
                 subclass(RaiderIoData::class, RaiderIoData.serializer())
                 subclass(RiotData::class, RiotData.serializer())
+                subclass(HardcoreData::class, HardcoreData.serializer())
             }
         }
         ignoreUnknownKeys = true
@@ -73,7 +76,7 @@ data class DataCacheService(
         return when (game) {
             Game.WOW -> cacheWowCharacters(characters as List<WowCharacter>)
             Game.LOL -> cacheLolCharacters(characters as List<LolCharacter>)
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> cacheWowHardcoreCharacters(characters as List<WowCharacter>)
         }
     }
 
@@ -121,7 +124,11 @@ data class DataCacheService(
         dataCollector.join()
 
         logger.info("Finished Caching Lol characters")
-        logger.debug("cached ${lolCharacters.size} characters in ${Duration.between(start, OffsetDateTime.now()).toSeconds() / 60.0} minutes")
+        logger.debug(
+            "cached ${lolCharacters.size} characters in ${
+                Duration.between(start, OffsetDateTime.now()).toSeconds() / 60.0
+            } minutes"
+        )
         logger.debug("dynamic match cache hit rate: ${matchCache.hitRate}%")
         errorsList
     }
@@ -222,6 +229,36 @@ data class DataCacheService(
                 errorsAndData.first
             }
             cutoffErrorOrMaybeErrors.mapLeft { listOf(it) }.fold({ it }, { it })
+        }
+
+    private suspend fun cacheWowHardcoreCharacters(wowCharacters: List<WowCharacter>): List<HttpError> =
+        coroutineScope {
+            val errorsAndData = wowCharacters.map { wowCharacter ->
+                async {
+                    retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
+                        blizzardClient.getCharacterProfile(wowCharacter.region, wowCharacter.realm, wowCharacter.name)
+                    }.map { wowCharacter.id to it }
+                }
+            }.awaitAll().split()
+
+            val data = errorsAndData.second.map {
+                DataCache(
+                    it.first,
+                    json.encodeToString<Data>(
+                        HardcoreData(
+                            it.second.id,
+                            it.second.name,
+                            it.second.level,
+                            it.second.isDead
+                        )
+                    ),
+                    OffsetDateTime.now()
+                )
+            }
+
+            dataCacheRepository.insert(data)
+
+            errorsAndData.first
         }
 
     suspend fun clear(): Int = dataCacheRepository.deleteExpiredRecord(ttl)

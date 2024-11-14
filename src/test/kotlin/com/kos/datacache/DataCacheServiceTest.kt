@@ -19,6 +19,7 @@ import com.kos.eventsourcing.events.Event
 import com.kos.eventsourcing.events.EventWithVersion
 import com.kos.eventsourcing.events.ViewCreatedEvent
 import com.kos.eventsourcing.subscriptions.EventSubscription
+import com.kos.httpclients.blizzard.BlizzardClient
 import com.kos.httpclients.domain.*
 import com.kos.httpclients.domain.Metadata
 import com.kos.httpclients.raiderio.RaiderIoClient
@@ -40,6 +41,7 @@ import kotlin.test.fail
 class DataCacheServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val blizzardClient = mock(BlizzardClient::class.java)
     private val retryConfig = RetryConfig(1, 1)
 
     @Test
@@ -52,7 +54,7 @@ class DataCacheServiceTest {
                     wowDataCache.copy(characterId = 3, data = wowDataCache.data.replace(""""id": 1""", """"id": 3"""))
                 )
             )
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
             val data = service.getData(listOf(1, 3), oldFirst = true)
             assertTrue(data.isRight { it.size == 2 })
             assertEquals(listOf<Long>(1, 3), data.map {
@@ -70,7 +72,7 @@ class DataCacheServiceTest {
             val repo = DataCacheInMemoryRepository().withState(
                 listOf(lolDataCache)
             )
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
             val data = service.getData(listOf(2), oldFirst = true)
 
             assertTrue(data.isRight { it.size == 1 })
@@ -92,7 +94,7 @@ class DataCacheServiceTest {
                     wowDataCache.copy(data = wowDataCache.data.replace(""""score": 0.0""", """"score": 1.0""")),
                 )
             )
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
             val data = service.getData(listOf(1), oldFirst = true)
             assertTrue(data.isRight { it.size == 1 })
             assertEquals(listOf(0.0), data.map {
@@ -113,7 +115,7 @@ class DataCacheServiceTest {
             )
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())
             val repo = DataCacheInMemoryRepository().withState(listOf(wowDataCache))
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
             assertEquals(listOf(wowDataCache), repo.state())
             service.cache(listOf(basicWowCharacter, basicWowCharacter.copy(id = 2)), Game.WOW)
             assertEquals(3, repo.state().size)
@@ -132,7 +134,7 @@ class DataCacheServiceTest {
             )
             `when`(riotClient.getMatchById(RiotMockHelper.matchId)).thenReturn(Either.Right(RiotMockHelper.match))
             val repo = DataCacheInMemoryRepository()
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
             service.cache(listOf(basicLolCharacter), Game.LOL)
             assertEquals(1, repo.state().size)
         }
@@ -154,7 +156,7 @@ class DataCacheServiceTest {
             `when`(riotClient.getMatchById(anyString())).thenReturn(Either.Right(RiotMockHelper.match))
 
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
 
             val errors = service.cache(listOf(basicLolCharacter), Game.LOL)
 
@@ -178,7 +180,7 @@ class DataCacheServiceTest {
                 .thenReturn(jsonParseError)
 
             val repo = DataCacheInMemoryRepository()
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
 
             val errors = service.cache(listOf(basicLolCharacter), Game.LOL)
 
@@ -236,7 +238,7 @@ class DataCacheServiceTest {
             )
 
             val repo = DataCacheInMemoryRepository().withState(listOf(dataCache))
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
 
             val errors = service.cache(listOf(basicLolCharacter), Game.LOL)
 
@@ -251,8 +253,14 @@ class DataCacheServiceTest {
             requestedMatchIds.forEach {
                 assertTrue(insertedValue.data.contains(""""id":"$it""""), "${insertedValue.data} should contain id:$it")
             }
-            assertFalse(insertedValue.data.contains(""""id":"match1""""), "${insertedValue.data} should contain id:match1")
-            assertFalse(insertedValue.data.contains(""""id":"match2""""), "${insertedValue.data} should contain id:match2")
+            assertFalse(
+                insertedValue.data.contains(""""id":"match1""""),
+                "${insertedValue.data} should contain id:match1"
+            )
+            assertFalse(
+                insertedValue.data.contains(""""id":"match2""""),
+                "${insertedValue.data} should contain id:match2"
+            )
 
             assertEquals(listOf(), errors)
         }
@@ -317,7 +325,7 @@ class DataCacheServiceTest {
             )
 
             val repo = DataCacheInMemoryRepository()
-            val service = DataCacheService(repo, raiderIoClient, riotClient, retryConfig)
+            val service = DataCacheService(repo, raiderIoClient, riotClient, blizzardClient, retryConfig)
 
             val errors = service.cache(listOf(basicLolCharacter, basicLolCharacter.copy(id = 2)), Game.LOL)
 

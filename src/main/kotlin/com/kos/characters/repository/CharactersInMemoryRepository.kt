@@ -12,6 +12,7 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
     CharactersRepository,
     InMemoryRepository {
     private val wowCharacters: MutableList<WowCharacter> = mutableListOf()
+    private val wowHardcoreCharacters: MutableList<WowCharacter> = mutableListOf()
     private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
 
     private fun nextId(): Long {
@@ -25,6 +26,7 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
         game: Game
     ): Either<InsertError, List<Character>> {
         val wowInitialCharacters = this.wowCharacters.toList()
+        val wowHardcoreInitialCharacters = this.wowHardcoreCharacters.toList()
         val lolInitialCharacters = this.lolCharacters.toList()
         when (game) {
             Game.WOW -> {
@@ -75,7 +77,29 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                 return Either.Right(inserted)
             }
 
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> {
+                val inserted = characters.fold(listOf<Character>()) { acc, it ->
+                    when (it) {
+                        is WowCharacterRequest -> {
+                            if (this.wowHardcoreCharacters.any { character -> it.same(character) }) {
+                                this.wowHardcoreCharacters.clear()
+                                this.wowHardcoreCharacters.addAll(wowHardcoreInitialCharacters)
+                                return Either.Left(InsertError("Error inserting character $it"))
+                            }
+                            val character = it.toCharacter(nextId())
+                            this.wowHardcoreCharacters.add(character)
+                            acc + character
+                        }
+
+                        is LolCharacterEnrichedRequest -> {
+                            this.wowHardcoreCharacters.clear()
+                            this.wowHardcoreCharacters.addAll(wowInitialCharacters)
+                            return Either.Left(InsertError("Error inserting character $it"))
+                        }
+                    }
+                }
+                return Either.Right(inserted)
+            }
         }
     }
 
@@ -122,7 +146,22 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                 else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
 
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> when (character) {
+                is WowCharacterRequest -> {
+                    val index = wowHardcoreCharacters.indexOfFirst { it.id == id }
+                    wowHardcoreCharacters.removeAt(index)
+                    val c = WowCharacter(
+                        id,
+                        character.name,
+                        character.region,
+                        character.realm
+                    )
+                    wowHardcoreCharacters.add(index, c)
+                    Either.Right(1)
+                }
+
+                else -> Either.Left(InsertError("error updating $id $character for $game"))
+            }
         }
     }
 
@@ -140,28 +179,34 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                 it.name == request.name &&
                         it.tag == request.tag
             }
-            Game.WOW_HC -> TODO()
+
+            Game.WOW_HC -> wowHardcoreCharacters.find {
+                request as WowCharacterRequest
+                it.name == request.name &&
+                        it.realm == request.realm &&
+                        it.region == request.region
+            }
         }
 
     override suspend fun get(id: Long, game: Game): Character? =
         when (game) {
             Game.WOW -> wowCharacters.find { it.id == id }
             Game.LOL -> lolCharacters.find { it.id == id }
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> wowHardcoreCharacters.find { it.id == id }
         }
 
     override suspend fun get(game: Game): List<Character> =
         when (game) {
             Game.WOW -> wowCharacters
             Game.LOL -> lolCharacters
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> wowHardcoreCharacters
         }
 
     override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
         return when (game) {
             Game.WOW -> wowCharacters.find { character.same(it) }
             Game.LOL -> lolCharacters.find { character.same(it) }
-            Game.WOW_HC -> TODO()
+            Game.WOW_HC -> wowHardcoreCharacters.find { character.same(it) }
         }
     }
 
@@ -171,28 +216,30 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
 
         return when (game) {
             Game.WOW -> wowCharacters
+            Game.WOW_HC -> wowHardcoreCharacters
             Game.LOL -> {
                 lolCharacters.filter { character ->
                     val newestCachedRecord = dataCacheRepository.get(character.id).maxByOrNull { it.inserted }
                     newestCachedRecord == null || newestCachedRecord.inserted.isBefore(now.minusMinutes(olderThanMinutes))
                 }
             }
-            Game.WOW_HC -> TODO()
         }
     }
 
     override suspend fun state(): CharactersState {
-        return CharactersState(wowCharacters, lolCharacters)
+        return CharactersState(wowCharacters, wowHardcoreCharacters, lolCharacters)
     }
 
     override suspend fun withState(initialState: CharactersState): CharactersInMemoryRepository {
         wowCharacters.addAll(initialState.wowCharacters)
+        wowHardcoreCharacters.addAll(initialState.wowHardcoreCharacters)
         lolCharacters.addAll(initialState.lolCharacters)
         return this
     }
 
     override fun clear() {
         wowCharacters.clear()
+        wowHardcoreCharacters.clear()
         lolCharacters.clear()
         dataCacheRepository.clear()
     }

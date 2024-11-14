@@ -292,11 +292,11 @@ class EventSubscriptionTest {
 
         private suspend fun createService(): Triple<CharactersService, DataCacheService, DataCacheRepository> {
             val charactersRepository = CharactersInMemoryRepository().withState(
-                CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter))
+                CharactersState(listOf(basicWowCharacter), listOf(), listOf(basicLolCharacter))
             )
             val dataCacheRepository = DataCacheInMemoryRepository()
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClientMock, blizzardClient)
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClientMock, retryConfig)
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClientMock, blizzardClient, retryConfig)
             return Triple(charactersService, spyk(dataCacheService), dataCacheRepository)
         }
 
@@ -581,13 +581,12 @@ class EventSubscriptionTest {
 
             val credentialsService = CredentialsService(credentialsRepository)
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, blizzardClient, retryConfig)
             val service =
                 ViewsService(
                     viewsRepository,
                     charactersService,
                     dataCacheService,
-                    raiderIoClient,
                     credentialsService,
                     eventStore
                 )

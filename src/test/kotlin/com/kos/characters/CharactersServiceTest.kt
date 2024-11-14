@@ -72,7 +72,7 @@ class CharactersServiceTest {
     @Test
     fun `inserting a lof of characters where half exists half doesn't`() {
         runBlocking {
-            val state = CharactersState(listOf(), gigaLolCharacterList)
+            val state = CharactersState(listOf(), listOf(), gigaLolCharacterList)
 
             `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
                 val name = invocation.getArgument<String>(0)
@@ -107,7 +107,7 @@ class CharactersServiceTest {
     fun `it should skip inserting same league character even if he changed his name`() {
         runBlocking {
 
-            val state = CharactersState(listOf(), listOf(basicLolCharacter))
+            val state = CharactersState(listOf(),listOf(), listOf(basicLolCharacter))
             val request = LolCharacterRequest("R7 Disney Girl", "EUW")
 
             `when`(riotClient.getPUUIDByRiotId("R7 Disney Girl", "EUW")).thenReturn(Either.Right(basicGetPuuidResponse))
@@ -126,7 +126,7 @@ class CharactersServiceTest {
     fun `i can get a wow character`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(basicWowCharacter), listOf()))
+                CharactersInMemoryRepository().withState(CharactersState(listOf(basicWowCharacter), listOf(), listOf()))
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(basicWowCharacter, charactersService.get(basicWowCharacter.id, Game.WOW))
@@ -137,7 +137,7 @@ class CharactersServiceTest {
     fun `i can get a lol character`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(), listOf(basicLolCharacter)))
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(basicLolCharacter, charactersService.get(basicLolCharacter.id, Game.LOL))
@@ -151,6 +151,7 @@ class CharactersServiceTest {
                 CharactersInMemoryRepository().withState(
                     CharactersState(
                         listOf(basicWowCharacter),
+                        listOf(),
                         listOf(basicLolCharacter)
                     )
                 )
@@ -167,6 +168,7 @@ class CharactersServiceTest {
                 CharactersInMemoryRepository().withState(
                     CharactersState(
                         listOf(basicWowCharacter),
+                        listOf(),
                         listOf(basicLolCharacter)
                     )
                 )
@@ -180,7 +182,7 @@ class CharactersServiceTest {
     fun `i can update lol characters`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(), listOf(basicLolCharacter)))
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             `when`(riotClient.getSummonerByPuuid(basicLolCharacter.puuid)).thenReturn(

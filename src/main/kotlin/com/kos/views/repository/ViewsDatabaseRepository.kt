@@ -32,7 +32,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
         val published = bool("published")
-        val game = varchar("game", 3)
+        val game = text("game")
 
         override val primaryKey = PrimaryKey(id)
     }

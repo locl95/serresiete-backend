@@ -105,13 +105,12 @@ fun Application.module() {
     val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheRetryConfig = RetryConfig(3, 1200)
     val dataCacheService =
-        DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
+        DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, blizzardClient, dataCacheRetryConfig)
     val viewsService =
         ViewsService(
             viewsRepository,
             charactersService,
             dataCacheService,
-            raiderIoHTTPClient,
             credentialsService,
             eventStore
         )
@@ -143,8 +142,24 @@ fun Application.module() {
         subscriptionsRetryConfig
     ) { EventSubscription.syncLolCharactersProcessor(it, charactersService, dataCacheService) }
 
+    val syncWowEventSubscription = EventSubscription(
+        "sync-wow",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncWowCharactersProcessor(it, charactersService, dataCacheService) }
+
+    val syncWowHardcoreEventSubscription = EventSubscription(
+        "sync-wow-hc",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncWowHardcoreCharactersProcessor(it, charactersService, dataCacheService) }
+
     launchSubscription(viewsEventSubscription)
     launchSubscription(syncLolEventSubscription)
+    launchSubscription(syncWowEventSubscription)
+    launchSubscription(syncWowHardcoreEventSubscription)
 
     configureAuthentication(credentialsService, jwtConfig)
     configureCors()

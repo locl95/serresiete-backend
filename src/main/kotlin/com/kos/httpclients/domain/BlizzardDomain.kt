@@ -24,3 +24,11 @@ data class GetWowCharacterResponse(
     @SerialName("is_ghost")
     val isDead: Boolean,
 )
+
+@Serializable
+data class HardcoreData(
+    val id: Long,
+    val name: String,
+    val level: Int,
+    val isDead: Boolean,
+): Data

@@ -20,9 +20,12 @@ import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.eventsourcing.events.repository.EventStoreDatabase
 import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
-import com.kos.plugins.*
+import com.kos.httpclients.blizzard.BlizzardHttpAuthClient
+import com.kos.httpclients.blizzard.BlizzardHttpClient
+import com.kos.httpclients.domain.BlizzardCredentials
 import com.kos.httpclients.raiderio.RaiderIoHTTPClient
 import com.kos.httpclients.riot.RiotHTTPClient
+import com.kos.plugins.*
 import com.kos.roles.RolesController
 import com.kos.roles.RolesService
 import com.kos.roles.repository.RolesActivitiesDatabaseRepository
@@ -36,12 +39,15 @@ import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
@@ -53,10 +59,14 @@ fun main() {
 fun Application.module() {
     val riotApiKey = System.getenv("RIOT_API_KEY")
 
-
     val jwtConfig = JWTConfig(
         System.getenv("JWT_ISSUER"),
         System.getenv("JWT_SECRET")
+    )
+
+    val blizzardCredentials = BlizzardCredentials(
+        System.getenv("BLIZZARD_CLIENT_ID"),
+        System.getenv("BLIZZARD_CLIENT_SECRET")
     )
 
     val coroutineScope = CoroutineScope(Dispatchers.Default)
@@ -66,6 +76,8 @@ fun Application.module() {
     val client = HttpClient(CIO)
     val raiderIoHTTPClient = RaiderIoHTTPClient(client)
     val riotHTTPClient = RiotHTTPClient(client, riotApiKey)
+    val blizzardAuthClient = BlizzardHttpAuthClient(client, blizzardCredentials)
+    val blizzardClient = BlizzardHttpClient(client, blizzardAuthClient)
 
     val eventStore = EventStoreDatabase(db)
 
@@ -92,7 +104,8 @@ fun Application.module() {
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheRetryConfig = RetryConfig(3, 1200)
-    val dataCacheService = DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
+    val dataCacheService =
+        DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
     val viewsService =
         ViewsService(
             viewsRepository,

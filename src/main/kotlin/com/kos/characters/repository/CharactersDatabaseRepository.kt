@@ -108,7 +108,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                     this[WowCharacters.realm] = it.realm
                                 }
 
-                                is LolCharacter -> throw IllegalArgumentException()
+                                else -> throw IllegalArgumentException()
                             }
                         }.map { resultRowToWowCharacter(it) }
 
@@ -126,6 +126,8 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 }
                             }
                         }.map { resultRowToLolCharacter(it) }
+
+                        Game.WOW_HC -> TODO()
                     }
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
@@ -174,6 +176,8 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
 
                     else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
+
+                Game.WOW_HC -> TODO()
             }
         }
     }
@@ -188,6 +192,8 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.LOL -> LolCharacters.select { LolCharacters.id.eq(id) }.singleOrNull()?.let {
                     resultRowToLolCharacter(it)
                 }
+
+                Game.WOW_HC -> TODO()
             }
         }
     }
@@ -211,6 +217,8 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             .and(LolCharacters.name.eq(request.name))
                     }.map { resultRowToLolCharacter(it) }
                 }
+
+                Game.WOW_HC -> TODO()
             }
         }.singleOrNull()
     }
@@ -234,6 +242,8 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             .and(LolCharacters.summonerId.eq(character.summonerId))
                     }.map { resultRowToLolCharacter(it) }
                 }
+
+                Game.WOW_HC -> TODO()
             }
         }.singleOrNull()
     }
@@ -243,6 +253,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
             when (game) {
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
+                Game.WOW_HC -> TODO()
             }
         }
 
@@ -253,7 +264,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
                 Game.LOL -> {
                     val subQuery = DataCacheDatabaseRepository.DataCaches
-                        .slice(DataCacheDatabaseRepository.DataCaches.characterId, DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted"))
+                        .slice(
+                            DataCacheDatabaseRepository.DataCaches.characterId,
+                            DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted")
+                        )
                         .selectAll()
                         .groupBy(DataCacheDatabaseRepository.DataCaches.characterId)
 
@@ -261,7 +275,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
 
                     val thirtyMinutesAgo = OffsetDateTime.now().minusMinutes(olderThanMinutes).toString()
                     LolCharacters
-                        .leftJoin(subQueryAliased, { id }, { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
+                        .leftJoin(
+                            subQueryAliased,
+                            { id },
+                            { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
                         .select {
                             // Filtering where max_inserted is NULL or more than 30 minutes ago
                             (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted].isNull()) or
@@ -269,6 +286,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                         }
                         .map { resultRowToLolCharacter(it) }
                 }
+                Game.WOW_HC -> TODO()
             }
         }
     }

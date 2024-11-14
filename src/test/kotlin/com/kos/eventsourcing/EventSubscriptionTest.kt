@@ -27,6 +27,7 @@ import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.SubscriptionState
 import com.kos.eventsourcing.subscriptions.SubscriptionStatus
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsInMemoryRepository
+import com.kos.httpclients.blizzard.BlizzardClient
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.roles.Role
@@ -53,6 +54,7 @@ class EventSubscriptionTest {
     private val retryConfig = RetryConfig(1, 1)
     private val raiderIoClient = Mockito.mock(RaiderIoClient::class.java)
     private val riotClient = Mockito.mock(RiotClient::class.java)
+    private val blizzardClient = Mockito.mock(BlizzardClient::class.java)
 
     @Nested
     inner class BehaviorOfProcessPendingEvents {
@@ -293,7 +295,7 @@ class EventSubscriptionTest {
                 CharactersState(listOf(basicWowCharacter), listOf(basicLolCharacter))
             )
             val dataCacheRepository = DataCacheInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClientMock)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClientMock, blizzardClient)
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClientMock, retryConfig)
             return Triple(charactersService, spyk(dataCacheService), dataCacheRepository)
         }
@@ -578,7 +580,7 @@ class EventSubscriptionTest {
             val eventStore = EventStoreInMemory()
 
             val credentialsService = CredentialsService(credentialsRepository)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
             val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
             val service =
                 ViewsService(

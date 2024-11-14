@@ -32,6 +32,7 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
+import com.kos.httpclients.blizzard.BlizzardClient
 import com.kos.httpclients.domain.GetPUUIDResponse
 import com.kos.httpclients.domain.GetSummonerResponse
 import com.kos.httpclients.raiderio.RaiderIoClient
@@ -63,6 +64,7 @@ import kotlin.test.fail
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val blizzardClient = mock(BlizzardClient::class.java)
     private val retryConfig = RetryConfig(1, 1)
 
     private val aggregateRoot = "/credentials/owner"
@@ -794,7 +796,7 @@ class ViewsServiceTest {
         val eventStore = EventStoreInMemory()
 
         val credentialsService = CredentialsService(credentialsRepository)
-        val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+        val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
         val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
         val service =
             ViewsService(

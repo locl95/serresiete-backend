@@ -164,6 +164,7 @@ class EventSubscription(
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
+                        Game.WOW_HC -> TODO()
                     }
                 }
 
@@ -186,6 +187,7 @@ class EventSubscription(
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
+                        Game.WOW_HC -> TODO()
                     }
                 }
 
@@ -205,6 +207,7 @@ class EventSubscription(
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
+                        Game.WOW_HC -> TODO()
                     }
                 }
 

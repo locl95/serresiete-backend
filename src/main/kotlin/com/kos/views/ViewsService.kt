@@ -16,8 +16,7 @@ import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.httpclients.domain.Data
 import com.kos.httpclients.domain.RaiderIoData
 import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.views.Game.LOL
-import com.kos.views.Game.WOW
+import com.kos.views.Game.*
 import com.kos.views.repository.ViewsRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -205,6 +204,7 @@ class ViewsService(
         return when (view.game) {
             WOW -> getWowData(view)
             LOL -> getLolData(view)
+            WOW_HC -> TODO()
         }
     }
 

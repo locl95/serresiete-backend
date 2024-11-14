@@ -8,7 +8,8 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.views.Game
 import java.time.OffsetDateTime
 
-class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInMemoryRepository = DataCacheInMemoryRepository()) : CharactersRepository,
+class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInMemoryRepository = DataCacheInMemoryRepository()) :
+    CharactersRepository,
     InMemoryRepository {
     private val wowCharacters: MutableList<WowCharacter> = mutableListOf()
     private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
@@ -73,6 +74,8 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                 }
                 return Either.Right(inserted)
             }
+
+            Game.WOW_HC -> TODO()
         }
     }
 
@@ -118,6 +121,8 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
 
                 else -> Either.Left(InsertError("error updating $id $character for $game"))
             }
+
+            Game.WOW_HC -> TODO()
         }
     }
 
@@ -135,24 +140,28 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                 it.name == request.name &&
                         it.tag == request.tag
             }
+            Game.WOW_HC -> TODO()
         }
 
     override suspend fun get(id: Long, game: Game): Character? =
         when (game) {
             Game.WOW -> wowCharacters.find { it.id == id }
             Game.LOL -> lolCharacters.find { it.id == id }
+            Game.WOW_HC -> TODO()
         }
 
     override suspend fun get(game: Game): List<Character> =
         when (game) {
             Game.WOW -> wowCharacters
             Game.LOL -> lolCharacters
+            Game.WOW_HC -> TODO()
         }
 
     override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
         return when (game) {
             Game.WOW -> wowCharacters.find { character.same(it) }
             Game.LOL -> lolCharacters.find { character.same(it) }
+            Game.WOW_HC -> TODO()
         }
     }
 
@@ -168,6 +177,7 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
                     newestCachedRecord == null || newestCachedRecord.inserted.isBefore(now.minusMinutes(olderThanMinutes))
                 }
             }
+            Game.WOW_HC -> TODO()
         }
     }
 

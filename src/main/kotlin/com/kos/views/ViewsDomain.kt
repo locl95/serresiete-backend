@@ -12,12 +12,16 @@ enum class Game {
     },
     LOL {
         override fun toString(): String = "lol"
+    },
+    WOW_HC {
+        override fun toString(): String = "wow_hc"
     };
 
     companion object {
         fun fromString(value: String): Game = when (value) {
             "wow" -> WOW
             "lol" -> LOL
+            "wow_hc" -> WOW_HC
             else -> throw IllegalArgumentException("Unknown game: $value")
         }
     }

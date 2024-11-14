@@ -8,6 +8,8 @@ import com.kos.common.WithLogger
 import com.kos.common.collect
 import com.kos.common.split
 import com.kos.common.*
+import com.kos.httpclients.blizzard.BlizzardClient
+import com.kos.httpclients.blizzard.BlizzardHttpClient
 import com.kos.httpclients.raiderio.RaiderIoClient
 import com.kos.httpclients.riot.RiotClient
 import com.kos.views.Game
@@ -21,7 +23,8 @@ import kotlinx.coroutines.launch
 data class CharactersService(
     private val charactersRepository: CharactersRepository,
     private val raiderioClient: RaiderIoClient,
-    private val riotClient: RiotClient
+    private val riotClient: RiotClient,
+    private val blizzardHttpClient: BlizzardClient
 ) : WithLogger("CharactersService") {
     suspend fun createAndReturnIds(
         requestedCharacters: List<CharacterCreateRequest>,
@@ -60,6 +63,18 @@ data class CharactersService(
                         async {
                             initialRequest as WowCharacterRequest
                             initialRequest to raiderioClient.exists(initialRequest)
+                        }
+                    }
+                        .awaitAll()
+                }.collect({ it.second }) { it.first }
+            }
+
+            Game.WOW_HC -> {
+                coroutineScope {
+                    existentAndNew.second.map { initialRequest ->
+                        async {
+                            initialRequest as WowCharacterRequest
+                            initialRequest to blizzardHttpClient.exists(initialRequest)
                         }
                     }
                         .awaitAll()
@@ -156,5 +171,6 @@ data class CharactersService(
 
     suspend fun get(id: Long, game: Game): Character? = charactersRepository.get(id, game)
     suspend fun get(game: Game): List<Character> = charactersRepository.get(game)
-    suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long) = charactersRepository.getCharactersToSync(game, olderThanMinutes)
+    suspend fun getCharactersToSync(game: Game, olderThanMinutes: Long) =
+        charactersRepository.getCharactersToSync(game, olderThanMinutes)
 }

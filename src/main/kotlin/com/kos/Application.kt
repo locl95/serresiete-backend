@@ -99,7 +99,7 @@ fun Application.module() {
     val authController = AuthController(authService)
 
     val charactersRepository = CharactersDatabaseRepository(db)
-    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
+    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient, blizzardClient)
 
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)

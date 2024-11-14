@@ -73,6 +73,7 @@ data class DataCacheService(
         return when (game) {
             Game.WOW -> cacheWowCharacters(characters as List<WowCharacter>)
             Game.LOL -> cacheLolCharacters(characters as List<LolCharacter>)
+            Game.WOW_HC -> TODO()
         }
     }
 

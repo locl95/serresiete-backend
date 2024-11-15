@@ -5,10 +5,11 @@ import arrow.core.Either
 import com.kos.assertTrue
 import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper
-import com.kos.characters.CharactersTestHelper.basicLolCharacter
-import com.kos.characters.CharactersTestHelper.basicWowCharacter
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.common.NotFound
 import com.kos.common.RetryConfig
 import com.kos.credentials.CredentialsService
@@ -18,7 +19,6 @@ import com.kos.credentials.repository.CredentialsRepositoryState
 import com.kos.datacache.DataCache
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.repository.DataCacheInMemoryRepository
-import com.kos.datacache.repository.DataCacheRepository
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
@@ -26,9 +26,6 @@ import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.SubscriptionState
 import com.kos.eventsourcing.subscriptions.SubscriptionStatus
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsInMemoryRepository
-import com.kos.clients.blizzard.BlizzardClient
-import com.kos.clients.raiderio.RaiderIoClient
-import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import com.kos.views.SimpleView
 import com.kos.views.ViewsService
@@ -41,7 +38,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
-import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -283,156 +279,6 @@ class EventSubscriptionTest {
     }
 
     @Nested
-    inner class BehaviorOfSyncLolProcessor {
-
-        private val riotClientMock = riotClient
-
-        private suspend fun createService(): Triple<CharactersService, DataCacheService, DataCacheRepository> {
-            val charactersRepository = CharactersInMemoryRepository().withState(
-                CharactersState(listOf(basicWowCharacter), listOf(), listOf(basicLolCharacter))
-            )
-            val dataCacheRepository = DataCacheInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClientMock, blizzardClient)
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClientMock, blizzardClient, retryConfig)
-            return Triple(charactersService, spyk(dataCacheService), dataCacheRepository)
-        }
-
-        private fun createEventWithVersion(eventType: EventData, game: Game): EventWithVersion {
-            val payload = when (eventType) {
-                is ViewCreatedEvent -> eventType.copy(game = game)
-                is ViewEditedEvent -> eventType.copy(game = game)
-                is ViewPatchedEvent -> eventType.copy(game = game)
-                else -> fail()
-            }
-            return EventWithVersion(1L, Event("/credentials/owner", ViewsTestHelper.id, payload))
-        }
-
-        private suspend fun assertCacheInvocation(
-            eventWithVersion: EventWithVersion,
-            charactersService: CharactersService,
-            dataCacheService: DataCacheService,
-            dataCacheRepository: DataCacheRepository,
-            shouldCache: Boolean,
-            expectedCacheSize: Int
-        ) {
-            val result =
-                EventSubscription.syncLolCharactersProcessor(eventWithVersion, charactersService, dataCacheService)
-            result.fold(
-                { fail("Expected success") },
-                {
-                    if (shouldCache) coVerify { dataCacheService.cache(eq(listOf(basicLolCharacter)), eq(Game.LOL)) }
-                    else coVerify(exactly = 0) { dataCacheService.cache(any(), any()) }
-                }
-            )
-            assertEquals(expectedCacheSize, dataCacheRepository.state().size)
-        }
-
-        @Test
-        fun `syncLolCharactersProcessor calls updateLolCharacters on VIEW_CREATED with LOL game`() = runBlocking {
-            `when`(riotClientMock.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
-                .thenReturn(Either.Right(listOf()))
-
-            val (charactersService, spiedService, dataCacheRepository) = createService()
-            val eventWithVersion = createEventWithVersion(
-                ViewCreatedEvent(
-                    ViewsTestHelper.id,
-                    ViewsTestHelper.name,
-                    ViewsTestHelper.owner,
-                    listOf(basicLolCharacter.id),
-                    true,
-                    Game.LOL
-                ), Game.LOL
-            )
-
-            assertCacheInvocation(
-                eventWithVersion, charactersService, spiedService, dataCacheRepository, true, 1
-            )
-        }
-
-        @Test
-        fun `syncLolCharactersProcessor does not call updateLolCharacters on VIEW_CREATED with WOW game`() =
-            runBlocking {
-                val (charactersService, spiedService, dataCacheRepository) = createService()
-                val eventWithVersion = createEventWithVersion(
-                    ViewCreatedEvent(
-                        ViewsTestHelper.id,
-                        ViewsTestHelper.name,
-                        ViewsTestHelper.owner,
-                        listOf(basicLolCharacter.id),
-                        true,
-                        Game.WOW
-                    ), Game.WOW
-                )
-
-                assertCacheInvocation(
-                    eventWithVersion, charactersService, spiedService, dataCacheRepository, false, 0
-                )
-            }
-
-        @Test
-        fun `syncLolCharactersProcessor calls updateLolCharacters on VIEW_EDITED with LOL game`() = runBlocking {
-            `when`(riotClientMock.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
-                .thenReturn(Either.Right(listOf()))
-            val (charactersService, spiedService, dataCacheRepository) = createService()
-            val eventWithVersion = createEventWithVersion(
-                ViewEditedEvent(
-                    ViewsTestHelper.id, ViewsTestHelper.name, listOf(basicLolCharacter.id), true, Game.LOL
-                ), Game.LOL
-            )
-
-            assertCacheInvocation(
-                eventWithVersion, charactersService, spiedService, dataCacheRepository, true, 1
-            )
-        }
-
-        @Test
-        fun `syncLolCharactersProcessor does not call updateLolCharacters on VIEW_EDITED with WOW game`() =
-            runBlocking {
-                val (charactersService, spiedService, dataCacheRepository) = createService()
-                val eventWithVersion = createEventWithVersion(
-                    ViewEditedEvent(
-                        ViewsTestHelper.id, ViewsTestHelper.name, listOf(basicLolCharacter.id), true, Game.WOW
-                    ), Game.WOW
-                )
-
-                assertCacheInvocation(
-                    eventWithVersion, charactersService, spiedService, dataCacheRepository, false, 0
-                )
-            }
-
-        @Test
-        fun `syncLolCharactersProcessor calls updateLolCharacters on VIEW_PATCHED with LOL game`() = runBlocking {
-            `when`(riotClientMock.getLeagueEntriesBySummonerId(basicLolCharacter.summonerId))
-                .thenReturn(Either.Right(listOf()))
-            val (charactersService, spiedService, dataCacheRepository) = createService()
-            val eventWithVersion = createEventWithVersion(
-                ViewPatchedEvent(
-                    ViewsTestHelper.id, ViewsTestHelper.name, listOf(basicLolCharacter.id), true, Game.LOL
-                ), Game.LOL
-            )
-
-            assertCacheInvocation(
-                eventWithVersion, charactersService, spiedService, dataCacheRepository, true, 1
-            )
-        }
-
-        @Test
-        fun `syncLolCharactersProcessor does not call updateLolCharacters on VIEW_PATCHED with WOW game`() =
-            runBlocking {
-                val (charactersService, spiedService, dataCacheRepository) = createService()
-                val eventWithVersion = createEventWithVersion(
-                    ViewPatchedEvent(
-                        ViewsTestHelper.id, ViewsTestHelper.name, listOf(basicLolCharacter.id), true, Game.WOW
-                    ), Game.WOW
-                )
-
-                assertCacheInvocation(
-                    eventWithVersion, charactersService, spiedService, dataCacheRepository, false, 0
-                )
-            }
-    }
-
-    @Nested
     inner class BehaviorOfViewsProcessor {
         private val aggregateRoot = "/credentials/owner"
 
@@ -578,7 +424,8 @@ class EventSubscriptionTest {
 
             val credentialsService = CredentialsService(credentialsRepository)
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
-            val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, blizzardClient, retryConfig)
+            val dataCacheService =
+                DataCacheService(dataCacheRepository, raiderIoClient, riotClient, blizzardClient, retryConfig)
             val service =
                 ViewsService(
                     viewsRepository,

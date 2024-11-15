@@ -103,11 +103,12 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given a repository of characters i can retrieve a character by a character request`() {
         runBlocking {
-            val repo = repository.withState(CharactersState(listOf(basicWowCharacter), listOf(), gigaLolCharacterList))
+            val repo = repository.withState(CharactersState(listOf(basicWowCharacter), listOf(basicWowCharacter), gigaLolCharacterList))
 
             val wowCharacterRequest: CharacterCreateRequest =
                 WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
             assertEquals(basicWowCharacter, repo.get(wowCharacterRequest, Game.WOW))
+            assertEquals(basicWowCharacter, repo.get(wowCharacterRequest, Game.WOW_HC))
 
             val lolCharacter = gigaLolCharacterList[3]
             val lolCharacterRequest = LolCharacterRequest(lolCharacter.name, lolCharacter.tag)
@@ -118,11 +119,12 @@ abstract class CharactersRepositoryTestCommon {
     @Test
     fun `given a repository of characters i can retrieve a character by a character insert`() {
         runBlocking {
-            val repo = repository.withState(CharactersState(listOf(basicWowCharacter),listOf(),  gigaLolCharacterList))
+            val repo = repository.withState(CharactersState(listOf(basicWowCharacter),listOf(basicWowCharacter),  gigaLolCharacterList))
 
             val wowCharacterRequest: CharacterInsertRequest =
                 WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
             assertEquals(basicWowCharacter, repo.get(wowCharacterRequest, Game.WOW))
+            assertEquals(basicWowCharacter, repo.get(wowCharacterRequest, Game.WOW_HC))
 
             val lolCharacter = gigaLolCharacterList[3]
             val lolCharacterRequest = LolCharacterEnrichedRequest(

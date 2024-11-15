@@ -50,6 +50,27 @@ class CharactersServiceTest {
     }
 
     @Test
+    fun `inserting two characters over an empty wow hardcore repository returns the ids of both new characters`() {
+        runBlocking {
+            val request1 =
+                WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
+            val request2 = WowCharacterRequest("kakarøna", basicWowCharacter.region, basicWowCharacter.realm)
+
+            `when`(blizzardClient.exists(request1)).thenReturn(true)
+            `when`(blizzardClient.exists(request2)).thenReturn(true)
+
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
+
+            val request = listOf(request1, request2)
+            val expected: List<Long> = listOf(1, 2)
+
+            charactersService.createAndReturnIds(request, Game.WOW_HC).fold({ fail() }) { assertEquals(expected, it) }
+
+        }
+    }
+
+    @Test
     fun `inserting a character that does not exist does not get inserted`() {
         runBlocking {
             val request1 =

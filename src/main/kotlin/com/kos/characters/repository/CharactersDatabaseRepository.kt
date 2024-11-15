@@ -42,6 +42,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         //This needs to be done to consume serial ids. Could be done in a different way but I don't dislike it.
         initialState.lolCharacters.forEach { _ -> selectNextId() }
         initialState.wowCharacters.forEach { _ -> selectNextId() }
+        initialState.wowHardcoreCharacters.forEach { _ -> selectNextId() }
         return this
     }
 

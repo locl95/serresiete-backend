@@ -16,7 +16,7 @@ class CharactersInMemoryRepository(private val dataCacheRepository: DataCacheInM
     private val lolCharacters: MutableList<LolCharacter> = mutableListOf()
 
     private fun nextId(): Long {
-        val allIds = wowCharacters.map { it.id } + lolCharacters.map { it.id }
+        val allIds = wowCharacters.map { it.id } + lolCharacters.map { it.id } + wowHardcoreCharacters.map { it.id }
         return if (allIds.isEmpty()) 1
         else allIds.maxBy { it } + 1
     }

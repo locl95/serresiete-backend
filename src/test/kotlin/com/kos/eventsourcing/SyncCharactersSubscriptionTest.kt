@@ -20,6 +20,7 @@ import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.views.Game
 import com.kos.views.ViewsTestHelper
+import com.kos.views.ViewsTestHelper.owner
 import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
@@ -56,7 +57,7 @@ class SyncCharactersSubscriptionTest {
             is ViewCreatedEvent -> eventType.copy(game = game)
             is ViewEditedEvent -> eventType.copy(game = game)
             is ViewPatchedEvent -> eventType.copy(game = game)
-            else -> fail()
+            else -> eventType
         }
         return EventWithVersion(1L, Event("/credentials/owner", ViewsTestHelper.id, payload))
     }
@@ -260,6 +261,34 @@ class SyncCharactersSubscriptionTest {
                     0
                 )
             }
+        @Test
+        fun `should ignore not related events`() {
+            runBlocking {
+                val (charactersService, spiedService, dataCacheRepository) = createService()
+                val eventWithVersion = createEventWithVersion(
+                    ViewToBeCreatedEvent(
+                        ViewsTestHelper.id,
+                        ViewsTestHelper.name,
+                        false,
+                        listOf(CharactersTestHelper.basicWowRequest),
+                        Game.LOL,
+                        owner
+                    ), Game.LOL
+                )
+
+                assertCacheInvocation(
+                    EventSubscription::syncLolCharactersProcessor,
+                    Game.LOL,
+                    CharactersTestHelper.basicWowCharacter,
+                    eventWithVersion,
+                    charactersService,
+                    spiedService,
+                    dataCacheRepository,
+                    false,
+                    0
+                )
+            }
+        }
     }
 
     @Nested
@@ -352,6 +381,35 @@ class SyncCharactersSubscriptionTest {
                 true,
                 1
             )
+        }
+
+        @Test
+        fun `should ignore not related events`() {
+            runBlocking {
+                val (charactersService, spiedService, dataCacheRepository) = createService()
+                val eventWithVersion = createEventWithVersion(
+                    ViewToBeCreatedEvent(
+                        ViewsTestHelper.id,
+                        ViewsTestHelper.name,
+                        false,
+                        listOf(CharactersTestHelper.basicWowRequest),
+                        Game.WOW,
+                        owner
+                    ), Game.WOW
+                )
+
+                assertCacheInvocation(
+                    EventSubscription::syncWowCharactersProcessor,
+                    Game.WOW,
+                    CharactersTestHelper.basicWowCharacter,
+                    eventWithVersion,
+                    charactersService,
+                    spiedService,
+                    dataCacheRepository,
+                    false,
+                    0
+                )
+            }
         }
     }
 
@@ -468,6 +526,35 @@ class SyncCharactersSubscriptionTest {
                 true,
                 1
             )
+        }
+
+        @Test
+        fun `should ignore not related events`() {
+            runBlocking {
+                val (charactersService, spiedService, dataCacheRepository) = createService()
+                val eventWithVersion = createEventWithVersion(
+                    ViewToBeCreatedEvent(
+                        ViewsTestHelper.id,
+                        ViewsTestHelper.name,
+                        false,
+                        listOf(CharactersTestHelper.basicWowRequest),
+                        Game.WOW_HC,
+                        owner
+                    ), Game.WOW_HC
+                )
+
+                assertCacheInvocation(
+                    EventSubscription::syncWowHardcoreCharactersProcessor,
+                    Game.WOW_HC,
+                    CharactersTestHelper.basicWowCharacter,
+                    eventWithVersion,
+                    charactersService,
+                    spiedService,
+                    dataCacheRepository,
+                    false,
+                    0
+                )
+            }
         }
     }
 }

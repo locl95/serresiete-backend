@@ -2,7 +2,9 @@ package com.kos.clients.blizzard
 
 import com.kos.clients.domain.GetWowCharacterResponse
 import kotlinx.serialization.json.Json
+import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.Test
+
 class BlizzardDomainTest {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -107,7 +109,21 @@ class BlizzardDomainTest {
             }
         """.trimIndent()
 
-        val foo = json.decodeFromString<GetWowCharacterResponse>(response)
-        println(foo)
+        val getWowCharacterResponse = GetWowCharacterResponse(
+            id = 30758927,
+            name = "Kumii",
+            level = 60,
+            isDead = false,
+            averageItemLevel = 59,
+            equippedItemLevel = 57,
+            characterClass = "Hunter",
+            race = "Night Elf",
+            realm = "Stitches",
+            guild = "I CANT RELEASE",
+            experience = 0
+        )
+
+        assertEquals(getWowCharacterResponse, json.decodeFromString<GetWowCharacterResponse>(response))
+
     }
 }

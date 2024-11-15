@@ -8,10 +8,10 @@ import com.kos.characters.WowCharacter
 import com.kos.common.*
 import com.kos.common.Retry.retryEitherWithFixedDelay
 import com.kos.datacache.repository.DataCacheRepository
-import com.kos.httpclients.blizzard.BlizzardClient
-import com.kos.httpclients.domain.*
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.domain.*
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -244,14 +244,7 @@ data class DataCacheService(
             val data = errorsAndData.second.map {
                 DataCache(
                     it.first,
-                    json.encodeToString<Data>(
-                        HardcoreData(
-                            it.second.id,
-                            it.second.name,
-                            it.second.level,
-                            it.second.isDead
-                        )
-                    ),
+                    json.encodeToString<Data>(HardcoreData.apply(it.second)),
                     OffsetDateTime.now()
                 )
             }

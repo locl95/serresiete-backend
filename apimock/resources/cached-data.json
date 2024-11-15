@@ -2,7 +2,7 @@
   "viewName": "LEC",
   "data": [
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 764,
       "summonerLevel": 641,
       "summonerName": "Odoamne",
@@ -201,7 +201,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6499,
       "summonerLevel": 396,
       "summonerName": "LeonardoDiCassio",
@@ -400,7 +400,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 4379,
       "summonerLevel": 327,
       "summonerName": "niudefuwuqi2007",
@@ -599,7 +599,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6246,
       "summonerLevel": 692,
       "summonerName": "3XA",
@@ -798,7 +798,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 589,
       "summonerLevel": 1281,
       "summonerName": "goodjob",
@@ -997,7 +997,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 1381,
       "summonerLevel": 192,
       "summonerName": "AdiTheGoodGuy",
@@ -1196,7 +1196,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6003,
       "summonerLevel": 1105,
       "summonerName": "Zwyrøø",
@@ -1395,7 +1395,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6522,
       "summonerLevel": 916,
       "summonerName": "yuqi",
@@ -1594,7 +1594,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 29,
       "summonerLevel": 1126,
       "summonerName": "Kushala Daora",
@@ -1793,7 +1793,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 588,
       "summonerLevel": 800,
       "summonerName": "G2 Bwipo",
@@ -1992,7 +1992,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 4030,
       "summonerLevel": 203,
       "summonerName": "TheShygenda",
@@ -2191,7 +2191,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 7,
       "summonerLevel": 209,
       "summonerName": "C1oser",
@@ -2390,7 +2390,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 29,
       "summonerLevel": 773,
       "summonerName": "Mazs",
@@ -2589,7 +2589,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 4027,
       "summonerLevel": 1080,
       "summonerName": "CABALLO GANADOR",
@@ -2978,7 +2978,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 4803,
       "summonerLevel": 870,
       "summonerName": "Wesley Warren Jr",
@@ -3177,7 +3177,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6737,
       "summonerLevel": 87,
       "summonerName": "qrds",
@@ -3376,7 +3376,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 773,
       "summonerLevel": 563,
       "summonerName": "Dr BlackBerry",
@@ -3575,7 +3575,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6661,
       "summonerLevel": 720,
       "summonerName": "Dr Coconut",
@@ -3774,7 +3774,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 23,
       "summonerLevel": 1022,
       "summonerName": "Dr Orange",
@@ -3973,7 +3973,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 21,
       "summonerLevel": 158,
       "summonerName": "Dr Mango",
@@ -4172,7 +4172,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 682,
       "summonerLevel": 1015,
       "summonerName": "Dr Dragonfruit",
@@ -4371,7 +4371,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 22,
       "summonerLevel": 33,
       "summonerName": "Fantastic Duo2",
@@ -4379,7 +4379,7 @@
       "leagues": {}
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 3507,
       "summonerLevel": 932,
       "summonerName": "komanche uchiha",
@@ -4578,7 +4578,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 6236,
       "summonerLevel": 971,
       "summonerName": "c0cky movement",
@@ -4777,7 +4777,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 5489,
       "summonerLevel": 1361,
       "summonerName": "tukaan",
@@ -4976,7 +4976,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 1152,
       "summonerLevel": 1172,
       "summonerName": "alvarooo",
@@ -5175,7 +5175,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 5169,
       "summonerLevel": 900,
       "summonerName": "Walid Georgey",
@@ -5564,7 +5564,7 @@
       }
     },
     {
-      "type": "com.kos.httpclients.domain.RiotData",
+      "type": "com.kos.clients.domain.RiotData",
       "summonerIcon": 1442,
       "summonerLevel": 762,
       "summonerName": "ismααα",

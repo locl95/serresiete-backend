@@ -8,10 +8,9 @@ import com.kos.common.WithLogger
 import com.kos.common.collect
 import com.kos.common.split
 import com.kos.common.*
-import com.kos.httpclients.blizzard.BlizzardClient
-import com.kos.httpclients.blizzard.BlizzardHttpClient
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

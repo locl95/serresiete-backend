@@ -1,4 +1,4 @@
-package com.kos.riot
+package com.kos.clients.riot
 
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*

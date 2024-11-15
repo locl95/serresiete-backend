@@ -9,7 +9,7 @@ import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
-import com.kos.httpclients.domain.Data
+import com.kos.clients.domain.Data
 import com.kos.views.repository.ViewsRepository
 import java.util.*
 

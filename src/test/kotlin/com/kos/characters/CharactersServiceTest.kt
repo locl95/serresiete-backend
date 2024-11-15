@@ -10,11 +10,11 @@ import com.kos.characters.CharactersTestHelper.gigaLolCharacterList
 import com.kos.characters.CharactersTestHelper.gigaLolCharacterRequestList
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.httpclients.blizzard.BlizzardClient
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.GetSummonerResponse
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.domain.GetPUUIDResponse
+import com.kos.clients.domain.GetSummonerResponse
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.*

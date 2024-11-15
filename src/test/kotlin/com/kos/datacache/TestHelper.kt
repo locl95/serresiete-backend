@@ -25,11 +25,11 @@ object TestHelper {
          }                        
      },                           
      "mythicPlusBestRuns": [],
-     "type": "com.kos.httpclients.domain.RaiderIoData"
+     "type": "com.kos.clients.domain.RaiderIoData"
    }"""
 
     val lolData = """{
-        "type": "com.kos.httpclients.domain.RiotData",
+        "type": "com.kos.clients.domain.RiotData",
         "summonerIcon": 1389,
         "summonerLevel": 499,
         "summonerName": "GTP ZeroMVPs",
@@ -139,7 +139,7 @@ object TestHelper {
     }"""
 
     val anotherLolData = """{
-          "type": "com.kos.httpclients.domain.RiotData",
+          "type": "com.kos.clients.domain.RiotData",
           "leagues": {},
           "summonerIcon": 3582,
           "summonerName": "sanxei",
@@ -149,7 +149,7 @@ object TestHelper {
     """
 
     val smartSyncDataCache = """{
-            "type": "com.kos.httpclients.domain.RiotData",
+            "type": "com.kos.clients.domain.RiotData",
             "summonerIcon": 1,
             "summonerLevel": 30,
             "summonerName": "TestSummoner",

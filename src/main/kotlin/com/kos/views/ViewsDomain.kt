@@ -2,7 +2,7 @@ package com.kos.views
 
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
-import com.kos.httpclients.domain.Data
+import com.kos.clients.domain.Data
 import kotlinx.serialization.Serializable
 
 @Serializable

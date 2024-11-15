@@ -1,14 +1,14 @@
-package com.kos.httpclients.blizzard
+package com.kos.clients.blizzard
 
 import arrow.core.Either
 import arrow.core.raise.either
 import com.kos.characters.WowCharacterRequest
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.GetWowCharacterResponse
-import com.kos.httpclients.domain.RiotError
-import com.kos.httpclients.domain.TokenResponse
+import com.kos.clients.domain.GetWowCharacterResponse
+import com.kos.clients.domain.RiotError
+import com.kos.clients.domain.TokenResponse
+import com.kos.common.WithLogger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -18,7 +18,7 @@ import kotlinx.serialization.json.Json
 import java.net.URI
 
 class BlizzardHttpClient(private val client: HttpClient, private val blizzardAuthClient: BlizzardAuthClient) :
-    BlizzardClient {
+    BlizzardClient, WithLogger("blizzardClient") {
     private val baseURI: (String) -> URI = { region -> URI("https://$region.api.blizzard.com") }
     private val json = Json {
         ignoreUnknownKeys = true
@@ -30,6 +30,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         character: String
     ): Either<HttpError, GetWowCharacterResponse> {
         return either {
+            logger.debug("getCharacterProfile for $realm $realm $character")
             val tokenResponse = blizzardAuthClient.getAccessToken().bind()
             val partialURI = URI("/profile/wow/character/$realm/$character?locale=en_US")
             val response = getWowProfile(region, partialURI, tokenResponse)

@@ -73,7 +73,13 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
+    override suspend fun create(
+        id: String,
+        name: String,
+        owner: String,
+        characterIds: List<Long>,
+        game: Game
+    ): SimpleView {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Views.insert {
                 it[Views.id] = id
@@ -107,10 +113,8 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
 
     override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewPatched {
         newSuspendedTransaction(Dispatchers.IO, db) {
-            Views.update({ Views.id.eq(id) }) { statement ->
-                name?.let { statement[Views.name] = it }
-                published?.let { statement[Views.published] = it }
-            }
+            name?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.name] = it } }
+            published?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.published] = it } }
             characters?.let {
                 CharactersView.deleteWhere { viewId.eq(id) }
                 CharactersView.batchInsert(it) { cid ->

@@ -73,6 +73,7 @@ class EventSubscription(
                                 )
                             )
                             logger.error("processing event ${event.version} has failed because ${e.message}")
+                            logger.debug(e.stackTraceToString())
                             Pair(false, event.version)
                         }
                     } else Pair(false, version)
@@ -274,7 +275,7 @@ class EventSubscription(
                     return when (payload.game) {
                         Game.WOW -> {
                             syncWowCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
-                            payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
+                            payload.characters?.mapNotNull { charactersService.get(it, Game.WOW) }?.let {
                                 dataCacheService.cache(it, payload.game)
                             }
                             Either.Right(Unit)
@@ -353,7 +354,7 @@ class EventSubscription(
                     return when (payload.game) {
                         Game.WOW_HC -> {
                             syncWowHardcoreCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
-                            payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
+                            payload.characters?.mapNotNull { charactersService.get(it, Game.WOW_HC) }?.let {
                                 dataCacheService.cache(it, payload.game)
                             }
                             Either.Right(Unit)

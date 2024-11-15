@@ -2,7 +2,6 @@ package com.kos.eventsourcing
 
 
 import arrow.core.Either
-import com.kos.activities.Activity
 import com.kos.assertTrue
 import com.kos.characters.CharactersService
 import com.kos.characters.CharactersTestHelper
@@ -27,11 +26,9 @@ import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.SubscriptionState
 import com.kos.eventsourcing.subscriptions.SubscriptionStatus
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsInMemoryRepository
-import com.kos.httpclients.blizzard.BlizzardClient
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
-import com.kos.roles.Role
-import com.kos.roles.repository.RolesActivitiesInMemoryRepository
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import com.kos.views.SimpleView
 import com.kos.views.ViewsService

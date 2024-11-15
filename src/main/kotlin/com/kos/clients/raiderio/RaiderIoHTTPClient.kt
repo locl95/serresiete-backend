@@ -1,13 +1,13 @@
-package com.kos.httpclients.raiderio
+package com.kos.clients.raiderio
 
 import arrow.core.Either
 import com.kos.characters.WowCharacter
 import com.kos.characters.WowCharacterRequest
 import com.kos.common.*
-import com.kos.httpclients.domain.RaiderIoCutoff
-import com.kos.httpclients.domain.RaiderIoProfile
-import com.kos.httpclients.domain.RaiderIoProtocol
-import com.kos.httpclients.domain.RaiderIoResponse
+import com.kos.clients.domain.RaiderIoCutoff
+import com.kos.clients.domain.RaiderIoProfile
+import com.kos.clients.domain.RaiderIoProtocol
+import com.kos.clients.domain.RaiderIoResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*

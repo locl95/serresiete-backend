@@ -27,12 +27,9 @@ import com.kos.datacache.TestHelper.wowDataCache
 import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.eventsourcing.events.EventType
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
-import com.kos.httpclients.blizzard.BlizzardClient
-import com.kos.httpclients.domain.Data
-import com.kos.httpclients.domain.RaiderIoData
-import com.kos.httpclients.domain.RiotData
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.roles.Role
 import com.kos.roles.repository.RolesActivitiesInMemoryRepository
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
@@ -41,10 +38,6 @@ import com.kos.views.ViewsTestHelper.owner
 import com.kos.views.repository.ViewsInMemoryRepository
 import io.mockk.InternalPlatformDsl.toStr
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime

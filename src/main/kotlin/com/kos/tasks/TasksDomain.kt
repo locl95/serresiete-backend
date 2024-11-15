@@ -42,7 +42,7 @@ enum class TaskType {
         override fun toString(): String = "cacheWowDataTask"
     },
     CACHE_WOW_HC_DATA_TASK {
-        override fun toString(): String = "cacheWowDataTask"
+        override fun toString(): String = "cacheWowHcDataTask"
     },
     CACHE_LOL_DATA_TASK {
         override fun toString(): String = "cacheLolDataTask"

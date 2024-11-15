@@ -1,9 +1,9 @@
-package com.kos.httpclients.blizzard
+package com.kos.clients.blizzard
 
 import arrow.core.Either
 import com.kos.characters.WowCharacterRequest
 import com.kos.common.HttpError
-import com.kos.httpclients.domain.GetWowCharacterResponse
+import com.kos.clients.domain.GetWowCharacterResponse
 
 interface BlizzardClient {
     suspend fun getCharacterProfile(region: String, realm: String, character: String): Either<HttpError, GetWowCharacterResponse>

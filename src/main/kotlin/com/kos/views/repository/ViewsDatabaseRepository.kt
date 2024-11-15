@@ -1,5 +1,6 @@
 package com.kos.views.repository
 
+import com.kos.common.fold
 import com.kos.views.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -45,7 +46,10 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
             row[Views.published],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
                 .map { resultRowToCharacterView(it).first },
-            Game.fromString(row[Views.game])
+            Game.fromString(row[Views.game]).fold(
+                { throw IllegalStateException("Unexpected invalid game type: ${row[Views.game]}") },
+                { it }
+            )
         )
     }
 
@@ -73,7 +77,13 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         }.singleOrNull()
     }
 
-    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
+    override suspend fun create(
+        id: String,
+        name: String,
+        owner: String,
+        characterIds: List<Long>,
+        game: Game
+    ): SimpleView {
         newSuspendedTransaction(Dispatchers.IO, db) {
             Views.insert {
                 it[Views.id] = id
@@ -127,8 +137,15 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         return ViewDeleted(id)
     }
 
-    override suspend fun getViews(): List<SimpleView> {
-        return newSuspendedTransaction(Dispatchers.IO, db) { Views.selectAll().map { resultRowToSimpleView(it) } }
+    override suspend fun getViews(game: Game?): List<SimpleView> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
+            val baseQuery = Views.selectAll()
+            val filteredQuery = game.fold(
+                { baseQuery },
+                { baseQuery.adjustWhere { Views.game eq it.toString() } }
+            )
+            filteredQuery.map { resultRowToSimpleView(it) }
+        }
     }
 
     override suspend fun state(): List<SimpleView> {

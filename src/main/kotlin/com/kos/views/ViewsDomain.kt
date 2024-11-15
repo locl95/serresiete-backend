@@ -1,7 +1,9 @@
 package com.kos.views
 
+import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
+import com.kos.common.InvalidTaskType
 import com.kos.httpclients.domain.Data
 import kotlinx.serialization.Serializable
 
@@ -15,10 +17,10 @@ enum class Game {
     };
 
     companion object {
-        fun fromString(value: String): Game = when (value) {
-            "wow" -> WOW
-            "lol" -> LOL
-            else -> throw IllegalArgumentException("Unknown game: $value")
+        fun fromString(value: String): Either<InvalidTaskType, Game> = when (value) {
+            "wow" -> Either.Right(WOW)
+            "lol" -> Either.Right(LOL)
+            else -> Either.Left(InvalidTaskType(value))
         }
     }
 }
@@ -72,7 +74,8 @@ data class ViewDeleted(val viewId: String) : ViewResult {
 }
 
 @Serializable
-data class ViewModified(val viewId: String, val name: String, val published: Boolean, val characters: List<Long>) : ViewResult {
+data class ViewModified(val viewId: String, val name: String, val published: Boolean, val characters: List<Long>) :
+    ViewResult {
     override val isSuccess: Boolean = true
 }
 

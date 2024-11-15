@@ -1,6 +1,7 @@
 package com.kos.views.repository
 
 import com.kos.common.InMemoryRepository
+import com.kos.common.fold
 import com.kos.views.*
 
 class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
@@ -11,7 +12,13 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun get(id: String): SimpleView? = views.find { it.id == id }
 
-    override suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game): SimpleView {
+    override suspend fun create(
+        id: String,
+        name: String,
+        owner: String,
+        characterIds: List<Long>,
+        game: Game
+    ): SimpleView {
         val simpleView = SimpleView(id, name, owner, true, characterIds, game)
         views.add(simpleView)
         return simpleView
@@ -50,8 +57,13 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return ViewDeleted(id)
     }
 
-    override suspend fun getViews(): List<SimpleView> {
-        return views
+    override suspend fun getViews(game: Game?): List<SimpleView> {
+        val allViews = views.toList()
+
+        return game.fold(
+            { allViews },
+            { views.filter { it.game == game } }
+        )
     }
 
     override suspend fun state(): List<SimpleView> {

@@ -1,4 +1,4 @@
-package com.kos.httpclients.domain
+package com.kos.clients.domain
 
 import arrow.core.Either
 import arrow.core.traverse

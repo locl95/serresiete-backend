@@ -3,7 +3,7 @@ package com.kos.datacache
 import arrow.core.Either
 import com.kos.characters.WowCharacter
 import com.kos.common.HttpError
-import com.kos.httpclients.domain.*
+import com.kos.clients.domain.*
 
 object RaiderIoMockHelper {
     fun get(wowCharacter: WowCharacter): Either<HttpError, RaiderIoResponse> {
@@ -44,6 +44,36 @@ object RaiderIoMockHelper {
             ), mythicPlusBestRuns = listOf()
         )
     )
+
+    val raiderIoDataString = """
+        {
+          "type": "com.kos.clients.domain.RaiderIoData",
+          "id": 1,
+          "name": "kakarona",
+          "score": 0.0,
+          "class": "class",
+          "spec": "spec",
+          "quantile": 1.0,
+          "mythicPlusRanks": {
+            "overall": {
+              "world": 1,
+              "region": 1,
+              "realm": 1
+            },
+            "class": {
+              "world": 1,
+              "region": 1,
+              "realm": 1
+            },
+            "specs": [
+              
+            ]
+          },
+          "mythicPlusBestRuns": [
+            
+          ]
+        }
+    """.trimIndent()
 
     val raiderioCachedData: RaiderIoData = RaiderIoData(
         id = 1,

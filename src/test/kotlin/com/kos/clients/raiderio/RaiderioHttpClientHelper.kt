@@ -1,6 +1,6 @@
-package com.kos.raiderio
+package com.kos.clients.raiderio
 
-import com.kos.httpclients.domain.*
+import com.kos.clients.domain.*
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*

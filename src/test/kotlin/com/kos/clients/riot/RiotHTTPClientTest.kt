@@ -1,9 +1,9 @@
-package com.kos.riot
+package com.kos.clients.riot
 
 import com.kos.assertTrue
-import com.kos.httpclients.domain.QueueType
-import com.kos.httpclients.riot.RiotHTTPClient
-import com.kos.riot.RiotHTTPClientHelper.client
+import com.kos.clients.domain.QueueType
+import com.kos.clients.riot.RiotHTTPClient
+import com.kos.clients.riot.RiotHTTPClientHelper.client
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 

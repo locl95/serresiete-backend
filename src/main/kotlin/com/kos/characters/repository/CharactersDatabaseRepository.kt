@@ -23,6 +23,12 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 this[WowCharacters.region] = it.region
                 this[WowCharacters.realm] = it.realm
             }
+            WowHardcoreCharacters.batchInsert(initialState.wowHardcoreCharacters) {
+                this[WowHardcoreCharacters.id] = it.id
+                this[WowHardcoreCharacters.name] = it.name
+                this[WowHardcoreCharacters.region] = it.region
+                this[WowHardcoreCharacters.realm] = it.realm
+            }
             LolCharacters.batchInsert(initialState.lolCharacters) {
                 this[LolCharacters.id] = it.id
                 this[LolCharacters.name] = it.name
@@ -36,6 +42,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         //This needs to be done to consume serial ids. Could be done in a different way but I don't dislike it.
         initialState.lolCharacters.forEach { _ -> selectNextId() }
         initialState.wowCharacters.forEach { _ -> selectNextId() }
+        initialState.wowHardcoreCharacters.forEach { _ -> selectNextId() }
         return this
     }
 
@@ -54,6 +61,23 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         row[WowCharacters.region],
         row[WowCharacters.realm]
     )
+
+    object WowHardcoreCharacters : Table("wow_hardcore_characters") {
+        val id = long("id")
+        val name = text("name")
+        val realm = text("realm")
+        val region = text("region")
+
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    private fun resultRowToWowHardcoreCharacter(row: ResultRow) = WowCharacter(
+        row[WowHardcoreCharacters.id],
+        row[WowHardcoreCharacters.name],
+        row[WowHardcoreCharacters.region],
+        row[WowHardcoreCharacters.realm]
+    )
+
 
     object LolCharacters : Table("lol_characters") {
         val id = long("id")
@@ -108,7 +132,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                     this[WowCharacters.realm] = it.realm
                                 }
 
-                                is LolCharacter -> throw IllegalArgumentException()
+                                else -> throw IllegalArgumentException()
                             }
                         }.map { resultRowToWowCharacter(it) }
 
@@ -126,6 +150,19 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                                 }
                             }
                         }.map { resultRowToLolCharacter(it) }
+
+                        Game.WOW_HC -> WowHardcoreCharacters.batchInsert(charsToInsert) {
+                            when (it) {
+                                is WowCharacter -> {
+                                    this[WowHardcoreCharacters.id] = it.id
+                                    this[WowHardcoreCharacters.name] = it.name
+                                    this[WowHardcoreCharacters.region] = it.region
+                                    this[WowHardcoreCharacters.realm] = it.realm
+                                }
+
+                                else -> throw IllegalArgumentException()
+                            }
+                        }.map { resultRowToWowHardcoreCharacter(it) }
                     }
                     Either.Right(insertedCharacters)
                 } catch (e: SQLException) {
@@ -174,6 +211,18 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
 
                     else -> Either.Left(InsertError("problem updating $id: $character for $game"))
                 }
+
+                Game.WOW_HC -> when (character) {
+                    is WowCharacterRequest -> {
+                        Either.Right(WowHardcoreCharacters.update({ WowHardcoreCharacters.id eq id }) {
+                            it[name] = character.name
+                            it[region] = character.region
+                            it[realm] = character.realm
+                        })
+                    }
+
+                    else -> Either.Left(InsertError("problem updating $id: $character for $game"))
+                }
             }
         }
     }
@@ -187,6 +236,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
 
                 Game.LOL -> LolCharacters.select { LolCharacters.id.eq(id) }.singleOrNull()?.let {
                     resultRowToLolCharacter(it)
+                }
+
+                Game.WOW_HC -> WowHardcoreCharacters.select { WowHardcoreCharacters.id.eq(id) }.singleOrNull()?.let {
+                    resultRowToWowHardcoreCharacter(it)
                 }
             }
         }
@@ -211,8 +264,17 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             .and(LolCharacters.name.eq(request.name))
                     }.map { resultRowToLolCharacter(it) }
                 }
-            }
-        }.singleOrNull()
+
+                Game.WOW_HC -> {
+                    request as WowCharacterRequest
+                    WowHardcoreCharacters.select {
+                        WowHardcoreCharacters.name.eq(request.name)
+                            .and(WowHardcoreCharacters.realm.eq(request.realm))
+                            .and(WowHardcoreCharacters.region.eq(request.region))
+                    }.map { resultRowToWowHardcoreCharacter(it) }
+                }
+            }.singleOrNull()
+        }
     }
 
     override suspend fun get(character: CharacterInsertRequest, game: Game): Character? {
@@ -234,6 +296,15 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                             .and(LolCharacters.summonerId.eq(character.summonerId))
                     }.map { resultRowToLolCharacter(it) }
                 }
+
+                Game.WOW_HC -> {
+                    character as WowCharacterRequest
+                    WowHardcoreCharacters.select {
+                        WowHardcoreCharacters.name.eq(character.name)
+                            .and(WowHardcoreCharacters.realm.eq(character.realm))
+                            .and(WowHardcoreCharacters.region.eq(character.region))
+                    }.map { resultRowToWowHardcoreCharacter(it) }
+                }
             }
         }.singleOrNull()
     }
@@ -243,6 +314,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
             when (game) {
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
                 Game.LOL -> LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
+                Game.WOW_HC -> WowHardcoreCharacters.selectAll().map { resultRowToWowHardcoreCharacter(it) }
             }
         }
 
@@ -253,7 +325,10 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
                 Game.WOW -> WowCharacters.selectAll().map { resultRowToWowCharacter(it) }
                 Game.LOL -> {
                     val subQuery = DataCacheDatabaseRepository.DataCaches
-                        .slice(DataCacheDatabaseRepository.DataCaches.characterId, DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted"))
+                        .slice(
+                            DataCacheDatabaseRepository.DataCaches.characterId,
+                            DataCacheDatabaseRepository.DataCaches.inserted.max().alias("inserted")
+                        )
                         .selectAll()
                         .groupBy(DataCacheDatabaseRepository.DataCaches.characterId)
 
@@ -261,14 +336,18 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
 
                     val thirtyMinutesAgo = OffsetDateTime.now().minusMinutes(olderThanMinutes).toString()
                     LolCharacters
-                        .leftJoin(subQueryAliased, { id }, { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
+                        .leftJoin(
+                            subQueryAliased,
+                            { id },
+                            { subQueryAliased[DataCacheDatabaseRepository.DataCaches.characterId] })
                         .select {
-                            // Filtering where max_inserted is NULL or more than 30 minutes ago
                             (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted].isNull()) or
                                     (subQueryAliased[DataCacheDatabaseRepository.DataCaches.inserted] lessEq thirtyMinutesAgo)
                         }
                         .map { resultRowToLolCharacter(it) }
                 }
+
+                Game.WOW_HC -> WowHardcoreCharacters.selectAll().map { resultRowToWowHardcoreCharacter(it) }
             }
         }
     }
@@ -278,6 +357,7 @@ class CharactersDatabaseRepository(private val db: Database) : CharactersReposit
         return newSuspendedTransaction(Dispatchers.IO, db) {
             CharactersState(
                 WowCharacters.selectAll().map { resultRowToWowCharacter(it) },
+                WowHardcoreCharacters.selectAll().map { resultRowToWowHardcoreCharacter(it) },
                 LolCharacters.selectAll().map { resultRowToLolCharacter(it) }
             )
         }

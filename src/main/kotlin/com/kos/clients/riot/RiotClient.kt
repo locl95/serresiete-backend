@@ -1,8 +1,8 @@
-package com.kos.httpclients.riot
+package com.kos.clients.riot
 
 import arrow.core.Either
 import com.kos.common.HttpError
-import com.kos.httpclients.domain.*
+import com.kos.clients.domain.*
 
 interface RiotClient {
     suspend fun getPUUIDByRiotId(riotName: String, riotTag: String): Either<HttpError, GetPUUIDResponse>

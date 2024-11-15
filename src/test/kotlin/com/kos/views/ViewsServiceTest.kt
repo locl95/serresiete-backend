@@ -32,10 +32,11 @@ import com.kos.datacache.repository.DataCacheInMemoryRepository
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
 import com.kos.eventsourcing.events.repository.EventStoreInMemory
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.GetSummonerResponse
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.domain.GetPUUIDResponse
+import com.kos.clients.domain.GetSummonerResponse
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.roles.Role
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
@@ -63,6 +64,7 @@ import kotlin.test.fail
 class ViewsServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val blizzardClient = mock(BlizzardClient::class.java)
     private val retryConfig = RetryConfig(1, 1)
 
     private val aggregateRoot = "/credentials/owner"
@@ -463,6 +465,7 @@ class ViewsServiceTest {
                     listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                     CharactersState(
                         listOf(basicWowCharacter, basicWowCharacter2),
+                        listOf(),
                         listOf()
                     ),
                     listOf(),
@@ -494,6 +497,7 @@ class ViewsServiceTest {
                 val (eventStore, viewsService) = createService(
                     listOf(basicSimpleLolView.copy(characterIds = listOf(1))),
                     CharactersState(
+                        listOf(),
                         listOf(),
                         listOf(basicLolCharacter, basicLolCharacter2)
                     ),
@@ -762,7 +766,7 @@ class ViewsServiceTest {
 
                 val (_, viewsService) = createService(
                     listOf(simpleView),
-                    CharactersState(listOf(), listOf(basicLolCharacter)),
+                    CharactersState(listOf(), listOf(), listOf(basicLolCharacter)),
                     listOf(
                         lolDataCache.copy(characterId = 1),
                         moreRecentDataCache
@@ -794,14 +798,13 @@ class ViewsServiceTest {
         val eventStore = EventStoreInMemory()
 
         val credentialsService = CredentialsService(credentialsRepository)
-        val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
-        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, retryConfig)
+        val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
+        val dataCacheService = DataCacheService(dataCacheRepository, raiderIoClient, riotClient, blizzardClient, retryConfig)
         val service =
             ViewsService(
                 viewsRepository,
                 charactersService,
                 dataCacheService,
-                raiderIoClient,
                 credentialsService,
                 eventStore
             )

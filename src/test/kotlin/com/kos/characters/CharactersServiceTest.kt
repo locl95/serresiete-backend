@@ -10,10 +10,11 @@ import com.kos.characters.CharactersTestHelper.gigaLolCharacterList
 import com.kos.characters.CharactersTestHelper.gigaLolCharacterRequestList
 import com.kos.characters.repository.CharactersInMemoryRepository
 import com.kos.characters.repository.CharactersState
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.GetSummonerResponse
-import com.kos.httpclients.raiderio.RaiderIoClient
-import com.kos.httpclients.riot.RiotClient
+import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.domain.GetPUUIDResponse
+import com.kos.clients.domain.GetSummonerResponse
+import com.kos.clients.raiderio.RaiderIoClient
+import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.*
@@ -25,6 +26,7 @@ import kotlin.test.fail
 class CharactersServiceTest {
     private val raiderIoClient = mock(RaiderIoClient::class.java)
     private val riotClient = mock(RiotClient::class.java)
+    private val blizzardClient = mock(BlizzardClient::class.java)
 
     @Test
     fun `inserting two characters over an empty repository returns the ids of both new characters`() {
@@ -37,12 +39,33 @@ class CharactersServiceTest {
             `when`(raiderIoClient.exists(request2)).thenReturn(true)
 
             val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             val request = listOf(request1, request2)
             val expected: List<Long> = listOf(1, 2)
 
             charactersService.createAndReturnIds(request, Game.WOW).fold({ fail() }) { assertEquals(expected, it) }
+
+        }
+    }
+
+    @Test
+    fun `inserting two characters over an empty wow hardcore repository returns the ids of both new characters`() {
+        runBlocking {
+            val request1 =
+                WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
+            val request2 = WowCharacterRequest("kakarøna", basicWowCharacter.region, basicWowCharacter.realm)
+
+            `when`(blizzardClient.exists(request1)).thenReturn(true)
+            `when`(blizzardClient.exists(request2)).thenReturn(true)
+
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
+
+            val request = listOf(request1, request2)
+            val expected: List<Long> = listOf(1, 2)
+
+            charactersService.createAndReturnIds(request, Game.WOW_HC).fold({ fail() }) { assertEquals(expected, it) }
 
         }
     }
@@ -58,7 +81,7 @@ class CharactersServiceTest {
             `when`(raiderIoClient.exists(request2)).thenReturn(false)
 
             val charactersRepository = CharactersInMemoryRepository()
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             val request = listOf(request1, request2)
             val expected: List<Long> = listOf(1)
@@ -70,7 +93,7 @@ class CharactersServiceTest {
     @Test
     fun `inserting a lof of characters where half exists half doesn't`() {
         runBlocking {
-            val state = CharactersState(listOf(), gigaLolCharacterList)
+            val state = CharactersState(listOf(), listOf(), gigaLolCharacterList)
 
             `when`(riotClient.getPUUIDByRiotId(anyString(), anyString())).thenAnswer { invocation ->
                 val name = invocation.getArgument<String>(0)
@@ -92,7 +115,7 @@ class CharactersServiceTest {
             }
 
             val charactersRepository = CharactersInMemoryRepository().withState(state)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             val createAndReturnIds = charactersService.createAndReturnIds(gigaLolCharacterRequestList, Game.LOL)
             val expectedReturnedIds = listOf<Long>(7, 8, 9, 10, 11, 12, 13, 0, 1, 2, 3, 4, 5, 6)
@@ -105,14 +128,14 @@ class CharactersServiceTest {
     fun `it should skip inserting same league character even if he changed his name`() {
         runBlocking {
 
-            val state = CharactersState(listOf(), listOf(basicLolCharacter))
+            val state = CharactersState(listOf(),listOf(), listOf(basicLolCharacter))
             val request = LolCharacterRequest("R7 Disney Girl", "EUW")
 
             `when`(riotClient.getPUUIDByRiotId("R7 Disney Girl", "EUW")).thenReturn(Either.Right(basicGetPuuidResponse))
             `when`(riotClient.getSummonerByPuuid("1")).thenReturn(Either.Right(basicGetSummonerResponse))
 
             val charactersRepository = CharactersInMemoryRepository().withState(state)
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             val createAndReturnIds = charactersService.createAndReturnIds(listOf(request), Game.LOL)
             createAndReturnIds.fold({ fail() }) { assertEquals(listOf(), it) }
@@ -124,8 +147,8 @@ class CharactersServiceTest {
     fun `i can get a wow character`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(basicWowCharacter), listOf()))
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                CharactersInMemoryRepository().withState(CharactersState(listOf(basicWowCharacter), listOf(), listOf()))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(basicWowCharacter, charactersService.get(basicWowCharacter.id, Game.WOW))
         }
@@ -135,8 +158,8 @@ class CharactersServiceTest {
     fun `i can get a lol character`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(), listOf(basicLolCharacter)))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(basicLolCharacter, charactersService.get(basicLolCharacter.id, Game.LOL))
         }
@@ -149,10 +172,11 @@ class CharactersServiceTest {
                 CharactersInMemoryRepository().withState(
                     CharactersState(
                         listOf(basicWowCharacter),
+                        listOf(),
                         listOf(basicLolCharacter)
                     )
                 )
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(listOf(basicWowCharacter), charactersService.get(Game.WOW))
         }
@@ -165,10 +189,11 @@ class CharactersServiceTest {
                 CharactersInMemoryRepository().withState(
                     CharactersState(
                         listOf(basicWowCharacter),
+                        listOf(),
                         listOf(basicLolCharacter)
                     )
                 )
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             assertEquals(listOf(basicLolCharacter), charactersService.get(Game.LOL))
         }
@@ -178,8 +203,8 @@ class CharactersServiceTest {
     fun `i can update lol characters`() {
         runBlocking {
             val charactersRepository =
-                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(basicLolCharacter)))
-            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient)
+                CharactersInMemoryRepository().withState(CharactersState(listOf(), listOf(), listOf(basicLolCharacter)))
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
 
             `when`(riotClient.getSummonerByPuuid(basicLolCharacter.puuid)).thenReturn(
                 Either.Right(

@@ -1,4 +1,4 @@
-package com.kos.httpclients.domain
+package com.kos.clients.domain
 
 import com.kos.characters.LolCharacter
 import com.kos.common.HttpError

@@ -1,4 +1,9 @@
 # Changelog
+## [4.2.0] 15-11-2024
+
+### Added
+- **WoW Hardcore Views**: Introduced support for **World of Warcraft Hardcore Views**, allowing users to create and manage views specifically for hardcore characters.
+- **Event Sourcing for WoW Characters**: Synchronization for WoW characters, including **Mythic+** and **Hardcore**, is now handled via event sourcing, improving efficiency and scalability.
 ## [4.1.0] 12-11-2024
 
 ### Changed

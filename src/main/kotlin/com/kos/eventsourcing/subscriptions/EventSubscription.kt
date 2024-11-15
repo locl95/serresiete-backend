@@ -3,7 +3,6 @@ package com.kos.eventsourcing.subscriptions
 import arrow.core.Either
 import arrow.core.raise.either
 import com.kos.characters.CharactersService
-import com.kos.characters.LolCharacter
 import com.kos.common.ControllerError
 import com.kos.common.OffsetDateTimeSerializer
 import com.kos.common.Retry.retryEitherWithExponentialBackoff
@@ -74,6 +73,7 @@ class EventSubscription(
                                 )
                             )
                             logger.error("processing event ${event.version} has failed because ${e.message}")
+                            logger.debug(e.stackTraceToString())
                             Pair(false, event.version)
                         }
                     } else Pair(false, version)
@@ -88,9 +88,12 @@ class EventSubscription(
 
     companion object {
         private val viewsProcessorLogger = LoggerFactory.getLogger("eventSubscription.viewsProcessor")
-        private val syncLolCharactersProcessorLogger = LoggerFactory.getLogger("eventSubscription.syncLolCharactersProcessor")
-
-
+        private val syncLolCharactersProcessorLogger =
+            LoggerFactory.getLogger("eventSubscription.syncLolCharactersProcessor")
+        private val syncWowCharactersProcessorLogger =
+            LoggerFactory.getLogger("eventSubscription.syncWowCharactersProcessor")
+        private val syncWowHardcoreCharactersProcessorLogger =
+            LoggerFactory.getLogger("eventSubscription.syncWowHardcoreCharactersProcessor")
 
         suspend fun viewsProcessor(
             eventWithVersion: EventWithVersion,
@@ -138,7 +141,6 @@ class EventSubscription(
             }
         }
 
-        @Suppress("UNCHECKED_CAST")
         suspend fun syncLolCharactersProcessor(
             eventWithVersion: EventWithVersion,
             charactersService: CharactersService,
@@ -155,12 +157,12 @@ class EventSubscription(
                                     it,
                                     Game.LOL
                                 )
-                            } as List<LolCharacter>
+                            }
                             dataCacheService.cache(viewCharacters, payload.game)
                             Either.Right(Unit)
                         }
 
-                        Game.WOW -> {
+                        else -> {
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
@@ -177,12 +179,12 @@ class EventSubscription(
                                     it,
                                     Game.LOL
                                 )
-                            } as List<LolCharacter>
+                            }
                             dataCacheService.cache(viewCharacters, payload.game)
                             Either.Right(Unit)
                         }
 
-                        Game.WOW -> {
+                        else -> {
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
@@ -195,14 +197,171 @@ class EventSubscription(
                         Game.LOL -> {
                             syncLolCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
                             payload.characters?.mapNotNull { charactersService.get(it, Game.LOL) }?.let {
-                                it as List<LolCharacter>
                                 dataCacheService.cache(it, payload.game)
                             }
                             Either.Right(Unit)
                         }
 
-                        Game.WOW -> {
+                        else -> {
                             syncLolCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                else -> {
+                    syncLolCharactersProcessorLogger.debug(
+                        "skipping event v{} ({})",
+                        eventWithVersion.version,
+                        eventWithVersion.event.eventData.eventType
+                    )
+                    Either.Right(Unit)
+                }
+            }
+        }
+
+        suspend fun syncWowCharactersProcessor(
+            eventWithVersion: EventWithVersion,
+            charactersService: CharactersService,
+            dataCacheService: DataCacheService
+        ): Either<ControllerError, Unit> {
+            return when (eventWithVersion.event.eventData.eventType) {
+                EventType.VIEW_CREATED -> {
+                    val payload = eventWithVersion.event.eventData as ViewCreatedEvent
+                    return when (payload.game) {
+                        Game.WOW -> {
+                            syncWowCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.WOW
+                                )
+                            }
+                            dataCacheService.cache(viewCharacters, payload.game)
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                EventType.VIEW_EDITED -> {
+                    val payload = eventWithVersion.event.eventData as ViewEditedEvent
+                    return when (payload.game) {
+                        Game.WOW -> {
+                            syncWowCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.WOW
+                                )
+                            }
+                            dataCacheService.cache(viewCharacters, payload.game)
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                EventType.VIEW_PATCHED -> {
+                    val payload = eventWithVersion.event.eventData as ViewPatchedEvent
+                    return when (payload.game) {
+                        Game.WOW -> {
+                            syncWowCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            payload.characters?.mapNotNull { charactersService.get(it, Game.WOW) }?.let {
+                                dataCacheService.cache(it, payload.game)
+                            }
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                else -> {
+                    syncWowCharactersProcessorLogger.debug(
+                        "skipping event v{} ({})",
+                        eventWithVersion.version,
+                        eventWithVersion.event.eventData.eventType
+                    )
+                    Either.Right(Unit)
+                }
+            }
+        }
+
+        suspend fun syncWowHardcoreCharactersProcessor(
+            eventWithVersion: EventWithVersion,
+            charactersService: CharactersService,
+            dataCacheService: DataCacheService
+        ): Either<ControllerError, Unit> {
+            return when (eventWithVersion.event.eventData.eventType) {
+                EventType.VIEW_CREATED -> {
+                    val payload = eventWithVersion.event.eventData as ViewCreatedEvent
+                    return when (payload.game) {
+                        Game.WOW_HC -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.WOW_HC
+                                )
+                            }
+                            dataCacheService.cache(viewCharacters, payload.game)
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                EventType.VIEW_EDITED -> {
+                    val payload = eventWithVersion.event.eventData as ViewEditedEvent
+                    return when (payload.game) {
+                        Game.WOW_HC -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            val viewCharacters = payload.characters.mapNotNull {
+                                charactersService.get(
+                                    it,
+                                    Game.WOW_HC
+                                )
+                            }
+                            dataCacheService.cache(viewCharacters, payload.game)
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
+                            Either.Right(Unit)
+                        }
+                    }
+                }
+
+                EventType.VIEW_PATCHED -> {
+                    val payload = eventWithVersion.event.eventData as ViewPatchedEvent
+                    return when (payload.game) {
+                        Game.WOW_HC -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("processing event v${eventWithVersion.version}")
+                            payload.characters?.mapNotNull { charactersService.get(it, Game.WOW_HC) }?.let {
+                                dataCacheService.cache(it, payload.game)
+                            }
+                            Either.Right(Unit)
+                        }
+
+                        else -> {
+                            syncWowHardcoreCharactersProcessorLogger.debug("skipping event v${eventWithVersion.version}")
                             Either.Right(Unit)
                         }
                     }
@@ -220,3 +379,4 @@ class EventSubscription(
         }
     }
 }
+

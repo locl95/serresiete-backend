@@ -3,7 +3,7 @@ package com.kos.datacache
 import arrow.core.Either
 import com.kos.characters.CharactersTestHelper.basicLolCharacter
 import com.kos.common.HttpError
-import com.kos.httpclients.domain.*
+import com.kos.clients.domain.*
 
 object RiotMockHelper {
     val flexQEntryResponse = LeagueEntryResponse(

@@ -46,6 +46,8 @@ data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClie
     )
 
     private suspend fun <T> throttleRequest(request: suspend () -> T): T {
+        logger.debug("PerSecondThrottlerHashId ${System.identityHashCode(perSecondRateLimiter)}")
+        logger.debug("PerTwoMinutesThrottlerHashId ${System.identityHashCode(perTwoMinuteRateLimiter)}")
         return perSecondRateLimiter.executeSuspendFunction {
             perTwoMinuteRateLimiter.executeSuspendFunction(request)
         }

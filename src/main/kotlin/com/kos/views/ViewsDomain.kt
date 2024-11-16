@@ -3,9 +3,8 @@ package com.kos.views
 import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
-import com.kos.common.InvalidGameType
-import com.kos.httpclients.domain.Data
 import com.kos.clients.domain.Data
+import com.kos.common.InvalidGameType
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -24,6 +23,7 @@ enum class Game {
         fun fromString(value: String): Either<InvalidGameType, Game> = when (value) {
             "wow" -> Either.Right(WOW)
             "lol" -> Either.Right(LOL)
+            "wow_hc" -> Either.Right(WOW_HC)
             else -> Either.Left(InvalidGameType(value))
         }
     }

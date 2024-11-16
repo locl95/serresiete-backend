@@ -52,7 +52,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
     ): Either<HttpError, GetWowRealmResponse> {
         return either {
             val tokenResponse = blizzardAuthClient.getAccessToken().bind()
-            val partialUri = URI("/data/wow/realm/5220?locale=en_US")
+            val partialUri = URI("/data/wow/realm/$id?locale=en_US")
             val response = client.get(baseURI(region).toString() + partialUri.toString()) {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")

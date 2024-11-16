@@ -59,7 +59,7 @@ data class GetWowCharacterResponse(
     val name: String,
     val level: Int,
     @SerialName("is_ghost")
-    val isDead: Boolean,
+    val isDead: Boolean? = null,
     @SerialName("average_item_level")
     val averageItemLevel: Int,
     @SerialName("equipped_item_level")
@@ -97,7 +97,7 @@ data class HardcoreData(
             characterResponse.id,
             characterResponse.name,
             characterResponse.level,
-            characterResponse.isDead,
+            characterResponse.isDead ?: false,
             characterResponse.averageItemLevel,
             characterResponse.equippedItemLevel,
             characterResponse.characterClass,

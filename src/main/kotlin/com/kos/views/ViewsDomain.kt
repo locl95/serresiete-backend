@@ -3,7 +3,7 @@ package com.kos.views
 import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
-import com.kos.common.InvalidTaskType
+import com.kos.common.InvalidGameType
 import com.kos.httpclients.domain.Data
 import kotlinx.serialization.Serializable
 
@@ -17,10 +17,10 @@ enum class Game {
     };
 
     companion object {
-        fun fromString(value: String): Either<InvalidTaskType, Game> = when (value) {
+        fun fromString(value: String): Either<InvalidGameType, Game> = when (value) {
             "wow" -> Either.Right(WOW)
             "lol" -> Either.Right(LOL)
-            else -> Either.Left(InvalidTaskType(value))
+            else -> Either.Left(InvalidGameType(value))
         }
     }
 }

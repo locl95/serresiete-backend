@@ -1,6 +1,7 @@
 package com.kos.views.repository
 
 import com.kos.common.fold
+import com.kos.common.getOrThrow
 import com.kos.views.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
@@ -46,10 +47,8 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
             row[Views.published],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
                 .map { resultRowToCharacterView(it).first },
-            Game.fromString(row[Views.game]).fold(
-                { throw IllegalStateException("Unexpected invalid game type: ${row[Views.game]}") },
-                { it }
-            )
+            Game.fromString(row[Views.game])
+                .getOrThrow(IllegalStateException("Unexpected invalid game type: ${row[Views.game]}"))
         )
     }
 

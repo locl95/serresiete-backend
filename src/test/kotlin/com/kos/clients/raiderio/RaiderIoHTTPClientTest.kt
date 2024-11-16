@@ -1,12 +1,11 @@
-package com.kos.raiderio
+package com.kos.clients.raiderio
 
 import arrow.core.Either
 import com.kos.characters.WowCharacter
+import com.kos.clients.domain.RaiderIoResponse
+import com.kos.clients.raiderio.RaiderioHttpClientHelper.client
+import com.kos.clients.raiderio.RaiderioHttpClientHelper.raiderioProfileResponse
 import com.kos.common.HttpError
-import com.kos.httpclients.raiderio.RaiderIoHTTPClient
-import com.kos.httpclients.domain.RaiderIoResponse
-import com.kos.raiderio.RaiderioHttpClientHelper.client
-import com.kos.raiderio.RaiderioHttpClientHelper.raiderioProfileResponse
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

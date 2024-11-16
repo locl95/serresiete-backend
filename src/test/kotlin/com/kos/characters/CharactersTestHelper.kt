@@ -1,12 +1,12 @@
 package com.kos.characters
 
 import com.kos.characters.repository.CharactersState
-import com.kos.httpclients.domain.GetAccountResponse
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.GetSummonerResponse
+import com.kos.clients.domain.GetAccountResponse
+import com.kos.clients.domain.GetPUUIDResponse
+import com.kos.clients.domain.GetSummonerResponse
 
 object CharactersTestHelper {
-    val emptyCharactersState = CharactersState(listOf(), listOf())
+    val emptyCharactersState = CharactersState(listOf(), listOf(), listOf())
     val basicWowRequest = WowCharacterRequest("kakarona", "eu", "zuljin")
     val basicWowRequest2 = WowCharacterRequest("layser", "eu", "zuljin")
     val basicLolCharacter = LolCharacter(1, "GTP ZeroMVPs", "WOW", "1", 1, "1", 1)

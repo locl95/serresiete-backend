@@ -36,7 +36,10 @@ object Retry : WithLogger("retry") {
                     logger.info("Retries left $retries for $functionName")
                     delay(delayTime)
                     _retryEitherWithFixedDelay(retries - 1, delayTime, functionName, block)
-                } else res
+                } else {
+                    logger.error("Failed retrying with $res")
+                    res
+                }
         }
     }
 

@@ -20,11 +20,11 @@ import com.kos.datacache.repository.DataCacheDatabaseRepository
 import com.kos.eventsourcing.events.repository.EventStoreDatabase
 import com.kos.eventsourcing.subscriptions.EventSubscription
 import com.kos.eventsourcing.subscriptions.repository.SubscriptionsDatabaseRepository
-import com.kos.httpclients.blizzard.BlizzardHttpAuthClient
-import com.kos.httpclients.blizzard.BlizzardHttpClient
-import com.kos.httpclients.domain.BlizzardCredentials
-import com.kos.httpclients.raiderio.RaiderIoHTTPClient
-import com.kos.httpclients.riot.RiotHTTPClient
+import com.kos.clients.blizzard.BlizzardHttpAuthClient
+import com.kos.clients.blizzard.BlizzardHttpClient
+import com.kos.clients.domain.BlizzardCredentials
+import com.kos.clients.raiderio.RaiderIoHTTPClient
+import com.kos.clients.riot.RiotHTTPClient
 import com.kos.plugins.*
 import com.kos.roles.RolesController
 import com.kos.roles.RolesService
@@ -39,15 +39,12 @@ import com.kos.views.ViewsService
 import com.kos.views.repository.ViewsDatabaseRepository
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
@@ -99,19 +96,18 @@ fun Application.module() {
     val authController = AuthController(authService)
 
     val charactersRepository = CharactersDatabaseRepository(db)
-    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient)
+    val charactersService = CharactersService(charactersRepository, raiderIoHTTPClient, riotHTTPClient, blizzardClient)
 
     val viewsRepository = ViewsDatabaseRepository(db)
     val dataCacheRepository = DataCacheDatabaseRepository(db)
     val dataCacheRetryConfig = RetryConfig(3, 1200)
     val dataCacheService =
-        DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, dataCacheRetryConfig)
+        DataCacheService(dataCacheRepository, raiderIoHTTPClient, riotHTTPClient, blizzardClient, dataCacheRetryConfig)
     val viewsService =
         ViewsService(
             viewsRepository,
             charactersService,
             dataCacheService,
-            raiderIoHTTPClient,
             credentialsService,
             eventStore
         )
@@ -143,8 +139,24 @@ fun Application.module() {
         subscriptionsRetryConfig
     ) { EventSubscription.syncLolCharactersProcessor(it, charactersService, dataCacheService) }
 
+    val syncWowEventSubscription = EventSubscription(
+        "sync-wow",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncWowCharactersProcessor(it, charactersService, dataCacheService) }
+
+    val syncWowHardcoreEventSubscription = EventSubscription(
+        "sync-wow-hc",
+        eventStore,
+        subscriptionsRepository,
+        subscriptionsRetryConfig
+    ) { EventSubscription.syncWowHardcoreCharactersProcessor(it, charactersService, dataCacheService) }
+
     launchSubscription(viewsEventSubscription)
     launchSubscription(syncLolEventSubscription)
+    launchSubscription(syncWowEventSubscription)
+    launchSubscription(syncWowHardcoreEventSubscription)
 
     configureAuthentication(credentialsService, jwtConfig)
     configureCors()

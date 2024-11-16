@@ -1,12 +1,11 @@
-package com.kos.httpclients.blizzard
+package com.kos.clients.blizzard
 
 import arrow.core.Either
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
-import com.kos.httpclients.domain.BlizzardCredentials
-import com.kos.httpclients.domain.GetPUUIDResponse
-import com.kos.httpclients.domain.RiotError
-import com.kos.httpclients.domain.TokenResponse
+import com.kos.clients.domain.BlizzardCredentials
+import com.kos.clients.domain.RiotError
+import com.kos.clients.domain.TokenResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*

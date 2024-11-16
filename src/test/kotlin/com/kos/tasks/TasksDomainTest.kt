@@ -9,6 +9,7 @@ class TasksDomainTest {
     fun `entries to string should return a list of my task types as strings`() {
         val expected = listOf(
             "cacheWowDataTask",
+            "cacheWowHcDataTask",
             "cacheLolDataTask",
             "tokenCleanupTask",
             "taskCleanupTask",

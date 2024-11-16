@@ -27,6 +27,7 @@ data class TasksService(
             TaskType.TOKEN_CLEANUP_TASK -> tokenCleanup(taskId)
             TaskType.CACHE_LOL_DATA_TASK -> cacheDataTask(Game.LOL, taskType, taskId)
             TaskType.CACHE_WOW_DATA_TASK -> cacheDataTask(Game.WOW, taskType, taskId)
+            TaskType.CACHE_WOW_HC_DATA_TASK -> cacheDataTask(Game.WOW_HC, taskType, taskId)
             TaskType.TASK_CLEANUP_TASK -> taskCleanup(taskId)
             TaskType.UPDATE_LOL_CHARACTERS_TASK -> updateLolCharacters(taskId)
         }

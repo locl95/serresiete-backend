@@ -5,6 +5,7 @@ import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
 import com.kos.common.InvalidGameType
 import com.kos.httpclients.domain.Data
+import com.kos.clients.domain.Data
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,6 +15,9 @@ enum class Game {
     },
     LOL {
         override fun toString(): String = "lol"
+    },
+    WOW_HC {
+        override fun toString(): String = "wow_hc"
     };
 
     companion object {

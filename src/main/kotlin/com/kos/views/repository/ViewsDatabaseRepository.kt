@@ -34,7 +34,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         val name = varchar("name", 128)
         val owner = varchar("owner", 48)
         val published = bool("published")
-        val game = varchar("game", 3)
+        val game = text("game")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -116,10 +116,8 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
 
     override suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?): ViewPatched {
         newSuspendedTransaction(Dispatchers.IO, db) {
-            Views.update({ Views.id.eq(id) }) { statement ->
-                name?.let { statement[Views.name] = it }
-                published?.let { statement[Views.published] = it }
-            }
+            name?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.name] = it } }
+            published?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.published] = it } }
             characters?.let {
                 CharactersView.deleteWhere { viewId.eq(id) }
                 CharactersView.batchInsert(it) { cid ->

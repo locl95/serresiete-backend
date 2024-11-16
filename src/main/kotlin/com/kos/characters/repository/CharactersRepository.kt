@@ -6,7 +6,11 @@ import com.kos.common.InsertError
 import com.kos.common.WithState
 import com.kos.views.Game
 
-data class CharactersState(val wowCharacters: List<WowCharacter>, val lolCharacters: List<LolCharacter>)
+data class CharactersState(
+    val wowCharacters: List<WowCharacter>,
+    val wowHardcoreCharacters: List<WowCharacter>,
+    val lolCharacters: List<LolCharacter>
+)
 
 interface CharactersRepository : WithState<CharactersState, CharactersRepository> {
 

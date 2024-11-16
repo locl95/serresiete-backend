@@ -1,10 +1,10 @@
-package com.kos.httpclients.riot
+package com.kos.clients.riot
 
 import arrow.core.Either
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
 import com.kos.common.WithLogger
-import com.kos.httpclients.domain.*
+import com.kos.clients.domain.*
 import io.github.resilience4j.kotlin.ratelimiter.RateLimiterConfig
 import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
 import io.github.resilience4j.ratelimiter.RateLimiter
@@ -46,6 +46,8 @@ data class RiotHTTPClient(val client: HttpClient, val apiKey: String) : RiotClie
     )
 
     private suspend fun <T> throttleRequest(request: suspend () -> T): T {
+        logger.debug("PerSecondThrottlerHashId ${System.identityHashCode(perSecondRateLimiter)}")
+        logger.debug("PerTwoMinutesThrottlerHashId ${System.identityHashCode(perTwoMinuteRateLimiter)}")
         return perSecondRateLimiter.executeSuspendFunction {
             perTwoMinuteRateLimiter.executeSuspendFunction(request)
         }

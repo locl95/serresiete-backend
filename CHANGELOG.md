@@ -4,6 +4,13 @@
 ### Added
 - **WoW Hardcore Views**: Introduced support for **World of Warcraft Hardcore Views**, allowing users to create and manage views specifically for hardcore characters.
 - **Event Sourcing for WoW Characters**: Synchronization for WoW characters, including **Mythic+** and **Hardcore**, is now handled via event sourcing, improving efficiency and scalability.
+
+## [4.1.1] 15-11-2024
+
+### Added
+- **Game-Based View Filtering**: Introduced a new filter to retrieve views specific to a particular game.
+    - This enhancement improves user experience by allowing targeted retrieval of views for games like "World of Warcraft" or "League of Legends."
+
 ## [4.1.0] 12-11-2024
 
 ### Changed

@@ -38,7 +38,9 @@ import com.kos.clients.domain.GetSummonerResponse
 import com.kos.clients.raiderio.RaiderIoClient
 import com.kos.clients.riot.RiotClient
 import com.kos.roles.Role
+import com.kos.views.ViewsTestHelper.basicSimpleGameViews
 import com.kos.views.ViewsTestHelper.basicSimpleLolView
+import com.kos.views.ViewsTestHelper.basicSimpleLolViews
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
@@ -100,6 +102,20 @@ class ViewsServiceTest {
                 )
 
                 assertEquals(basicSimpleWowView, viewsService.getSimple("1"))
+            }
+        }
+
+        @Test
+        fun `i can get views of a game`() {
+            runBlocking {
+                val (_, viewsService) = createService(
+                    basicSimpleGameViews,
+                    emptyCharactersState,
+                    listOf(),
+                    emptyCredentialsInitialState
+                )
+
+                assertEquals(basicSimpleLolViews, viewsService.getViews(Game.LOL))
             }
         }
     }

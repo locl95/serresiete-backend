@@ -1,5 +1,7 @@
 package com.kos.views
 
+import com.kos.views.ViewsTestHelper.basicSimpleGameViews
+import com.kos.views.ViewsTestHelper.basicSimpleLolViews
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.id
 import com.kos.views.ViewsTestHelper.name
@@ -21,6 +23,14 @@ import kotlin.test.assertEquals
 
 abstract class ViewsRepositoryTest {
     abstract val repository: ViewsRepository
+
+    @Test
+    fun `given a repository with views i can retrieve the views of a game`() {
+        runBlocking {
+            val repositoryWithState = repository.withState(basicSimpleGameViews)
+            assertEquals(basicSimpleLolViews, repositoryWithState.getViews(Game.LOL))
+        }
+    }
 
     @Test
     fun `given a repository with views i can retrieve them`() {

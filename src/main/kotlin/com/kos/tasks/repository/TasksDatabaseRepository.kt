@@ -53,7 +53,6 @@ class TasksDatabaseRepository(private val db: Database) : TasksRepository {
                 { baseQuery },
                 { baseQuery.adjustWhere { Tasks.type eq it.toString() } }
             )
-
             filteredQuery.map { resultRowToTask(it) }
         }
     }

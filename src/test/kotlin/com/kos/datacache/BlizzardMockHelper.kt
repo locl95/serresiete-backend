@@ -2,14 +2,17 @@ package com.kos.datacache
 
 import arrow.core.Either
 import com.kos.characters.WowCharacter
+import com.kos.characters.WowCharacterRequest
 import com.kos.common.HttpError
 import com.kos.clients.domain.*
+import kotlin.random.Random
 
 object BlizzardMockHelper {
 
     fun getToken(): Either<HttpError, TokenResponse> {
         return Either.Right(TokenResponse("token", "token", 10, "sub"))
     }
+
     fun getCharacterProfile(wowCharacter: WowCharacter): Either<HttpError, GetWowCharacterResponse> {
         return Either.Right(
             GetWowCharacterResponse(
@@ -21,12 +24,33 @@ object BlizzardMockHelper {
                 50,
                 "Hunter",
                 "Night Elf",
-                wowCharacter.realm,
+                Realm("Stitches", 5220),
                 "PERO LA QUERIA TANTO",
                 0
             )
         )
     }
+
+    fun getCharacterProfile(wowCharacter: WowCharacterRequest): Either<HttpError, GetWowCharacterResponse> {
+        return Either.Right(
+            GetWowCharacterResponse(
+                Random.nextLong(),
+                wowCharacter.name,
+                60,
+                false,
+                50,
+                50,
+                "Hunter",
+                "Night Elf",
+                Realm("Stitches", 5220),
+                "PERO LA QUERIA TANTO",
+                0
+            )
+        )
+    }
+
+    val hardcoreRealm = GetWowRealmResponse("Hardcore")
+    val notHardcoreRealm = GetWowRealmResponse("Not Hardcore")
 
     val getWowCharacterResponse = GetWowCharacterResponse(
         id = 30758927,
@@ -37,7 +61,7 @@ object BlizzardMockHelper {
         equippedItemLevel = 57,
         characterClass = "Hunter",
         race = "Night Elf",
-        realm = "Stitches",
+        realm = Realm("Stitches", 5220),
         guild = "I CANT RELEASE",
         experience = 0
     )

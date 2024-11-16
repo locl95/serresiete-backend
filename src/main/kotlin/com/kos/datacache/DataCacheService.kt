@@ -2,6 +2,7 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
@@ -233,13 +234,22 @@ data class DataCacheService(
 
     private suspend fun cacheWowHardcoreCharacters(wowCharacters: List<WowCharacter>): List<HttpError> =
         coroutineScope {
-            val errorsAndData = wowCharacters.map { wowCharacter ->
-                async {
-                    retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
-                        blizzardClient.getCharacterProfile(wowCharacter.region, wowCharacter.realm, wowCharacter.name)
-                    }.map { wowCharacter.id to it }
-                }
-            }.awaitAll().split()
+            val errorsAndData =
+                wowCharacters.map { wowCharacter ->
+                    async {
+                        either {
+                            val characterResponse: GetWowCharacterResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
+                                    blizzardClient.getCharacterProfile(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+                            wowCharacter.id to characterResponse
+                        }
+                    }
+                }.awaitAll().split()
 
             val data = errorsAndData.second.map {
                 DataCache(

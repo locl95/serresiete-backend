@@ -1,5 +1,7 @@
 package com.kos.common
 
+import com.kos.characters.WowCharacter
+import com.kos.characters.WowCharacterRequest
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.Forbidden
@@ -24,6 +26,11 @@ class InvalidTaskType(val type: String)
 interface HttpError : ControllerError {
     fun error(): String
 }
+
+class NonHardcoreCharacter(private val wowCharacter: WowCharacterRequest): HttpError {
+    override fun error(): String = "${wowCharacter.realm} is not hardcore"
+}
+
 
 data class JsonParseError(val json: String, val path: String, val error: String? = null) : HttpError {
     override fun error(): String = "ParsedJson: ${json}\nPath: $path Error: $error"

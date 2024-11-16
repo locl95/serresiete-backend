@@ -6,6 +6,7 @@ import com.kos.characters.WowCharacterRequest
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
 import com.kos.clients.domain.GetWowCharacterResponse
+import com.kos.clients.domain.GetWowRealmResponse
 import com.kos.clients.domain.RiotError
 import com.kos.clients.domain.TokenResponse
 import com.kos.common.WithLogger
@@ -45,14 +46,29 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         }
     }
 
-    override suspend fun exists(wowCharacterRequest: WowCharacterRequest): Boolean {
+    override suspend fun getRealm(
+        region: String,
+        id: Long
+    ): Either<HttpError, GetWowRealmResponse> {
         return either {
             val tokenResponse = blizzardAuthClient.getAccessToken().bind()
-            val partialURI =
-                URI("/profile/wow/character/${wowCharacterRequest.realm}/${wowCharacterRequest.name}?locale=en_US")
-            val response = getWowProfile(wowCharacterRequest.region, partialURI, tokenResponse)
-            response.status.value < 300
-        }.fold({ false }, { it })
+            val partialUri = URI("/data/wow/realm/$id?locale=en_US")
+            val response = client.get(baseURI(region).toString() + partialUri.toString()) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                    append(HttpHeaders.Accept, "*/*")
+                    append("Battlenet-Namespace", "dynamic-classic1x-eu")
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                json.decodeFromString<GetWowRealmResponse>(jsonString)
+            } catch (e: SerializationException) {
+                raise(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                raise(json.decodeFromString<RiotError>(jsonString))
+            }
+        }
     }
 
     private suspend fun getWowProfile(

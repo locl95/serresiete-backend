@@ -15,6 +15,10 @@ import com.kos.clients.domain.GetPUUIDResponse
 import com.kos.clients.domain.GetSummonerResponse
 import com.kos.clients.raiderio.RaiderIoClient
 import com.kos.clients.riot.RiotClient
+import com.kos.common.NonHardcoreCharacter
+import com.kos.datacache.BlizzardMockHelper
+import com.kos.datacache.BlizzardMockHelper.hardcoreRealm
+import com.kos.datacache.BlizzardMockHelper.notHardcoreRealm
 import com.kos.views.Game
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito.*
@@ -56,8 +60,10 @@ class CharactersServiceTest {
                 WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
             val request2 = WowCharacterRequest("kakarøna", basicWowCharacter.region, basicWowCharacter.realm)
 
-            `when`(blizzardClient.exists(request1)).thenReturn(true)
-            `when`(blizzardClient.exists(request2)).thenReturn(true)
+            `when`(blizzardClient.getCharacterProfile(request1.region, request1.realm, request1.name)).thenReturn(BlizzardMockHelper.getCharacterProfile(request1))
+            `when`(blizzardClient.getCharacterProfile(request2.region, request2.realm, request2.name)).thenReturn(BlizzardMockHelper.getCharacterProfile(request2))
+            `when`(blizzardClient.getRealm(request1.region, 5220)).thenReturn(Either.Right(hardcoreRealm))
+            `when`(blizzardClient.getRealm(request2.region, 5220)).thenReturn(Either.Right(hardcoreRealm))
 
             val charactersRepository = CharactersInMemoryRepository()
             val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
@@ -66,6 +72,26 @@ class CharactersServiceTest {
             val expected: List<Long> = listOf(1, 2)
 
             charactersService.createAndReturnIds(request, Game.WOW_HC).fold({ fail() }) { assertEquals(expected, it) }
+
+        }
+    }
+
+    @Test
+    fun `inserting a character from a non hardcore realm does not get inserted over an empty wow hardcore repository`() {
+        runBlocking {
+            val request1 =
+                WowCharacterRequest(basicWowCharacter.name, basicWowCharacter.region, basicWowCharacter.realm)
+
+            `when`(blizzardClient.getCharacterProfile(request1.region, request1.realm, request1.name)).thenReturn(BlizzardMockHelper.getCharacterProfile(request1))
+            `when`(blizzardClient.getRealm(request1.region, 5220)).thenReturn(Either.Right(notHardcoreRealm))
+
+            val charactersRepository = CharactersInMemoryRepository()
+            val charactersService = CharactersService(charactersRepository, raiderIoClient, riotClient, blizzardClient)
+
+            val request = listOf(request1)
+            val expected: List<Long> = listOf()
+
+            charactersService.createAndReturnIds(request, Game.WOW_HC).fold({ fail(it.message) }) { assertEquals(expected, it) }
 
         }
     }

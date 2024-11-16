@@ -36,6 +36,23 @@ object NameExtractorSerializer : KSerializer<String> {
     }
 }
 
+object IdExtractorSerializer : KSerializer<Long> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("IdExtractor", PrimitiveKind.LONG)
+
+    override fun deserialize(decoder: Decoder): Long {
+        require(decoder is JsonDecoder)
+        val jsonObject = decoder.decodeJsonElement().jsonObject
+        return jsonObject["id"]!!.jsonPrimitive.long
+    }
+
+    override fun serialize(encoder: Encoder, value: Long) {
+        encoder.encodeLong(value)
+    }
+}
+
+@Serializable
+data class Realm(val name: String, val id: Long)
+
 @Serializable
 data class GetWowCharacterResponse(
     val id: Long,
@@ -52,12 +69,14 @@ data class GetWowCharacterResponse(
     val characterClass: String,
     @Serializable(with = NameExtractorSerializer::class)
     val race: String,
-    @Serializable(with = NameExtractorSerializer::class)
-    val realm: String,
+    val realm: Realm,
     @Serializable(with = NameExtractorSerializer::class)
     val guild: String? = null,
     val experience: Int
 )
+
+@Serializable
+data class GetWowRealmResponse(val category: String)
 
 @Serializable
 data class HardcoreData(
@@ -83,7 +102,7 @@ data class HardcoreData(
             characterResponse.equippedItemLevel,
             characterResponse.characterClass,
             characterResponse.race,
-            characterResponse.realm,
+            characterResponse.realm.name,
             characterResponse.guild,
             characterResponse.experience
         )

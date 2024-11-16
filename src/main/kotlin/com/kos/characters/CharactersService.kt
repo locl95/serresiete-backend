@@ -2,6 +2,7 @@ package com.kos.characters
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.kos.characters.repository.CharactersRepository
 import com.kos.common.InsertError
 import com.kos.common.WithLogger
@@ -9,6 +10,7 @@ import com.kos.common.collect
 import com.kos.common.split
 import com.kos.common.*
 import com.kos.clients.blizzard.BlizzardClient
+import com.kos.clients.domain.GetWowRealmResponse
 import com.kos.clients.raiderio.RaiderIoClient
 import com.kos.clients.riot.RiotClient
 import com.kos.views.Game
@@ -23,7 +25,7 @@ data class CharactersService(
     private val charactersRepository: CharactersRepository,
     private val raiderioClient: RaiderIoClient,
     private val riotClient: RiotClient,
-    private val blizzardHttpClient: BlizzardClient
+    private val blizzardClient: BlizzardClient
 ) : WithLogger("CharactersService") {
     suspend fun createAndReturnIds(
         requestedCharacters: List<CharacterCreateRequest>,
@@ -70,14 +72,26 @@ data class CharactersService(
 
             Game.WOW_HC -> {
                 coroutineScope {
-                    existentAndNew.second.map { initialRequest ->
+                    val errorsAndValidated = existentAndNew.second.map { initialRequest ->
                         async {
-                            initialRequest as WowCharacterRequest
-                            initialRequest to blizzardHttpClient.exists(initialRequest)
+                            either {
+                                initialRequest as WowCharacterRequest
+                                val characterResponse =
+                                    blizzardClient.getCharacterProfile(
+                                        initialRequest.region,
+                                        initialRequest.realm,
+                                        initialRequest.name
+                                    ).bind()
+                                val realm: GetWowRealmResponse =
+                                    blizzardClient.getRealm(initialRequest.region, characterResponse.realm.id).bind()
+                                ensure(realm.category == "Hardcore") { NonHardcoreCharacter(initialRequest) }
+                                initialRequest
+                            }
                         }
-                    }
-                        .awaitAll()
-                }.collect({ it.second }) { it.first }
+                    }.awaitAll().split()
+                    errorsAndValidated.first.forEach { logger.error(it.error()) }
+                    errorsAndValidated.second
+                }
             }
 
             Game.LOL -> coroutineScope {

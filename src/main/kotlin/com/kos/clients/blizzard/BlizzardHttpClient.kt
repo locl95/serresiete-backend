@@ -2,7 +2,6 @@ package com.kos.clients.blizzard
 
 import arrow.core.Either
 import arrow.core.raise.either
-import com.kos.characters.WowCharacterRequest
 import com.kos.clients.domain.*
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
@@ -28,7 +27,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         character: String
     ): Either<HttpError, GetWowCharacterResponse> {
         return either {
-            logger.debug("getCharacterProfile for $realm $realm $character")
+            logger.debug("getCharacterProfile for $region $realm $character")
             val tokenResponse = blizzardAuthClient.getAccessToken().bind()
             val partialURI = URI("/profile/wow/character/$realm/$character?locale=en_US")
             val response = getWowProfile(region, partialURI, tokenResponse)
@@ -49,7 +48,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         character: String
     ): Either<HttpError, GetWowMediaResponse> {
         return either {
-            logger.debug("getCharacterMedia for $realm $realm $character")
+            logger.debug("getCharacterMedia for $region $realm $character")
             val tokenResponse = blizzardAuthClient.getAccessToken().bind()
             val partialURI = URI("/profile/wow/character/$realm/$character/character-media?locale=en_US")
             val response = client.get(baseURI(region).toString() + partialURI.toString()) {
@@ -68,6 +67,41 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 raise(json.decodeFromString<RiotError>(jsonString))
             }
         }
+    }
+
+    override suspend fun getCharacterEquipment(
+        region: String,
+        realm: String,
+        character: String
+    ): Either<HttpError, GetWowEquipmentResponse> {
+        return either {
+            logger.debug("getCharacterEquipment for $region $realm $character")
+            val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+            val partialURI = URI("/profile/wow/character/$realm/$character/equipment?locale=en_US")
+            val response = client.get(baseURI(region).toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                    append(HttpHeaders.Accept, "*/*")
+                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                json.decodeFromString<GetWowEquipmentResponse>(jsonString)
+            } catch (e: SerializationException) {
+                raise(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                raise(json.decodeFromString<RiotError>(jsonString))
+            }
+        }
+    }
+
+    override suspend fun getItemMedia(
+        region: String,
+        realm: String,
+        character: String
+    ): Either<HttpError, GetWowMediaResponse> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getRealm(

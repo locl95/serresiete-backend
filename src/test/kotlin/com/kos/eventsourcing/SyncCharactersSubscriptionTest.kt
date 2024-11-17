@@ -440,6 +440,17 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter
                 )
             )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
 
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
@@ -490,6 +501,17 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter
                 )
             )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewEditedEvent(
@@ -535,6 +557,17 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(
                 BlizzardMockHelper.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterEquipment(
                     CharactersTestHelper.basicWowCharacter
                 )
             )

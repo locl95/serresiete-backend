@@ -253,7 +253,14 @@ data class DataCacheService(
                                     wowCharacter.name
                                 )
                             }.bind()
-                            wowCharacter.id to HardcoreData.apply(characterResponse, mediaResponse)
+                            val equipmentResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
+                                blizzardClient.getCharacterEquipment(
+                                    wowCharacter.region,
+                                    wowCharacter.realm,
+                                    wowCharacter.name
+                                )
+                            }.bind()
+                            wowCharacter.id to HardcoreData.apply(characterResponse, mediaResponse, equipmentResponse)
                         }
                     }
                 }.awaitAll().split()

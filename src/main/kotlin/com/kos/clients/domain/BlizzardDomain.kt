@@ -36,20 +36,6 @@ object NameExtractorSerializer : KSerializer<String> {
     }
 }
 
-object IdExtractorSerializer : KSerializer<Long> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("IdExtractor", PrimitiveKind.LONG)
-
-    override fun deserialize(decoder: Decoder): Long {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        return jsonObject["id"]!!.jsonPrimitive.long
-    }
-
-    override fun serialize(encoder: Encoder, value: Long) {
-        encoder.encodeLong(value)
-    }
-}
-
 @Serializable
 data class Realm(val name: String, val id: Long)
 
@@ -60,6 +46,8 @@ data class GetWowCharacterResponse(
     val level: Int,
     @SerialName("is_ghost")
     val isDead: Boolean? = null,
+    @SerialName("is_self_found")
+    val isSelfFound: Boolean? = null,
     @SerialName("average_item_level")
     val averageItemLevel: Int,
     @SerialName("equipped_item_level")
@@ -68,11 +56,21 @@ data class GetWowCharacterResponse(
     @SerialName("character_class")
     val characterClass: String,
     @Serializable(with = NameExtractorSerializer::class)
+    val faction: String,
+    @Serializable(with = NameExtractorSerializer::class)
     val race: String,
     val realm: Realm,
     @Serializable(with = NameExtractorSerializer::class)
     val guild: String? = null,
     val experience: Int
+)
+
+@Serializable
+data class AssetKeyValue(val key: String, val value: String)
+
+@Serializable
+data class GetWowMediaResponse(
+    val assets: List<AssetKeyValue>
 )
 
 @Serializable
@@ -84,27 +82,33 @@ data class HardcoreData(
     val name: String,
     val level: Int,
     val isDead: Boolean,
+    val isSelfFound: Boolean,
     val averageItemLevel: Int,
     val equippedItemLevel: Int,
     val characterClass: String,
     val race: String,
     val realm: String,
     val guild: String?,
-    val experience: Int
+    val experience: Int,
+    val faction: String,
+    val avatar: String?
 ) : Data {
     companion object {
-        fun apply(characterResponse: GetWowCharacterResponse) = HardcoreData(
+        fun apply(characterResponse: GetWowCharacterResponse, mediaResponse: GetWowMediaResponse) = HardcoreData(
             characterResponse.id,
             characterResponse.name,
             characterResponse.level,
             characterResponse.isDead ?: false,
+            characterResponse.isSelfFound ?: false,
             characterResponse.averageItemLevel,
             characterResponse.equippedItemLevel,
             characterResponse.characterClass,
             characterResponse.race,
             characterResponse.realm.name,
             characterResponse.guild,
-            characterResponse.experience
+            characterResponse.experience,
+            characterResponse.faction,
+            mediaResponse.assets.find { it.key == "avatar" }?.value
         )
     }
 }

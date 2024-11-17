@@ -3,12 +3,9 @@ package com.kos.clients.blizzard
 import arrow.core.Either
 import arrow.core.raise.either
 import com.kos.characters.WowCharacterRequest
+import com.kos.clients.domain.*
 import com.kos.common.HttpError
 import com.kos.common.JsonParseError
-import com.kos.clients.domain.GetWowCharacterResponse
-import com.kos.clients.domain.GetWowRealmResponse
-import com.kos.clients.domain.RiotError
-import com.kos.clients.domain.TokenResponse
 import com.kos.common.WithLogger
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -38,6 +35,33 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             val jsonString = response.body<String>()
             try {
                 json.decodeFromString<GetWowCharacterResponse>(jsonString)
+            } catch (e: SerializationException) {
+                raise(JsonParseError(jsonString, e.stackTraceToString()))
+            } catch (e: IllegalArgumentException) {
+                raise(json.decodeFromString<RiotError>(jsonString))
+            }
+        }
+    }
+
+    override suspend fun getCharacterMedia(
+        region: String,
+        realm: String,
+        character: String
+    ): Either<HttpError, GetWowMediaResponse> {
+        return either {
+            logger.debug("getCharacterMedia for $realm $realm $character")
+            val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+            val partialURI = URI("/profile/wow/character/$realm/$character/character-media?locale=en_US")
+            val response = client.get(baseURI(region).toString() + partialURI.toString()) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                    append(HttpHeaders.Accept, "*/*")
+                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                }
+            }
+            val jsonString = response.body<String>()
+            try {
+                json.decodeFromString<GetWowMediaResponse>(jsonString)
             } catch (e: SerializationException) {
                 raise(JsonParseError(jsonString, e.stackTraceToString()))
             } catch (e: IllegalArgumentException) {

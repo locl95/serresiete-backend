@@ -246,7 +246,14 @@ data class DataCacheService(
                                         wowCharacter.name
                                     )
                                 }.bind()
-                            wowCharacter.id to characterResponse
+                            val mediaResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
+                                blizzardClient.getCharacterMedia(
+                                    wowCharacter.region,
+                                    wowCharacter.realm,
+                                    wowCharacter.name
+                                )
+                            }.bind()
+                            wowCharacter.id to HardcoreData.apply(characterResponse, mediaResponse)
                         }
                     }
                 }.awaitAll().split()
@@ -254,7 +261,7 @@ data class DataCacheService(
             val data = errorsAndData.second.map {
                 DataCache(
                     it.first,
-                    json.encodeToString<Data>(HardcoreData.apply(it.second)),
+                    json.encodeToString<Data>(it.second),
                     OffsetDateTime.now()
                 )
             }

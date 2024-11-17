@@ -20,14 +20,22 @@ object BlizzardMockHelper {
                 wowCharacter.name,
                 60,
                 false,
+                false,
                 50,
                 50,
                 "Hunter",
+                "Alliance",
                 "Night Elf",
                 Realm("Stitches", 5220),
                 "PERO LA QUERIA TANTO",
-                0
+                0,
             )
+        )
+    }
+
+    fun getCharacterMedia(wowCharacter: WowCharacter): Either<HttpError, GetWowMediaResponse> {
+        return Either.Right(
+            GetWowMediaResponse(listOf(AssetKeyValue("avatar", "${wowCharacter.id}")))
         )
     }
 
@@ -38,9 +46,11 @@ object BlizzardMockHelper {
                 wowCharacter.name,
                 60,
                 false,
+                false,
                 50,
                 50,
                 "Hunter",
+                "Alliance",
                 "Night Elf",
                 Realm("Stitches", 5220),
                 "PERO LA QUERIA TANTO",
@@ -60,6 +70,7 @@ object BlizzardMockHelper {
         averageItemLevel = 59,
         equippedItemLevel = 57,
         characterClass = "Hunter",
+        faction = "Alliance",
         race = "Night Elf",
         realm = Realm("Stitches", 5220),
         guild = "I CANT RELEASE",

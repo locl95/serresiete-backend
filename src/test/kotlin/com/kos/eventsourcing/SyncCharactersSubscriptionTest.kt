@@ -261,6 +261,7 @@ class SyncCharactersSubscriptionTest {
                     0
                 )
             }
+
         @Test
         fun `should ignore not related events`() {
             runBlocking {
@@ -416,7 +417,7 @@ class SyncCharactersSubscriptionTest {
     @Nested
     inner class BehaviorOfSyncWowHardcoreProcessor {
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_CREATED with WOW_HC game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_CREATED with WOW_HC game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -425,6 +426,17 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(
                 BlizzardMockHelper.getCharacterProfile(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
                     CharactersTestHelper.basicWowCharacter
                 )
             )
@@ -455,7 +467,7 @@ class SyncCharactersSubscriptionTest {
         }
 
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_EDITED with WOW game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_EDITED with WOW game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -464,6 +476,17 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(
                 BlizzardMockHelper.getCharacterProfile(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
                     CharactersTestHelper.basicWowCharacter
                 )
             )
@@ -492,7 +515,7 @@ class SyncCharactersSubscriptionTest {
         }
 
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_PATCHED with WOW game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_PATCHED with WOW game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -501,6 +524,17 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(
                 BlizzardMockHelper.getCharacterProfile(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
                     CharactersTestHelper.basicWowCharacter
                 )
             )

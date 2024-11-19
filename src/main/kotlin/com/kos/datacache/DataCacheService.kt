@@ -246,7 +246,62 @@ data class DataCacheService(
                                         wowCharacter.name
                                     )
                                 }.bind()
-                            wowCharacter.id to characterResponse
+                            val mediaResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterMedia") {
+                                blizzardClient.getCharacterMedia(
+                                    wowCharacter.region,
+                                    wowCharacter.realm,
+                                    wowCharacter.name
+                                )
+                            }.bind()
+                            val equipmentResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterEquipment") {
+                                blizzardClient.getCharacterEquipment(
+                                    wowCharacter.region,
+                                    wowCharacter.realm,
+                                    wowCharacter.name
+                                )
+                            }.bind()
+
+                            val itemsWithIcon: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
+                                equipmentResponse.equippedItems.map {
+                                    it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
+                                        blizzardClient.getItemMedia(
+                                            wowCharacter.region,
+                                            it.item.id,
+                                        )
+                                    }.getOrNull()
+                                }
+
+                            val stats: GetWowCharacterStatsResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetStats") {
+                                    blizzardClient.getCharacterStats(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+
+                            val specializations: GetWowSpecializationsResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetSpecializations") {
+                                    blizzardClient.getCharacterSpecializations(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+
+                            val wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse =
+                                retryEitherWithFixedDelay(retryConfig, "raiderioWowheadEmbedded") {
+                                    raiderIoClient.wowheadEmbeddedCalculator(wowCharacter)
+                                }.bind()
+
+                            wowCharacter.id to HardcoreData.apply(
+                                characterResponse,
+                                mediaResponse,
+                                itemsWithIcon,
+                                stats,
+                                specializations,
+                                wowHeadEmbeddedResponse
+                            )
                         }
                     }
                 }.awaitAll().split()
@@ -254,7 +309,7 @@ data class DataCacheService(
             val data = errorsAndData.second.map {
                 DataCache(
                     it.first,
-                    json.encodeToString<Data>(HardcoreData.apply(it.second)),
+                    json.encodeToString<Data>(it.second),
                     OffsetDateTime.now()
                 )
             }

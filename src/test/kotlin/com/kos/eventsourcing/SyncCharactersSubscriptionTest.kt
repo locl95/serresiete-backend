@@ -25,6 +25,8 @@ import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Nested
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -446,11 +448,30 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter.realm,
                     CharactersTestHelper.basicWowCharacter.name
                 )
-            ).thenReturn(
-                BlizzardMockHelper.getCharacterEquipment(
-                    CharactersTestHelper.basicWowCharacter
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
                 )
-            )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
 
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
@@ -507,11 +528,31 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter.realm,
                     CharactersTestHelper.basicWowCharacter.name
                 )
-            ).thenReturn(
-                BlizzardMockHelper.getCharacterEquipment(
-                    CharactersTestHelper.basicWowCharacter
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
                 )
-            )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewEditedEvent(
@@ -566,11 +607,31 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter.realm,
                     CharactersTestHelper.basicWowCharacter.name
                 )
-            ).thenReturn(
-                BlizzardMockHelper.getCharacterEquipment(
-                    CharactersTestHelper.basicWowCharacter
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
                 )
-            )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewPatchedEvent(

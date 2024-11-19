@@ -215,8 +215,6 @@ data class GetWowSpecializationsResponse(
 @Serializable
 data class SpecializationGroup(
     val specializations: List<Specialization>,
-    @SerialName("is_active")
-    val isActive: Boolean
 )
 
 @Serializable

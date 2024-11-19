@@ -11,6 +11,8 @@ import com.kos.clients.riot.RiotClient
 import com.kos.common.ControllerError
 import com.kos.common.RetryConfig
 import com.kos.characters.Character
+import com.kos.clients.domain.RaiderioWowHeadEmbeddedResponse
+import com.kos.clients.domain.TalentLoadout
 import com.kos.datacache.BlizzardMockHelper
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.RaiderIoMockHelper
@@ -473,6 +475,10 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(BlizzardMockHelper.getItemMedia())
 
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewCreatedEvent(
@@ -553,6 +559,10 @@ class SyncCharactersSubscriptionTest {
                 )
             ).thenReturn(BlizzardMockHelper.getItemMedia())
 
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewEditedEvent(
@@ -631,6 +641,10 @@ class SyncCharactersSubscriptionTest {
                     18421
                 )
             ).thenReturn(BlizzardMockHelper.getItemMedia())
+
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
 
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(

@@ -2,23 +2,24 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
-import com.kos.common.*
-import com.kos.common.Retry.retryEitherWithFixedDelay
-import com.kos.datacache.repository.DataCacheRepository
 import com.kos.clients.blizzard.BlizzardClient
 import com.kos.clients.domain.*
 import com.kos.clients.raiderio.RaiderIoClient
 import com.kos.clients.riot.RiotClient
+import com.kos.common.*
+import com.kos.common.Retry.retryEitherWithFixedDelay
+import com.kos.datacache.repository.DataCacheRepository
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -29,6 +30,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import java.time.OffsetDateTime
+import kotlin.collections.fold
 
 data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
@@ -238,6 +240,16 @@ data class DataCacheService(
                 wowCharacters.map { wowCharacter ->
                     async {
                         either {
+                            val newestCharacterDataCacheEntry: HardcoreData? =
+                                dataCacheRepository.get(wowCharacter.id).maxByOrNull { it.inserted }?.let {
+                                    try {
+                                        json.decodeFromString<HardcoreData>(it.data)
+                                    } catch (e: Throwable) {
+                                        logger.debug("Couldn't deserialize character ${wowCharacter.id} while trying to obtain newest cached record.\n${e.message}")
+                                        null
+                                    }
+                                }
+
                             val characterResponse: GetWowCharacterResponse =
                                 retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
                                     blizzardClient.getCharacterProfile(
@@ -253,16 +265,30 @@ data class DataCacheService(
                                     wowCharacter.name
                                 )
                             }.bind()
-                            val equipmentResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterEquipment") {
-                                blizzardClient.getCharacterEquipment(
-                                    wowCharacter.region,
-                                    wowCharacter.realm,
-                                    wowCharacter.name
-                                )
-                            }.bind()
+                            val equipmentResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterEquipment") {
+                                    blizzardClient.getCharacterEquipment(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
 
-                            val itemsWithIcon: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
-                                equipmentResponse.equippedItems.map {
+                            val existentItemsAndItemsToRequest: Pair<List<WowItem>, List<WowItemResponse>> =
+                                newestCharacterDataCacheEntry._fold(
+                                    left = { equipmentResponse.equippedItems.map { Either.Right(it) } },
+                                    right = { record ->
+                                        equipmentResponse.equippedItems.fold(emptyList<Either<WowItem, WowItemResponse>>()) { acc, itemResponse ->
+                                            when (val maybeItem = record.items.find { itemResponse.item.id == it.id }) {
+                                                null -> acc + Either.Right(itemResponse)
+                                                else -> acc + Either.Left(maybeItem)
+                                            }
+
+                                        }
+                                    }).split()
+
+                            val newItemsWithIcons: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
+                                existentItemsAndItemsToRequest.second.map {
                                     it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
                                         blizzardClient.getItemMedia(
                                             wowCharacter.region,
@@ -295,9 +321,11 @@ data class DataCacheService(
                                 }.bind()
 
                             wowCharacter.id to HardcoreData.apply(
+                                wowCharacter.region,
                                 characterResponse,
                                 mediaResponse,
-                                itemsWithIcon,
+                                existentItemsAndItemsToRequest.first,
+                                newItemsWithIcons,
                                 stats,
                                 specializations,
                                 wowHeadEmbeddedResponse
@@ -318,6 +346,7 @@ data class DataCacheService(
 
             errorsAndData.first
         }
+
 
     suspend fun clear(): Int = dataCacheRepository.deleteExpiredRecord(ttl)
 }

@@ -388,6 +388,7 @@ data class HardcoreData(
     val race: String,
     val gender: String,
     val realm: String,
+    val region: String,
     val guild: String?,
     val experience: Int,
     val items: List<WowItem>,
@@ -398,8 +399,10 @@ data class HardcoreData(
 ) : Data {
     companion object {
         fun apply(
+            region: String,
             characterResponse: GetWowCharacterResponse,
             mediaResponse: GetWowMediaResponse,
+            alreadyExistentItems: List<WowItem>,
             equipmentResponse: List<Pair<WowItemResponse, GetWowMediaResponse?>>,
             statsResponse: GetWowCharacterStatsResponse,
             specializationsResponse: GetWowSpecializationsResponse,
@@ -416,9 +419,10 @@ data class HardcoreData(
             characterResponse.race,
             characterResponse.gender,
             characterResponse.realm.name,
+            region,
             characterResponse.guild,
             characterResponse.experience,
-            equipmentResponse.map { (item, icon) ->
+            alreadyExistentItems + equipmentResponse.map { (item, icon) ->
                 WowItem(
                     item.item.id,
                     item.slot.name,

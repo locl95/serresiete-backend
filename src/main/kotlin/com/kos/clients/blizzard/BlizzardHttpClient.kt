@@ -55,7 +55,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                    append("Battlenet-Namespace", "profile-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -82,7 +82,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                    append("Battlenet-Namespace", "profile-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -109,7 +109,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                    append("Battlenet-Namespace", "profile-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -136,7 +136,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "profile-classic1x-eu")
+                    append("Battlenet-Namespace", "profile-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -162,7 +162,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "static-classic1x-eu")
+                    append("Battlenet-Namespace", "static-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -187,7 +187,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
                     append(HttpHeaders.Accept, "*/*")
-                    append("Battlenet-Namespace", "dynamic-classic1x-eu")
+                    append("Battlenet-Namespace", "dynamic-classic1x-${region}")
                 }
             }
             val jsonString = response.body<String>()
@@ -209,7 +209,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         headers {
             append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
             append(HttpHeaders.Accept, "*/*")
-            append("Battlenet-Namespace", "profile-classic1x-eu")
+            append("Battlenet-Namespace", "profile-classic1x-${region}")
         }
     }
 }

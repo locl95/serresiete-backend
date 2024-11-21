@@ -17,6 +17,9 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.net.URI
 import java.time.Duration
+import java.time.OffsetDateTime
+
+data class TokenState(val obtainedAt: OffsetDateTime, val tokenResponse: TokenResponse)
 
 class BlizzardHttpClient(private val client: HttpClient, private val blizzardAuthClient: BlizzardAuthClient) :
     BlizzardClient, WithLogger("blizzardClient") {
@@ -24,6 +27,44 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
     private val json = Json {
         ignoreUnknownKeys = true
     }
+    private var token: Either<HttpError, TokenState>? = null
+
+    private suspend fun getAndUpdateToken(): Either<HttpError, TokenState> {
+        val newTokenState = when (token) {
+            null -> {
+                logger.debug("null token state")
+                blizzardAuthClient.getAccessToken()
+            }
+
+            else -> token!!.fold(
+                ifLeft = {
+                    logger.debug("token state with httpError: {}", it.error())
+                    blizzardAuthClient.getAccessToken()
+                },
+                ifRight = {
+                    if (it.obtainedAt.plusSeconds(it.tokenResponse.expiresIn)
+                            .minusSeconds(10)
+                            .isBefore(OffsetDateTime.now())
+                    ) {
+                        logger.debug(
+                            "token state expired: expiresIn - {} obtainedAt - {} ",
+                            it.tokenResponse.expiresIn,
+                            it.obtainedAt
+                        )
+                        blizzardAuthClient.getAccessToken()
+                    } else {
+                        logger.debug("token in good state")
+                        Either.Right(it.tokenResponse)
+                    }
+                }
+            )
+        }.map {
+            TokenState(OffsetDateTime.now(), it)
+        }
+        token = newTokenState
+        return newTokenState
+    }
+
 
     private val perSecondRateLimiter = RateLimiter.of(
         "perSecondLimiter",
@@ -47,9 +88,9 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getCharacterProfile for $region $realm $character")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/profile/wow/character/$realm/$character?locale=en_US")
-                val response = getWowProfile(region, partialURI, tokenResponse)
+                val response = getWowProfile(region, partialURI, tokenResponse.tokenResponse)
                 val jsonString = response.body<String>()
                 try {
                     json.decodeFromString<GetWowCharacterResponse>(jsonString)
@@ -70,11 +111,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getCharacterMedia for $region $realm $character")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/profile/wow/character/$realm/$character/character-media?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "profile-classic1x-${region}")
                     }
@@ -99,11 +140,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getCharacterEquipment for $region $realm $character")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/profile/wow/character/$realm/$character/equipment?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "profile-classic1x-${region}")
                     }
@@ -128,11 +169,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getCharacterEquipment for $region $realm $character")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/profile/wow/character/$realm/$character/specializations?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "profile-classic1x-${region}")
                     }
@@ -157,11 +198,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getCharacterStats for $region $realm $character")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/profile/wow/character/$realm/$character/statistics?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "profile-classic1x-${region}")
                     }
@@ -185,11 +226,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         return throttleRequest {
             either {
                 logger.debug("getItemMedia for $id")
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialURI = URI("/data/wow/media/item/$id?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "static-classic1x-${region}")
                     }
@@ -212,11 +253,11 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
     ): Either<HttpError, GetWowRealmResponse> {
         return throttleRequest {
             either {
-                val tokenResponse = blizzardAuthClient.getAccessToken().bind()
+                val tokenResponse = getAndUpdateToken().bind()
                 val partialUri = URI("/data/wow/realm/$id?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialUri.toString()) {
                     headers {
-                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.accessToken}")
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
                         append(HttpHeaders.Accept, "*/*")
                         append("Battlenet-Namespace", "dynamic-classic1x-${region}")
                     }

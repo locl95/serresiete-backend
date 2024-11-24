@@ -10,11 +10,12 @@ import java.time.OffsetDateTime
 class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepository {
 
     override suspend fun withState(initialState: List<DataCache>): DataCacheDatabaseRepository {
-        newSuspendedTransaction(Dispatchers.IO, db)  {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             DataCaches.batchInsert(initialState) {
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
                 this[DataCaches.inserted] = it.inserted.toString()
+                this[DataCaches.game] = it.game
             }
         }
         return this
@@ -24,6 +25,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         val characterId = long("character_id")
         val data = text("data")
         val inserted = text("inserted")
+        val game = text("game")
 
         override val primaryKey = PrimaryKey(characterId)
         override val tableName = "data_cache"
@@ -33,6 +35,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         row[DataCaches.characterId],
         row[DataCaches.data],
         OffsetDateTime.parse(row[DataCaches.inserted]),
+        row[DataCaches.game]
     )
 
     override suspend fun insert(data: List<DataCache>): Boolean {
@@ -41,6 +44,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
                 this[DataCaches.inserted] = it.inserted.toString()
+                this[DataCaches.game] = it.game
             }
         }
         return true
@@ -57,5 +61,6 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         }
     }
 
-    override suspend fun state(): List<DataCache> = newSuspendedTransaction(Dispatchers.IO, db) { DataCaches.selectAll().map { resultRowToDataCache(it) } }
+    override suspend fun state(): List<DataCache> =
+        newSuspendedTransaction(Dispatchers.IO, db) { DataCaches.selectAll().map { resultRowToDataCache(it) } }
 }

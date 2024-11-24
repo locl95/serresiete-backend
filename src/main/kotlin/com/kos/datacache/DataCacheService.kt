@@ -2,23 +2,24 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
-import com.kos.common.*
-import com.kos.common.Retry.retryEitherWithFixedDelay
-import com.kos.datacache.repository.DataCacheRepository
 import com.kos.clients.blizzard.BlizzardClient
 import com.kos.clients.domain.*
 import com.kos.clients.raiderio.RaiderIoClient
 import com.kos.clients.riot.RiotClient
+import com.kos.common.*
+import com.kos.common.Retry.retryEitherWithFixedDelay
+import com.kos.datacache.repository.DataCacheRepository
 import com.kos.views.Game
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -112,7 +113,12 @@ data class DataCacheService(
                     ifLeft = { error -> errorsChannel.send(error) },
                     ifRight = { (id, riotData) ->
                         dataChannel.send(
-                            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+                            DataCache(
+                                id,
+                                json.encodeToString<Data>(riotData),
+                                OffsetDateTime.now(),
+                                Game.LOL.toString()
+                            )
                         )
                     }
                 )
@@ -213,7 +219,8 @@ data class DataCacheService(
                         .split()
                 val data = errorsAndData.second.map {
                     DataCache(
-                        it.first, json.encodeToString<Data>(
+                        it.first,
+                        json.encodeToString<Data>(
                             it.second.profile.toRaiderIoData(
                                 it.first,
                                 BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoff.totalPopulation * 100).setScale(
@@ -222,7 +229,9 @@ data class DataCacheService(
                                 ).toDouble(),
                                 it.second.specs
                             )
-                        ), OffsetDateTime.now()
+                        ),
+                        OffsetDateTime.now(),
+                        Game.WOW.toString()
                     )
                 }
                 dataCacheRepository.insert(data)
@@ -255,7 +264,8 @@ data class DataCacheService(
                 DataCache(
                     it.first,
                     json.encodeToString<Data>(HardcoreData.apply(it.second)),
-                    OffsetDateTime.now()
+                    OffsetDateTime.now(),
+                    Game.WOW_HC.toString()
                 )
             }
 

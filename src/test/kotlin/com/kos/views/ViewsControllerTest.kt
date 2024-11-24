@@ -221,7 +221,7 @@ class ViewsControllerTest {
                 emptyCredentialsState,
                 listOf(basicSimpleWowView.copy(characterIds = listOf(1))),
                 CharactersState(listOf(basicWowCharacter), listOf(), listOf()),
-                listOf(DataCache(basicWowCharacter.id, raiderIoDataString, OffsetDateTime.now()))
+                listOf(DataCache(basicWowCharacter.id, raiderIoDataString, OffsetDateTime.now(), Game.WOW.toString()))
             )
 
             `when`(raiderIoClient.cutoff()).thenReturn(RaiderIoMockHelper.cutoff())

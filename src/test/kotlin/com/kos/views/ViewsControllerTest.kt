@@ -105,7 +105,7 @@ class ViewsControllerTest {
             )
             assertEquals(
                 listOf(basicSimpleWowView),
-                controller.getViews("owner", setOf(Activities.getOwnViews)).getOrNull()
+                controller.getViews("owner", setOf(Activities.getOwnViews), null).getOrNull()
             )
         }
     }
@@ -122,7 +122,7 @@ class ViewsControllerTest {
             )
             assertEquals(
                 listOf(basicSimpleWowView, notOwnerView),
-                controller.getViews("owner", setOf(Activities.getAnyViews)).getOrNull()
+                controller.getViews("owner", setOf(Activities.getAnyViews), null).getOrNull()
             )
         }
     }

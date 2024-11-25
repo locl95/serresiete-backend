@@ -1,8 +1,12 @@
 package com.kos.views
 
+import arrow.core.raise.either
+import com.kos.common.InvalidQueryParameter
+import com.kos.common.recoverToEither
 import com.kos.common.respondWithHandledError
 import com.kos.plugins.UserWithActivities
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -17,10 +21,19 @@ fun Route.viewsRouting(
         authenticate("auth-jwt") {
             get {
                 val userWithActivities = call.principal<UserWithActivities>()
-                viewsController.getViews(userWithActivities?.name, userWithActivities?.activities.orEmpty()).fold({
+                either {
+                    val gameTypeParameter = "game"
+                    val game: Game? =
+                        call.request.queryParameters[gameTypeParameter].recoverToEither(
+                            { InvalidQueryParameter(gameTypeParameter, it, Game.entries.map { games -> games.toString() }) },
+                            { Game.fromString(it) }
+                        ).bind()
+
+                    viewsController.getViews(userWithActivities?.name, userWithActivities?.activities.orEmpty(), game).bind()
+                }.fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -34,7 +47,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -49,7 +62,7 @@ fun Route.viewsRouting(
                     .fold({
                         call.respondWithHandledError(it)
                     }, {
-                        call.respond(HttpStatusCode.OK, it)
+                        call.respond(OK, it)
                     })
             }
         }
@@ -63,7 +76,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -77,7 +90,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -92,7 +105,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -107,7 +120,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }
@@ -121,7 +134,7 @@ fun Route.viewsRouting(
                 ).fold({
                     call.respondWithHandledError(it)
                 }, {
-                    call.respond(HttpStatusCode.OK, it)
+                    call.respond(OK, it)
                 })
             }
         }

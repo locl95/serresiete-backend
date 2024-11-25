@@ -23,6 +23,7 @@ class InvalidQueryParameter(param: String, value: String, allowed: List<String>?
 }
 
 class InvalidTaskType(val type: String)
+class InvalidGameType(val type: String)
 interface HttpError : ControllerError {
     fun error(): String
 }

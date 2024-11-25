@@ -30,6 +30,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import java.time.OffsetDateTime
+import kotlin.collections.fold
 
 data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
@@ -247,6 +248,16 @@ data class DataCacheService(
                 wowCharacters.map { wowCharacter ->
                     async {
                         either {
+                            val newestCharacterDataCacheEntry: HardcoreData? =
+                                dataCacheRepository.get(wowCharacter.id).maxByOrNull { it.inserted }?.let {
+                                    try {
+                                        json.decodeFromString<HardcoreData>(it.data)
+                                    } catch (e: Throwable) {
+                                        logger.debug("Couldn't deserialize character ${wowCharacter.id} while trying to obtain newest cached record.\n${e.message}")
+                                        null
+                                    }
+                                }
+
                             val characterResponse: GetWowCharacterResponse =
                                 retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacter") {
                                     blizzardClient.getCharacterProfile(
@@ -255,7 +266,78 @@ data class DataCacheService(
                                         wowCharacter.name
                                     )
                                 }.bind()
-                            wowCharacter.id to characterResponse
+                            val mediaResponse = retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterMedia") {
+                                blizzardClient.getCharacterMedia(
+                                    wowCharacter.region,
+                                    wowCharacter.realm,
+                                    wowCharacter.name
+                                )
+                            }.bind()
+                            val equipmentResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetCharacterEquipment") {
+                                    blizzardClient.getCharacterEquipment(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+
+                            val existentItemsAndItemsToRequest: Pair<List<WowItem>, List<WowItemResponse>> =
+                                newestCharacterDataCacheEntry._fold(
+                                    left = { equipmentResponse.equippedItems.map { Either.Right(it) } },
+                                    right = { record ->
+                                        equipmentResponse.equippedItems.fold(emptyList<Either<WowItem, WowItemResponse>>()) { acc, itemResponse ->
+                                            when (val maybeItem = record.items.find { itemResponse.item.id == it.id }) {
+                                                null -> acc + Either.Right(itemResponse)
+                                                else -> acc + Either.Left(maybeItem)
+                                            }
+
+                                        }
+                                    }).split()
+
+                            val newItemsWithIcons: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
+                                existentItemsAndItemsToRequest.second.map {
+                                    it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
+                                        blizzardClient.getItemMedia(
+                                            wowCharacter.region,
+                                            it.item.id,
+                                        )
+                                    }.getOrNull()
+                                }
+
+                            val stats: GetWowCharacterStatsResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetStats") {
+                                    blizzardClient.getCharacterStats(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+
+                            val specializations: GetWowSpecializationsResponse =
+                                retryEitherWithFixedDelay(retryConfig, "blizzardGetSpecializations") {
+                                    blizzardClient.getCharacterSpecializations(
+                                        wowCharacter.region,
+                                        wowCharacter.realm,
+                                        wowCharacter.name
+                                    )
+                                }.bind()
+
+                            val wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse =
+                                retryEitherWithFixedDelay(retryConfig, "raiderioWowheadEmbedded") {
+                                    raiderIoClient.wowheadEmbeddedCalculator(wowCharacter)
+                                }.bind()
+
+                            wowCharacter.id to HardcoreData.apply(
+                                wowCharacter.region,
+                                characterResponse,
+                                mediaResponse,
+                                existentItemsAndItemsToRequest.first,
+                                newItemsWithIcons,
+                                stats,
+                                specializations,
+                                wowHeadEmbeddedResponse
+                            )
                         }
                     }
                 }.awaitAll().split()
@@ -273,6 +355,7 @@ data class DataCacheService(
 
             errorsAndData.first
         }
+
 
     suspend fun clear(): Int = dataCacheRepository.deleteExpiredRecord(ttl)
 }

@@ -11,6 +11,8 @@ import com.kos.clients.riot.RiotClient
 import com.kos.common.ControllerError
 import com.kos.common.RetryConfig
 import com.kos.characters.Character
+import com.kos.clients.domain.RaiderioWowHeadEmbeddedResponse
+import com.kos.clients.domain.TalentLoadout
 import com.kos.datacache.BlizzardMockHelper
 import com.kos.datacache.DataCacheService
 import com.kos.datacache.RaiderIoMockHelper
@@ -25,6 +27,8 @@ import io.mockk.coVerify
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Nested
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -261,6 +265,7 @@ class SyncCharactersSubscriptionTest {
                     0
                 )
             }
+
         @Test
         fun `should ignore not related events`() {
             runBlocking {
@@ -416,7 +421,7 @@ class SyncCharactersSubscriptionTest {
     @Nested
     inner class BehaviorOfSyncWowHardcoreProcessor {
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_CREATED with WOW_HC game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_CREATED with WOW_HC game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -428,6 +433,51 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter
                 )
             )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
+
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
 
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
@@ -455,7 +505,7 @@ class SyncCharactersSubscriptionTest {
         }
 
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_EDITED with WOW game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_EDITED with WOW game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -467,6 +517,52 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter
                 )
             )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
+
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewEditedEvent(
@@ -492,7 +588,7 @@ class SyncCharactersSubscriptionTest {
         }
 
         @Test
-        fun `syncWowCharactersProcessor calls cache on VIEW_PATCHED with WOW game`() = runBlocking {
+        fun `syncWowHcCharactersProcessor calls cache on VIEW_PATCHED with WOW game`() = runBlocking {
             Mockito.`when`(
                 blizzardClient.getCharacterProfile(
                     CharactersTestHelper.basicWowCharacter.region,
@@ -504,6 +600,52 @@ class SyncCharactersSubscriptionTest {
                     CharactersTestHelper.basicWowCharacter
                 )
             )
+            Mockito.`when`(
+                blizzardClient.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(
+                BlizzardMockHelper.getCharacterMedia(
+                    CharactersTestHelper.basicWowCharacter
+                )
+            )
+            Mockito.`when`(
+                blizzardClient.getCharacterEquipment(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterEquipment())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterStats(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterStats())
+
+            Mockito.`when`(
+                blizzardClient.getCharacterSpecializations(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    CharactersTestHelper.basicWowCharacter.realm,
+                    CharactersTestHelper.basicWowCharacter.name
+                )
+            ).thenReturn(BlizzardMockHelper.getCharacterSpecializations())
+
+            Mockito.`when`(
+                blizzardClient.getItemMedia(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getItemMedia())
+
+            Mockito.`when`(
+                raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
+            ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
+
             val (charactersService, spiedService, dataCacheRepository) = createService()
             val eventWithVersion = createEventWithVersion(
                 ViewPatchedEvent(

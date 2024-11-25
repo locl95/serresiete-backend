@@ -1,8 +1,10 @@
 package com.kos.views
 
+import arrow.core.Either
 import com.kos.characters.Character
 import com.kos.characters.CharacterCreateRequest
 import com.kos.clients.domain.Data
+import com.kos.common.InvalidGameType
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -18,11 +20,11 @@ enum class Game {
     };
 
     companion object {
-        fun fromString(value: String): Game = when (value) {
-            "wow" -> WOW
-            "lol" -> LOL
-            "wow_hc" -> WOW_HC
-            else -> throw IllegalArgumentException("Unknown game: $value")
+        fun fromString(value: String): Either<InvalidGameType, Game> = when (value) {
+            "wow" -> Either.Right(WOW)
+            "lol" -> Either.Right(LOL)
+            "wow_hc" -> Either.Right(WOW_HC)
+            else -> Either.Left(InvalidGameType(value))
         }
     }
 }
@@ -76,7 +78,8 @@ data class ViewDeleted(val viewId: String) : ViewResult {
 }
 
 @Serializable
-data class ViewModified(val viewId: String, val name: String, val published: Boolean, val characters: List<Long>) : ViewResult {
+data class ViewModified(val viewId: String, val name: String, val published: Boolean, val characters: List<Long>) :
+    ViewResult {
     override val isSuccess: Boolean = true
 }
 

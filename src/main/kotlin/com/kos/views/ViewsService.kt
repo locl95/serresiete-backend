@@ -22,7 +22,7 @@ class ViewsService(
 ) {
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
-    suspend fun getViews(): List<SimpleView> = viewsRepository.getViews()
+    suspend fun getViews(game: Game?): List<SimpleView> = viewsRepository.getViews(game)
     suspend fun get(id: String): View? {
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null

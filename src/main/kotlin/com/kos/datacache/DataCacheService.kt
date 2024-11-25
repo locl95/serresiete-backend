@@ -117,7 +117,7 @@ data class DataCacheService(
                                 id,
                                 json.encodeToString<Data>(riotData),
                                 OffsetDateTime.now(),
-                                Game.LOL.toString()
+                                Game.LOL
                             )
                         )
                     }
@@ -231,7 +231,7 @@ data class DataCacheService(
                             )
                         ),
                         OffsetDateTime.now(),
-                        Game.WOW.toString()
+                        Game.WOW
                     )
                 }
                 dataCacheRepository.insert(data)
@@ -265,7 +265,7 @@ data class DataCacheService(
                     it.first,
                     json.encodeToString<Data>(HardcoreData.apply(it.second)),
                     OffsetDateTime.now(),
-                    Game.WOW_HC.toString()
+                    Game.WOW_HC
                 )
             }
 

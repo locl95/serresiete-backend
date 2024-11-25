@@ -1,6 +1,7 @@
 package com.kos.datacache.repository
 
 import com.kos.datacache.DataCache
+import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -15,7 +16,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
                 this[DataCaches.inserted] = it.inserted.toString()
-                this[DataCaches.game] = it.game
+                this[DataCaches.game] = it.game.toString()
             }
         }
         return this
@@ -35,7 +36,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         row[DataCaches.characterId],
         row[DataCaches.data],
         OffsetDateTime.parse(row[DataCaches.inserted]),
-        row[DataCaches.game]
+        Game.fromString(row[DataCaches.game])
     )
 
     override suspend fun insert(data: List<DataCache>): Boolean {
@@ -44,7 +45,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
                 this[DataCaches.characterId] = it.characterId
                 this[DataCaches.data] = it.data
                 this[DataCaches.inserted] = it.inserted.toString()
-                this[DataCaches.game] = it.game
+                this[DataCaches.game] = it.game.toString()
             }
         }
         return true

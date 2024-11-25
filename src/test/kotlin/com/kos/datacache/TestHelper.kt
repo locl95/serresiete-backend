@@ -224,8 +224,8 @@ object TestHelper {
         }"""
 
     private val now = OffsetDateTime.now()
-    val outdatedDataCache = DataCache(1, wowData, now.minusHours(25), Game.WOW.toString())
-    val wowDataCache = DataCache(1, wowData, now, Game.WOW.toString())
-    val lolDataCache = DataCache(2, lolData, now, Game.LOL.toString())
-    val anotherLolDataCache = DataCache(3, anotherLolData, now, Game.LOL.toString())
+    val outdatedDataCache = DataCache(1, wowData, now.minusHours(25), Game.WOW)
+    val wowDataCache = DataCache(1, wowData, now, Game.WOW)
+    val lolDataCache = DataCache(2, lolData, now, Game.LOL)
+    val anotherLolDataCache = DataCache(3, anotherLolData, now, Game.LOL)
 }

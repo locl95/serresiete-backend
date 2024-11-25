@@ -322,8 +322,8 @@ abstract class CharactersRepositoryTestCommon {
 
             dataCacheRepository.withState(
                 listOf(
-                    DataCache(1, "", OffsetDateTime.now(), Game.LOL.toString()),
-                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31), Game.LOL.toString())
+                    DataCache(1, "", OffsetDateTime.now(), Game.LOL),
+                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31), Game.LOL)
                 )
             )
             val res = repoWithState.getCharactersToSync(Game.LOL, 30)
@@ -356,9 +356,9 @@ abstract class CharactersRepositoryTestCommon {
 
             dataCacheRepository.withState(
                 listOf(
-                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31), Game.LOL.toString()),
-                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31), Game.LOL.toString()),
-                    DataCache(3, "", OffsetDateTime.now().minusMinutes(31), Game.LOL.toString())
+                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31), Game.LOL),
+                    DataCache(2, "", OffsetDateTime.now().minusMinutes(31), Game.LOL),
+                    DataCache(3, "", OffsetDateTime.now().minusMinutes(31), Game.LOL)
                 )
             )
             val res = repoWithState.getCharactersToSync(Game.LOL, 30)
@@ -408,8 +408,8 @@ abstract class CharactersRepositoryTestCommon {
 
             dataCacheRepository.withState(
                 listOf(
-                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31), Game.LOL.toString()),
-                    DataCache(1, "", OffsetDateTime.now(), Game.LOL.toString())
+                    DataCache(1, "", OffsetDateTime.now().minusMinutes(31), Game.LOL),
+                    DataCache(1, "", OffsetDateTime.now(), Game.LOL)
                 )
             )
             val res = repoWithState.getCharactersToSync(Game.LOL, 30)

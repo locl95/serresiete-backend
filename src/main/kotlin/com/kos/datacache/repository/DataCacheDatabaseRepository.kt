@@ -1,5 +1,6 @@
 package com.kos.datacache.repository
 
+import com.kos.common.getOrThrow
 import com.kos.datacache.DataCache
 import com.kos.views.Game
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         row[DataCaches.data],
         OffsetDateTime.parse(row[DataCaches.inserted]),
         Game.fromString(row[DataCaches.game])
+            .getOrThrow(IllegalArgumentException("Invalid game type: ${row[DataCaches.game]}"))
     )
 
     override suspend fun insert(data: List<DataCache>): Boolean {

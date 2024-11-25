@@ -30,7 +30,6 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import java.time.OffsetDateTime
-import kotlin.collections.fold
 
 data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
@@ -345,7 +344,7 @@ data class DataCacheService(
             val data = errorsAndData.second.map {
                 DataCache(
                     it.first,
-                    json.encodeToString<Data>(HardcoreData.apply(it.second)),
+                    json.encodeToString<Data>(it.second),
                     OffsetDateTime.now(),
                     Game.WOW_HC
                 )

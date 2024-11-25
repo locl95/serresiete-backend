@@ -37,8 +37,7 @@ class DataCacheDatabaseRepository(private val db: Database) : DataCacheRepositor
         row[DataCaches.characterId],
         row[DataCaches.data],
         OffsetDateTime.parse(row[DataCaches.inserted]),
-        Game.fromString(row[DataCaches.game])
-            .getOrThrow(IllegalArgumentException("Invalid game type: ${row[DataCaches.game]}"))
+        Game.fromString(row[DataCaches.game]).getOrThrow()
     )
 
     override suspend fun insert(data: List<DataCache>): Boolean {

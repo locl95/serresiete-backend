@@ -47,8 +47,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
             row[Views.published],
             CharactersView.select { CharactersView.viewId.eq(row[Views.id]) }
                 .map { resultRowToCharacterView(it).first },
-            Game.fromString(row[Views.game])
-                .getOrThrow(IllegalStateException("Unexpected invalid game type: ${row[Views.game]}"))
+            Game.fromString(row[Views.game]).getOrThrow()
         )
     }
 

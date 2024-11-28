@@ -23,6 +23,7 @@ class EventStoreDatabase(private val db: Database) : EventStore {
                 subclass(ViewCreatedEvent::class, ViewCreatedEvent.serializer())
                 subclass(ViewEditedEvent::class, ViewEditedEvent.serializer())
                 subclass(ViewPatchedEvent::class, ViewPatchedEvent.serializer())
+                subclass(ViewDeletedEvent::class, ViewDeletedEvent.serializer())
             }
         }
         ignoreUnknownKeys = true

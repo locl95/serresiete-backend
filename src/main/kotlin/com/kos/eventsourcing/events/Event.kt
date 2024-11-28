@@ -25,6 +25,9 @@ enum class EventType {
     },
     VIEW_PATCHED {
         override fun toString(): String = "viewPatched"
+    },
+    VIEW_DELETED {
+        override fun toString(): String = "viewDeleted"
     };
 
     companion object {
@@ -36,6 +39,7 @@ enum class EventType {
                 "viewCreated" -> VIEW_CREATED
                 "viewEdited" -> VIEW_EDITED
                 "viewPatched" -> VIEW_PATCHED
+                "viewDeleted" -> VIEW_DELETED
                 else -> throw IllegalArgumentException("error parsing EventType: $string")
             }
         }
@@ -143,6 +147,18 @@ data class ViewPatchedEvent(
             game
         )
     }
+}
+
+@Serializable
+data class ViewDeletedEvent(
+    val id: String,
+    val name: String,
+    val owner: String,
+    val characters: List<Long>,
+    val published: Boolean,
+    val game: Game
+) : EventData {
+    override val eventType: EventType = EventType.VIEW_DELETED
 }
 
 @Serializable

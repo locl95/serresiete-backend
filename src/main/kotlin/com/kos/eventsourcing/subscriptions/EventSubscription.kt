@@ -141,6 +141,10 @@ class EventSubscription(
             }
         }
 
+        suspend fun characterProcessor() {
+
+        }
+
         suspend fun syncLolCharactersProcessor(
             eventWithVersion: EventWithVersion,
             charactersService: CharactersService,

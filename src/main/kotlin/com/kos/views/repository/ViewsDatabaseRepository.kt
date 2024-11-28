@@ -129,9 +129,8 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         return ViewPatched(id, name, published, characters)
     }
 
-    override suspend fun delete(id: String): ViewDeleted {
+    override suspend fun delete(id: String): Unit {
         newSuspendedTransaction(Dispatchers.IO, db) { Views.deleteWhere { Views.id.eq(id) } }
-        return ViewDeleted(id)
     }
 
     override suspend fun getViews(game: Game?): List<SimpleView> {

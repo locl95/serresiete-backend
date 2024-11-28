@@ -183,8 +183,24 @@ class ViewsService(
         }
     }
 
-    suspend fun delete(id: String): ViewDeleted {
-        return viewsRepository.delete(id)
+    suspend fun delete(owner: String, viewToDelete: SimpleView): Operation {
+        val operationId = UUID.randomUUID().toString()
+        val aggregateRoot = "/credentials/$owner"
+        val event = Event(
+            aggregateRoot,
+            operationId,
+            ViewDeletedEvent(
+                viewToDelete.id,
+                viewToDelete.name,
+                viewToDelete.owner,
+                viewToDelete.characterIds,
+                viewToDelete.published,
+                viewToDelete.game,
+            )
+        )
+
+        viewsRepository.delete(viewToDelete.id) //TODO: encapsular en either lo que retorna delete
+        return eventStore.save(event)
     }
 
     suspend fun getData(view: View): Either<HttpError, List<Data>> =

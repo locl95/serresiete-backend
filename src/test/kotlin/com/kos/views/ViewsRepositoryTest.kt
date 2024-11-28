@@ -98,7 +98,6 @@ abstract class ViewsRepositoryTest {
             val repo = repository.withState(listOf(basicSimpleWowView))
             val delete = repo.delete(id)
             val finalState = repo.state()
-            assertEquals(ViewDeleted(id), delete)
             assertEquals(finalState, listOf())
         }
     }

@@ -17,7 +17,10 @@ app.get('/api/views/:id/data', (req, res) => {
 });
 
 app.get('/api/views/:id/cached-data', (req, res) => {
-    res.sendFile(join(__dirname, 'resources', 'cached-data.json'));
+    const viewId = req.params.id;
+
+    if (viewId === 'lol-view') return res.sendFile(join(__dirname, 'resources', 'lol-cached-data.json'));
+    return res.status(404).send('Not found')
 });
 
 app.get('/api/views', (req, res) => {

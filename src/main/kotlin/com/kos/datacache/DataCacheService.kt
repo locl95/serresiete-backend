@@ -30,7 +30,6 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import java.time.OffsetDateTime
-import kotlin.collections.fold
 
 data class DataCacheService(
     private val dataCacheRepository: DataCacheRepository,
@@ -114,7 +113,12 @@ data class DataCacheService(
                     ifLeft = { error -> errorsChannel.send(error) },
                     ifRight = { (id, riotData) ->
                         dataChannel.send(
-                            DataCache(id, json.encodeToString<Data>(riotData), OffsetDateTime.now())
+                            DataCache(
+                                id,
+                                json.encodeToString<Data>(riotData),
+                                OffsetDateTime.now(),
+                                Game.LOL
+                            )
                         )
                     }
                 )
@@ -215,7 +219,8 @@ data class DataCacheService(
                         .split()
                 val data = errorsAndData.second.map {
                     DataCache(
-                        it.first, json.encodeToString<Data>(
+                        it.first,
+                        json.encodeToString<Data>(
                             it.second.profile.toRaiderIoData(
                                 it.first,
                                 BigDecimal(it.second.profile.mythicPlusRanks.overall.region.toDouble() / cutoff.totalPopulation * 100).setScale(
@@ -224,7 +229,9 @@ data class DataCacheService(
                                 ).toDouble(),
                                 it.second.specs
                             )
-                        ), OffsetDateTime.now()
+                        ),
+                        OffsetDateTime.now(),
+                        Game.WOW
                     )
                 }
                 dataCacheRepository.insert(data)
@@ -338,7 +345,8 @@ data class DataCacheService(
                 DataCache(
                     it.first,
                     json.encodeToString<Data>(it.second),
-                    OffsetDateTime.now()
+                    OffsetDateTime.now(),
+                    Game.WOW_HC
                 )
             }
 

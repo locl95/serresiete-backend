@@ -315,10 +315,10 @@ data class DataCacheService(
                                     )
                                 }.bind()
 
-                            val wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse =
+                            val wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse? =
                                 retryEitherWithFixedDelay(retryConfig, "raiderioWowheadEmbedded") {
                                     raiderIoClient.wowheadEmbeddedCalculator(wowCharacter)
-                                }.bind()
+                                }.getOrNull()
 
                             wowCharacter.id to HardcoreData.apply(
                                 wowCharacter.region,

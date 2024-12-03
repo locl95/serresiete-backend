@@ -371,7 +371,7 @@ data class WowSpecialization(
 
 @Serializable
 data class WowTalents(
-    val wowHeadEmbeddedTalents: String,
+    val wowHeadEmbeddedTalents: String?,
     val specializations: List<WowSpecialization>
 )
 
@@ -406,7 +406,7 @@ data class HardcoreData(
             equipmentResponse: List<Pair<WowItemResponse, GetWowMediaResponse?>>,
             statsResponse: GetWowCharacterStatsResponse,
             specializationsResponse: GetWowSpecializationsResponse,
-            wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse
+            wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse?
         ) = HardcoreData(
             characterResponse.id,
             characterResponse.name,
@@ -435,7 +435,7 @@ data class HardcoreData(
             mediaResponse.assets.find { it.key == "avatar" }?.value,
             WowStats.apply(statsResponse),
             WowTalents(
-                wowHeadEmbeddedTalents = wowHeadEmbeddedResponse.talentLoadout.wowheadCalculator,
+                wowHeadEmbeddedTalents = wowHeadEmbeddedResponse?.talentLoadout?.wowheadCalculator,
                 specializations = specializationsResponse.specializationGroups.firstOrNull()?.specializations?.map { specialization ->
                     WowSpecialization.apply(specialization)
                 }.orEmpty()

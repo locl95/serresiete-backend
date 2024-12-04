@@ -296,13 +296,15 @@ data class DataCacheService(
 
                             val newItemsWithIcons: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
                                 existentItemsAndItemsToRequest.second.map {
-                                    it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
-                                        blizzardClient.getItemMedia(
-                                            wowCharacter.region,
-                                            it.item.id,
-                                        )
-                                    }.getOrNull()
-                                }
+                                    async {
+                                        it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
+                                            blizzardClient.getItemMedia(
+                                                wowCharacter.region,
+                                                it.item.id,
+                                            )
+                                        }.getOrNull()
+                                    }
+                                }.awaitAll()
 
                             val stats: GetWowCharacterStatsResponse =
                                 retryEitherWithFixedDelay(retryConfig, "blizzardGetStats") {

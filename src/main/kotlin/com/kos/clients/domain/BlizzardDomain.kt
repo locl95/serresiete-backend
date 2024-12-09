@@ -3,9 +3,8 @@ package com.kos.clients.domain
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
@@ -63,6 +62,142 @@ object ValueExtractorSerializer : KSerializer<Double> {
 
     override fun serialize(encoder: Encoder, value: Double) {
         encoder.encodeDouble(value)
+    }
+}
+
+object NestedDisplayableStringExtractorSerializer : KSerializer<String> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("DisplayableStringExtractor", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String {
+        require(decoder is JsonDecoder)
+        val jsonObject = decoder.decodeJsonElement().jsonObject
+        val display = jsonObject["display"]!!.jsonObject
+        return display["display_string"]!!.jsonPrimitive.content
+    }
+
+    override fun serialize(encoder: Encoder, value: String) {
+        encoder.encodeString(value)
+    }
+}
+
+object DisplayableStringExtractorSerializer : KSerializer<String> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("DisplayableStringExtractor", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String {
+        require(decoder is JsonDecoder)
+        val jsonObject = decoder.decodeJsonElement().jsonObject
+        return jsonObject["display_string"]!!.jsonPrimitive.content
+    }
+
+    override fun serialize(encoder: Encoder, value: String) {
+        encoder.encodeString(value)
+    }
+}
+
+object DescriptionListSerializer : KSerializer<List<String>> {
+    override val descriptor: SerialDescriptor =
+        ListSerializer(NestedDisplayableStringExtractorSerializer).descriptor
+
+    override fun deserialize(decoder: Decoder): List<String> {
+        require(decoder is JsonDecoder)
+        val jsonArray = decoder.decodeJsonElement().jsonArray
+        return jsonArray.map { element ->
+            val jsonObject = element.jsonObject
+            jsonObject["description"]!!.jsonPrimitive.content
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: List<String>) {
+        require(encoder is JsonEncoder)
+        val jsonArray = buildJsonArray {
+            value.forEach { displayString ->
+                addJsonObject {
+                    put("display", buildJsonObject {
+                        put("display_string", displayString)
+                    })
+                }
+            }
+        }
+        encoder.encodeJsonElement(jsonArray)
+    }
+}
+
+object NestedDisplayableStringListSerializer : KSerializer<List<String>> {
+    override val descriptor: SerialDescriptor =
+        ListSerializer(NestedDisplayableStringExtractorSerializer).descriptor
+
+    override fun deserialize(decoder: Decoder): List<String> {
+        require(decoder is JsonDecoder)
+        val jsonArray = decoder.decodeJsonElement().jsonArray
+        return jsonArray.map { element ->
+            val jsonObject = element.jsonObject
+            val display = jsonObject["display"]!!.jsonObject
+            display["display_string"]!!.jsonPrimitive.content
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: List<String>) {
+        require(encoder is JsonEncoder)
+        val jsonArray = buildJsonArray {
+            value.forEach { displayString ->
+                add(
+                    buildJsonObject {
+                        put(
+                            "display",
+                            buildJsonObject {
+                                put("display_string", displayString)
+                            }
+                        )
+                    }
+                )
+            }
+        }
+        encoder.encodeJsonElement(jsonArray)
+    }
+}
+
+object WowPriceSerializer : KSerializer<WowPriceResponse> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("WowPrice") {
+            element<String>("header")
+            element<String>("gold")
+            element<String>("silver")
+            element<String>("copper")
+        }
+
+    override fun deserialize(decoder: Decoder): WowPriceResponse {
+        require(decoder is JsonDecoder)
+        val jsonObject = decoder.decodeJsonElement().jsonObject
+        val display = jsonObject["display_strings"]!!.jsonObject
+        return WowPriceResponse(
+            header = display["header"]!!.jsonPrimitive.content,
+            gold = display["gold"]!!.jsonPrimitive.content,
+            silver = display["silver"]!!.jsonPrimitive.content,
+            copper = display["copper"]!!.jsonPrimitive.content
+        )
+    }
+
+    override fun serialize(encoder: Encoder, value: WowPriceResponse) {
+        require(encoder is JsonEncoder)
+        val jsonObject = buildJsonObject {
+            put(
+                "display",
+                buildJsonObject {
+                    put(
+                        "display_string",
+                        buildJsonObject {
+                            put("header", value.header)
+                            put("gold", value.gold)
+                            put("silver", value.silver)
+                            put("copper", value.copper)
+                        }
+                    )
+                }
+            )
+        }
+        encoder.encodeJsonElement(jsonObject)
     }
 }
 
@@ -185,6 +320,54 @@ data class GetWowMediaResponse(
     val assets: List<AssetKeyValue>
 )
 
+@Serializable(with = WowPriceSerializer::class)
+data class WowPriceResponse(val header: String, val gold: String, val silver: String, val copper: String)
+
+@Serializable
+data class WowPrice(val header: String, val gold: String, val silver: String, val copper: String) {
+    companion object {
+        fun apply(priceResponse: WowPriceResponse): WowPrice = WowPrice(
+            priceResponse.header,
+            priceResponse.gold,
+            priceResponse.silver,
+            priceResponse.copper
+        )
+    }
+}
+
+@Serializable
+data class WowPreviewItem(
+    @Serializable(with = NameExtractorSerializer::class)
+    val quality: String,
+    @SerialName("item_subclass")
+    @Serializable(with = NameExtractorSerializer::class)
+    val itemSubclass: String,
+    @SerialName("inventory_type")
+    @Serializable(with = NameExtractorSerializer::class)
+    val slot: String,
+    @Serializable(with = NestedDisplayableStringExtractorSerializer::class)
+    val armor: String? = null,
+    @Serializable(with = NestedDisplayableStringListSerializer::class)
+    val stats: List<String> = listOf(),
+    @Serializable(with = DescriptionListSerializer::class)
+    val spells: List<String> = listOf(),
+    @SerialName("sell_price")
+    val sellPrice: WowPriceResponse,
+    @Serializable(with = DisplayableStringExtractorSerializer::class)
+    val durability: String? = null
+)
+
+@Serializable
+data class GetWowItemResponse(
+    val id: Long,
+    val name: String,
+    val level: Int,
+    @SerialName("required_level")
+    val requiredLevel: Int,
+    @SerialName("preview_item")
+    val previewItem: WowPreviewItem
+)
+
 @Serializable
 data class WowItemId(val id: Long)
 
@@ -195,7 +378,7 @@ data class WowItemSlot(val name: String)
 data class WowItemQuality(val type: String)
 
 @Serializable
-data class WowItemResponse(
+data class WowEquippedItemResponse(
     val item: WowItemId,
     val slot: WowItemSlot,
     val quality: WowItemQuality,
@@ -205,7 +388,7 @@ data class WowItemResponse(
 @Serializable
 data class GetWowEquipmentResponse(
     @SerialName("equipped_items")
-    val equippedItems: List<WowItemResponse>
+    val equippedItems: List<WowEquippedItemResponse>
 )
 
 @Serializable
@@ -249,6 +432,14 @@ data class WowItem(
     val slot: String,
     val quality: String,
     val name: String,
+    val level: Int,
+    val requiredLevel: Int,
+    val itemSubclass: String,
+    val armor: String?,
+    val stats: List<String>,
+    val spells: List<String>,
+    val sellPrice: WowPrice,
+    val durability: String?,
     val icon: String?
 )
 
@@ -405,7 +596,7 @@ data class HardcoreData(
             characterResponse: GetWowCharacterResponse,
             mediaResponse: GetWowMediaResponse,
             alreadyExistentItems: List<WowItem>,
-            equipmentResponse: List<Pair<WowItemResponse, GetWowMediaResponse?>>,
+            equipmentResponse: List<Pair<GetWowItemResponse, GetWowMediaResponse?>>,
             statsResponse: GetWowCharacterStatsResponse,
             specializationsResponse: GetWowSpecializationsResponse,
             wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse?
@@ -426,10 +617,18 @@ data class HardcoreData(
             characterResponse.experience,
             alreadyExistentItems + equipmentResponse.map { (item, icon) ->
                 WowItem(
-                    item.item.id,
-                    item.slot.name,
-                    item.quality.type,
+                    item.id,
+                    item.previewItem.slot,
+                    item.previewItem.quality,
                     item.name,
+                    item.level,
+                    item.requiredLevel,
+                    item.previewItem.itemSubclass,
+                    item.previewItem.armor,
+                    item.previewItem.stats,
+                    item.previewItem.spells,
+                    WowPrice.apply(item.previewItem.sellPrice),
+                    item.previewItem.durability,
                     icon?.assets?.find { it.key == "icon" }?.value
                 )
             },

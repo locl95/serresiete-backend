@@ -476,6 +476,13 @@ class SyncCharactersSubscriptionTest {
             ).thenReturn(BlizzardMockHelper.getItemMedia())
 
             Mockito.`when`(
+                blizzardClient.getItem(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getWowItemResponse())
+
+            Mockito.`when`(
                 raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
             ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
 
@@ -560,6 +567,13 @@ class SyncCharactersSubscriptionTest {
             ).thenReturn(BlizzardMockHelper.getItemMedia())
 
             Mockito.`when`(
+                blizzardClient.getItem(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getWowItemResponse())
+
+            Mockito.`when`(
                 raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)
             ).thenReturn(Either.Right(RaiderioWowHeadEmbeddedResponse(TalentLoadout("030030303-02020202-"))))
 
@@ -641,6 +655,13 @@ class SyncCharactersSubscriptionTest {
                     18421
                 )
             ).thenReturn(BlizzardMockHelper.getItemMedia())
+
+            Mockito.`when`(
+                blizzardClient.getItem(
+                    CharactersTestHelper.basicWowCharacter.region,
+                    18421
+                )
+            ).thenReturn(BlizzardMockHelper.getWowItemResponse())
 
             Mockito.`when`(
                 raiderIoClient.wowheadEmbeddedCalculator(CharactersTestHelper.basicWowCharacter)

@@ -247,6 +247,31 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         }
     }
 
+    override suspend fun getItem(region: String, id: Long): Either<HttpError, GetWowItemResponse> {
+        return throttleRequest {
+            either {
+                logger.debug("getItem for $id")
+                val tokenResponse = getAndUpdateToken().bind()
+                val partialURI = URI("/data/wow/item/$id?locale=en_US")
+                val response = client.get(baseURI(region).toString() + partialURI.toString()) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
+                        append(HttpHeaders.Accept, "*/*")
+                        append("Battlenet-Namespace", "static-classic1x-${region}")
+                    }
+                }
+                val jsonString = response.body<String>()
+                try {
+                    json.decodeFromString<GetWowItemResponse>(jsonString)
+                } catch (e: SerializationException) {
+                    raise(JsonParseError(jsonString, e.stackTraceToString()))
+                } catch (e: IllegalArgumentException) {
+                    raise(json.decodeFromString<RiotError>(jsonString))
+                }
+            }
+        }
+    }
+
     override suspend fun getRealm(
         region: String,
         id: Long

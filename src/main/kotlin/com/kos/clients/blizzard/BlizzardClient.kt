@@ -11,5 +11,6 @@ interface BlizzardClient {
     suspend fun getCharacterSpecializations(region: String, realm: String, character: String): Either<HttpError, GetWowSpecializationsResponse>
     suspend fun getCharacterStats(region: String, realm: String, character: String): Either<HttpError, GetWowCharacterStatsResponse>
     suspend fun getItemMedia(region: String, id: Long): Either<HttpError, GetWowMediaResponse>
+    suspend fun getItem(region: String, id: Long): Either<HttpError, GetWowItemResponse>
     suspend fun getRealm(region: String, id: Long): Either<HttpError, GetWowRealmResponse>
 }

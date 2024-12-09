@@ -281,11 +281,11 @@ data class DataCacheService(
                                     )
                                 }.bind()
 
-                            val existentItemsAndItemsToRequest: Pair<List<WowItem>, List<WowItemResponse>> =
+                            val existentItemsAndItemsToRequest: Pair<List<WowItem>, List<WowEquippedItemResponse>> =
                                 newestCharacterDataCacheEntry._fold(
                                     left = { equipmentResponse.equippedItems.map { Either.Right(it) } },
                                     right = { record ->
-                                        equipmentResponse.equippedItems.fold(emptyList<Either<WowItem, WowItemResponse>>()) { acc, itemResponse ->
+                                        equipmentResponse.equippedItems.fold(emptyList<Either<WowItem, WowEquippedItemResponse>>()) { acc, itemResponse ->
                                             when (val maybeItem = record.items.find { itemResponse.item.id == it.id }) {
                                                 null -> acc + Either.Right(itemResponse)
                                                 else -> acc + Either.Left(maybeItem)
@@ -294,15 +294,20 @@ data class DataCacheService(
                                         }
                                     }).split()
 
-                            val newItemsWithIcons: List<Pair<WowItemResponse, GetWowMediaResponse?>> =
+                            val newItemsWithIcons: List<Pair<GetWowItemResponse, GetWowMediaResponse?>> =
                                 existentItemsAndItemsToRequest.second.map {
                                     async {
-                                        it to retryEitherWithFixedDelay(retryConfig, "blizzardGetItemsWithIcon") {
-                                            blizzardClient.getItemMedia(
-                                                wowCharacter.region,
-                                                it.item.id,
-                                            )
-                                        }.getOrNull()
+                                        Pair(
+                                            retryEitherWithFixedDelay(retryConfig, "blizzardGetItem") {
+                                                blizzardClient.getItem(wowCharacter.region, it.item.id)
+                                            }.bind(),
+                                            retryEitherWithFixedDelay(retryConfig, "blizzardGetItemMedia") {
+                                                blizzardClient.getItemMedia(
+                                                    wowCharacter.region,
+                                                    it.item.id,
+                                                )
+                                            }.getOrNull()
+                                        )
                                     }
                                 }.awaitAll()
 

@@ -295,10 +295,11 @@ data class DataCacheService(
                                         }
                                     }).split()
 
-                            val newItemsWithIcons: List<Pair<GetWowItemResponse, GetWowMediaResponse?>> =
+                            val newItemsWithIcons: List<Triple<WowEquippedItemResponse, GetWowItemResponse, GetWowMediaResponse?>> =
                                 existentItemsAndItemsToRequest.second.map {
                                     either {
-                                        Pair(
+                                        Triple(
+                                            it,
                                             retryEitherWithFixedDelay(retryConfig, "blizzardGetItem") {
                                                 blizzardClient.getItem(wowCharacter.region, it.item.id)
                                             }.bind(),

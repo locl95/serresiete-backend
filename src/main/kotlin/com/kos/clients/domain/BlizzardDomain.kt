@@ -499,7 +499,8 @@ data class HardcoreData(
             characterResponse: GetWowCharacterResponse,
             mediaResponse: GetWowMediaResponse,
             alreadyExistentItems: List<WowItem>,
-            equipmentResponse: List<Pair<GetWowItemResponse, GetWowMediaResponse?>>,
+            //TODO: Refactor this triple into an apply
+            equipmentResponse: List<Triple<WowEquippedItemResponse, GetWowItemResponse, GetWowMediaResponse?>>,
             statsResponse: GetWowCharacterStatsResponse,
             specializationsResponse: GetWowSpecializationsResponse,
             wowHeadEmbeddedResponse: RaiderioWowHeadEmbeddedResponse?
@@ -518,10 +519,10 @@ data class HardcoreData(
             region,
             characterResponse.guild,
             characterResponse.experience,
-            alreadyExistentItems + equipmentResponse.map { (item, icon) ->
+            alreadyExistentItems + equipmentResponse.map { (equipped, item, icon) ->
                 WowItem(
                     item.id,
-                    item.previewItem.slot,
+                    equipped.slot.name,
                     item.previewItem.quality,
                     item.name,
                     item.level,

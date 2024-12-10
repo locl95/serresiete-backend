@@ -1,10 +1,12 @@
 package com.kos.clients.domain
 
+import com.kos.common.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
@@ -23,140 +25,45 @@ data class TokenResponse(
     val sub: String
 )
 
-object NameExtractorSerializer : KSerializer<String> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("NameExtractor", PrimitiveKind.STRING)
+object NameExtractorSerializer : SingleFieldSerializer<String>(
+    fieldName = "name",
+    extractValue = { it.requireString("name") },
+    encodeValue = { encoder, value -> encoder.encodeString(value) }
+)
 
-    override fun deserialize(decoder: Decoder): String {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        return jsonObject["name"]!!.jsonPrimitive.content
-    }
+object EffectiveExtractorSerializer : SingleFieldSerializer<Int>(
+    fieldName = "effective",
+    extractValue = { it.requireInt("effective") },
+    encodeValue = { encoder, value -> encoder.encodeInt(value) }
+)
 
-    override fun serialize(encoder: Encoder, value: String) {
-        encoder.encodeString(value)
-    }
-}
+object ValueExtractorSerializer : SingleFieldSerializer<Double>(
+    fieldName = "value",
+    extractValue = { it.requireDouble("value") },
+    encodeValue = { encoder, value -> encoder.encodeDouble(value) }
+)
 
-object EffectiveExtractorSerializer : KSerializer<Int> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("NameExtractor", PrimitiveKind.STRING)
+object NestedDisplayableStringExtractorSerializer : SingleFieldSerializer<String>(
+    fieldName = "display.display_string",
+    extractValue = { it.requireNestedString("display", "display_string") },
+    encodeValue = { encoder, value -> encoder.encodeString(value) }
+)
 
-    override fun deserialize(decoder: Decoder): Int {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        return jsonObject["effective"]!!.jsonPrimitive.int
-    }
+object DisplayableStringExtractorSerializer : SingleFieldSerializer<String>(
+    fieldName = "display_string",
+    extractValue = { it.requireString("display_string") },
+    encodeValue = { encoder, value -> encoder.encodeString(value) }
+)
 
-    override fun serialize(encoder: Encoder, value: Int) {
-        encoder.encodeInt(value)
-    }
-}
+object DescriptionListSerializer : ListFieldSerializer<String>(
+    elementSerializer = DisplayableStringExtractorSerializer,
+    extractElement = { it.requireString("description") }
+)
 
-object ValueExtractorSerializer : KSerializer<Double> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("NameExtractor", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): Double {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        return jsonObject["value"]!!.jsonPrimitive.double
-    }
-
-    override fun serialize(encoder: Encoder, value: Double) {
-        encoder.encodeDouble(value)
-    }
-}
-
-object NestedDisplayableStringExtractorSerializer : KSerializer<String> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("DisplayableStringExtractor", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): String {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        val display = jsonObject["display"]!!.jsonObject
-        return display["display_string"]!!.jsonPrimitive.content
-    }
-
-    override fun serialize(encoder: Encoder, value: String) {
-        encoder.encodeString(value)
-    }
-}
-
-object DisplayableStringExtractorSerializer : KSerializer<String> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("DisplayableStringExtractor", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): String {
-        require(decoder is JsonDecoder)
-        val jsonObject = decoder.decodeJsonElement().jsonObject
-        return jsonObject["display_string"]!!.jsonPrimitive.content
-    }
-
-    override fun serialize(encoder: Encoder, value: String) {
-        encoder.encodeString(value)
-    }
-}
-
-object DescriptionListSerializer : KSerializer<List<String>> {
-    override val descriptor: SerialDescriptor =
-        ListSerializer(NestedDisplayableStringExtractorSerializer).descriptor
-
-    override fun deserialize(decoder: Decoder): List<String> {
-        require(decoder is JsonDecoder)
-        val jsonArray = decoder.decodeJsonElement().jsonArray
-        return jsonArray.map { element ->
-            val jsonObject = element.jsonObject
-            jsonObject["description"]!!.jsonPrimitive.content
-        }
-    }
-
-    override fun serialize(encoder: Encoder, value: List<String>) {
-        require(encoder is JsonEncoder)
-        val jsonArray = buildJsonArray {
-            value.forEach { displayString ->
-                addJsonObject {
-                    put("display", buildJsonObject {
-                        put("display_string", displayString)
-                    })
-                }
-            }
-        }
-        encoder.encodeJsonElement(jsonArray)
-    }
-}
-
-object NestedDisplayableStringListSerializer : KSerializer<List<String>> {
-    override val descriptor: SerialDescriptor =
-        ListSerializer(NestedDisplayableStringExtractorSerializer).descriptor
-
-    override fun deserialize(decoder: Decoder): List<String> {
-        require(decoder is JsonDecoder)
-        val jsonArray = decoder.decodeJsonElement().jsonArray
-        return jsonArray.map { element ->
-            val jsonObject = element.jsonObject
-            val display = jsonObject["display"]!!.jsonObject
-            display["display_string"]!!.jsonPrimitive.content
-        }
-    }
-
-    override fun serialize(encoder: Encoder, value: List<String>) {
-        require(encoder is JsonEncoder)
-        val jsonArray = buildJsonArray {
-            value.forEach { displayString ->
-                add(
-                    buildJsonObject {
-                        put(
-                            "display",
-                            buildJsonObject {
-                                put("display_string", displayString)
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        encoder.encodeJsonElement(jsonArray)
-    }
-}
+object NestedDisplayableStringListSerializer : ListFieldSerializer<String>(
+    elementSerializer = NestedDisplayableStringExtractorSerializer,
+    extractElement = { it.requireNestedString("display", "display_string") }
+)
 
 object WowPriceSerializer : KSerializer<WowPriceResponse> {
     override val descriptor: SerialDescriptor =
@@ -181,23 +88,19 @@ object WowPriceSerializer : KSerializer<WowPriceResponse> {
 
     override fun serialize(encoder: Encoder, value: WowPriceResponse) {
         require(encoder is JsonEncoder)
-        val jsonObject = buildJsonObject {
-            put(
-                "display",
-                buildJsonObject {
-                    put(
-                        "display_string",
-                        buildJsonObject {
-                            put("header", value.header)
-                            put("gold", value.gold)
-                            put("silver", value.silver)
-                            put("copper", value.copper)
-                        }
-                    )
-                }
-            )
-        }
-        encoder.encodeJsonElement(jsonObject)
+        encoder.encodeJsonElement(
+            buildJsonObject {
+                put(
+                    "display_strings",
+                    buildJsonObject {
+                        put("header", value.header)
+                        put("gold", value.gold)
+                        put("silver", value.silver)
+                        put("copper", value.copper)
+                    }
+                )
+            }
+        )
     }
 }
 
@@ -352,7 +255,7 @@ data class WowPreviewItem(
     @Serializable(with = DescriptionListSerializer::class)
     val spells: List<String> = listOf(),
     @SerialName("sell_price")
-    val sellPrice: WowPriceResponse,
+    val sellPrice: WowPriceResponse? = null,
     @Serializable(with = DisplayableStringExtractorSerializer::class)
     val durability: String? = null
 )
@@ -438,7 +341,7 @@ data class WowItem(
     val armor: String?,
     val stats: List<String>,
     val spells: List<String>,
-    val sellPrice: WowPrice,
+    val sellPrice: WowPrice?,
     val durability: String?,
     val icon: String?
 )
@@ -627,7 +530,7 @@ data class HardcoreData(
                     item.previewItem.armor,
                     item.previewItem.stats,
                     item.previewItem.spells,
-                    WowPrice.apply(item.previewItem.sellPrice),
+                    item.previewItem.sellPrice?.let { WowPrice.apply(it) },
                     item.previewItem.durability,
                     icon?.assets?.find { it.key == "icon" }?.value
                 )

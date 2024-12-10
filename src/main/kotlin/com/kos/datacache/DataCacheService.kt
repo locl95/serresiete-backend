@@ -2,6 +2,7 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.sequenceEither
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
@@ -296,7 +297,7 @@ data class DataCacheService(
 
                             val newItemsWithIcons: List<Pair<GetWowItemResponse, GetWowMediaResponse?>> =
                                 existentItemsAndItemsToRequest.second.map {
-                                    async {
+                                    either {
                                         Pair(
                                             retryEitherWithFixedDelay(retryConfig, "blizzardGetItem") {
                                                 blizzardClient.getItem(wowCharacter.region, it.item.id)
@@ -309,7 +310,7 @@ data class DataCacheService(
                                             }.getOrNull()
                                         )
                                     }
-                                }.awaitAll()
+                                }.bindAll()
 
                             val stats: GetWowCharacterStatsResponse =
                                 retryEitherWithFixedDelay(retryConfig, "blizzardGetStats") {

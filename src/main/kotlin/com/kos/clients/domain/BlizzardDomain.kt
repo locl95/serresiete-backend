@@ -239,6 +239,17 @@ data class WowPrice(val header: String, val gold: String, val silver: String, va
 }
 
 @Serializable
+data class WowWeaponStatsResponse(
+    @Serializable(with = DisplayableStringExtractorSerializer::class)
+    val damage: String,
+    @Serializable(with = DisplayableStringExtractorSerializer::class)
+    val dps: String,
+    @SerialName("attack_speed")
+    @Serializable(with = DisplayableStringExtractorSerializer::class)
+    val attackSpeed: String
+)
+
+@Serializable
 data class WowPreviewItem(
     @Serializable(with = NameExtractorSerializer::class)
     val quality: String,
@@ -248,6 +259,8 @@ data class WowPreviewItem(
     @SerialName("inventory_type")
     @Serializable(with = NameExtractorSerializer::class)
     val slot: String,
+    @Serializable(with = NameExtractorSerializer::class)
+    val binding: String? = null,
     @Serializable(with = NestedDisplayableStringExtractorSerializer::class)
     val armor: String? = null,
     @Serializable(with = NestedDisplayableStringListSerializer::class)
@@ -257,7 +270,8 @@ data class WowPreviewItem(
     @SerialName("sell_price")
     val sellPrice: WowPriceResponse? = null,
     @Serializable(with = DisplayableStringExtractorSerializer::class)
-    val durability: String? = null
+    val durability: String? = null,
+    val weapon: WowWeaponStatsResponse? = null
 )
 
 @Serializable
@@ -330,12 +344,29 @@ data class TalentInfo(
 data class GetWowRealmResponse(val category: String)
 
 @Serializable
+data class WowWeaponDisplayableStats(
+    val damage: String,
+    val dps: String,
+    val attackSpeed: String
+) {
+    companion object {
+        fun apply(response: WowWeaponStatsResponse) =
+            WowWeaponDisplayableStats(
+                response.damage,
+                response.dps,
+                response.attackSpeed
+            )
+    }
+}
+
+@Serializable
 data class WowItem(
     val id: Long,
     val slot: String,
     val quality: String,
     val name: String,
     val level: Int,
+    val binding: String?,
     val requiredLevel: Int,
     val itemSubclass: String,
     val armor: String?,
@@ -343,7 +374,8 @@ data class WowItem(
     val spells: List<String>,
     val sellPrice: WowPrice?,
     val durability: String?,
-    val icon: String?
+    val weaponStats: WowWeaponDisplayableStats?,
+    val icon: String?,
 )
 
 @Serializable
@@ -526,6 +558,7 @@ data class HardcoreData(
                     item.previewItem.quality,
                     item.name,
                     item.level,
+                    item.previewItem.binding,
                     item.requiredLevel,
                     item.previewItem.itemSubclass,
                     item.previewItem.armor,
@@ -533,6 +566,7 @@ data class HardcoreData(
                     item.previewItem.spells,
                     item.previewItem.sellPrice?.let { WowPrice.apply(it) },
                     item.previewItem.durability,
+                    item.previewItem.weapon?.let { WowWeaponDisplayableStats.apply(it)},
                     icon?.assets?.find { it.key == "icon" }?.value
                 )
             },

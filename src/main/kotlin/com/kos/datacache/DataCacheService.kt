@@ -2,7 +2,6 @@ package com.kos.datacache
 
 import arrow.core.Either
 import arrow.core.raise.either
-import arrow.core.sequenceEither
 import com.kos.characters.Character
 import com.kos.characters.LolCharacter
 import com.kos.characters.WowCharacter
@@ -50,6 +49,7 @@ data class DataCacheService(
             }
         }
         ignoreUnknownKeys = true
+        encodeDefaults = false
     }
 
     suspend fun get(characterId: Long) = dataCacheRepository.get(characterId)

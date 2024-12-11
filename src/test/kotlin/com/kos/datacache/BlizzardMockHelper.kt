@@ -1123,7 +1123,9 @@ object BlizzardMockHelper {
             stats = listOf("+21 Agility", "+13 Stamina", "+9 Intellect", "+9 Spirit"),
             spells = listOf("Equip: Improves your chance to get a critical strike by 1%."),
             sellPrice = WowPriceResponse(header = "Sell Price:", gold = "2", silver = "57", copper = "41"),
-            durability = "Durability 70 / 70"
+            durability = "Durability 70 / 70",
+            binding = "Binds when picked up",
+            weapon = null
         )
     )
 

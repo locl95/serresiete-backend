@@ -58,6 +58,10 @@ object BlizzardMockHelper {
         return Either.Right(getWowSpecializationsResponse)
     }
 
+    fun getWowItemResponse(): Either<HttpError, GetWowItemResponse> {
+        return Either.Right(getWowItemResponse)
+    }
+
     fun getCharacterProfile(wowCharacter: WowCharacterRequest): Either<HttpError, GetWowCharacterResponse> {
         return Either.Right(
             GetWowCharacterResponse(
@@ -373,7 +377,7 @@ object BlizzardMockHelper {
 
     val getWowEquipmentResponse = GetWowEquipmentResponse(
         equippedItems = listOf(
-            WowItemResponse(
+            WowEquippedItemResponse(
                 item = WowItemId(id = 18421),
                 slot = WowItemSlot(name = "Head"),
                 quality = WowItemQuality(type = "RARE"),
@@ -911,6 +915,217 @@ object BlizzardMockHelper {
                     )
                 )
             )
+        )
+    )
+
+    val getWowItemResponseString = """
+        {
+            "_links": {
+                "self": {
+                    "href": "https://eu.api.blizzard.com/data/wow/item/18421?namespace=static-1.15.4_56573-classic1x-eu"
+                }
+            },
+            "id": 18421,
+            "name": "Backwood Helm",
+            "quality": {
+                "type": "RARE",
+                "name": "Rare"
+            },
+            "level": 63,
+            "required_level": 0,
+            "media": {
+                "key": {
+                    "href": "https://eu.api.blizzard.com/data/wow/media/item/18421?namespace=static-1.15.4_56573-classic1x-eu"
+                },
+                "id": 18421
+            },
+            "item_class": {
+                "key": {
+                    "href": "https://eu.api.blizzard.com/data/wow/item-class/4?namespace=static-1.15.4_56573-classic1x-eu"
+                },
+                "name": "Armor",
+                "id": 4
+            },
+            "item_subclass": {
+                "key": {
+                    "href": "https://eu.api.blizzard.com/data/wow/item-class/4/item-subclass/3?namespace=static-1.15.4_56573-classic1x-eu"
+                },
+                "name": "Mail",
+                "id": 3
+            },
+            "inventory_type": {
+                "type": "HEAD",
+                "name": "Head"
+            },
+            "purchase_price": 128705,
+            "sell_price": 25741,
+            "max_count": 0,
+            "is_equippable": true,
+            "is_stackable": false,
+            "preview_item": {
+                "item": {
+                    "key": {
+                        "href": "https://eu.api.blizzard.com/data/wow/item/18421?namespace=static-1.15.4_56573-classic1x-eu"
+                    },
+                    "id": 18421
+                },
+                "quality": {
+                    "type": "RARE",
+                    "name": "Rare"
+                },
+                "name": "Backwood Helm",
+                "media": {
+                    "key": {
+                        "href": "https://eu.api.blizzard.com/data/wow/media/item/18421?namespace=static-1.15.4_56573-classic1x-eu"
+                    },
+                    "id": 18421
+                },
+                "item_class": {
+                    "key": {
+                        "href": "https://eu.api.blizzard.com/data/wow/item-class/4?namespace=static-1.15.4_56573-classic1x-eu"
+                    },
+                    "name": "Armor",
+                    "id": 4
+                },
+                "item_subclass": {
+                    "key": {
+                        "href": "https://eu.api.blizzard.com/data/wow/item-class/4/item-subclass/3?namespace=static-1.15.4_56573-classic1x-eu"
+                    },
+                    "name": "Mail",
+                    "id": 3
+                },
+                "inventory_type": {
+                    "type": "HEAD",
+                    "name": "Head"
+                },
+                "binding": {
+                    "type": "ON_ACQUIRE",
+                    "name": "Binds when picked up"
+                },
+                "armor": {
+                    "value": 301,
+                    "display": {
+                        "display_string": "301 Armor",
+                        "color": {
+                            "r": 255,
+                            "g": 255,
+                            "b": 255,
+                            "a": 1.0
+                        }
+                    }
+                },
+                "stats": [
+                    {
+                        "type": {
+                            "type": "AGILITY",
+                            "name": "Agility"
+                        },
+                        "value": 21,
+                        "display": {
+                            "display_string": "+21 Agility",
+                            "color": {
+                                "r": 255,
+                                "g": 255,
+                                "b": 255,
+                                "a": 1.0
+                            }
+                        }
+                    },
+                    {
+                        "type": {
+                            "type": "STAMINA",
+                            "name": "Stamina"
+                        },
+                        "value": 13,
+                        "display": {
+                            "display_string": "+13 Stamina",
+                            "color": {
+                                "r": 255,
+                                "g": 255,
+                                "b": 255,
+                                "a": 1.0
+                            }
+                        }
+                    },
+                    {
+                        "type": {
+                            "type": "INTELLECT",
+                            "name": "Intellect"
+                        },
+                        "value": 9,
+                        "display": {
+                            "display_string": "+9 Intellect",
+                            "color": {
+                                "r": 255,
+                                "g": 255,
+                                "b": 255,
+                                "a": 1.0
+                            }
+                        }
+                    },
+                    {
+                        "type": {
+                            "type": "SPIRIT",
+                            "name": "Spirit"
+                        },
+                        "value": 9,
+                        "display": {
+                            "display_string": "+9 Spirit",
+                            "color": {
+                                "r": 255,
+                                "g": 255,
+                                "b": 255,
+                                "a": 1.0
+                            }
+                        }
+                    }
+                ],
+                "spells": [
+                    {
+                        "spell": {
+                            "key": {
+                                "href": "https://eu.api.blizzard.com/data/wow/spell/7597?namespace=static-1.15.4_56573-classic1x-eu"
+                            },
+                            "name": "Increased Critical 1",
+                            "id": 7597
+                        },
+                        "description": "Equip: Improves your chance to get a critical strike by 1%."
+                    }
+                ],
+                "sell_price": {
+                    "value": 25741,
+                    "display_strings": {
+                        "header": "Sell Price:",
+                        "gold": "2",
+                        "silver": "57",
+                        "copper": "41"
+                    }
+                },
+                "durability": {
+                    "value": 70,
+                    "display_string": "Durability 70 / 70"
+                }
+            },
+            "purchase_quantity": 1
+        }
+    """.trimIndent()
+
+    val getWowItemResponse = GetWowItemResponse(
+        level = 63,
+        requiredLevel = 0,
+        id = 18421,
+        name = "Backwood Helm",
+        previewItem = WowPreviewItem(
+            quality = "Rare",
+            itemSubclass = "Mail",
+            slot = "Head",
+            armor = "301 Armor",
+            stats = listOf("+21 Agility", "+13 Stamina", "+9 Intellect", "+9 Spirit"),
+            spells = listOf("Equip: Improves your chance to get a critical strike by 1%."),
+            sellPrice = WowPriceResponse(header = "Sell Price:", gold = "2", silver = "57", copper = "41"),
+            durability = "Durability 70 / 70",
+            binding = "Binds when picked up",
+            weapon = null
         )
     )
 

@@ -16,6 +16,8 @@ import io.ktor.http.*
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.OffsetDateTime
 
@@ -28,6 +30,8 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
         ignoreUnknownKeys = true
     }
     private var token: Either<HttpError, TokenState>? = null
+
+    private fun encodedName(name: String) = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
 
     private suspend fun getAndUpdateToken(): Either<HttpError, TokenState> {
         val newTokenState = when (token) {
@@ -89,7 +93,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             either {
                 logger.debug("getCharacterProfile for $region $realm $character")
                 val tokenResponse = getAndUpdateToken().bind()
-                val partialURI = URI("/profile/wow/character/$realm/$character?locale=en_US")
+                val partialURI = URI("/profile/wow/character/$realm/${encodedName(character)}?locale=en_US")
                 val response = getWowProfile(region, partialURI, tokenResponse.tokenResponse)
                 val jsonString = response.body<String>()
                 try {
@@ -112,7 +116,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             either {
                 logger.debug("getCharacterMedia for $region $realm $character")
                 val tokenResponse = getAndUpdateToken().bind()
-                val partialURI = URI("/profile/wow/character/$realm/$character/character-media?locale=en_US")
+                val partialURI = URI("/profile/wow/character/$realm/${encodedName(character)}/character-media?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
                         append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
@@ -141,7 +145,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             either {
                 logger.debug("getCharacterEquipment for $region $realm $character")
                 val tokenResponse = getAndUpdateToken().bind()
-                val partialURI = URI("/profile/wow/character/$realm/$character/equipment?locale=en_US")
+                val partialURI = URI("/profile/wow/character/$realm/${encodedName(character)}/equipment?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
                         append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
@@ -170,7 +174,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             either {
                 logger.debug("getCharacterEquipment for $region $realm $character")
                 val tokenResponse = getAndUpdateToken().bind()
-                val partialURI = URI("/profile/wow/character/$realm/$character/specializations?locale=en_US")
+                val partialURI = URI("/profile/wow/character/$realm/${encodedName(character)}/specializations?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
                         append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")
@@ -199,7 +203,7 @@ class BlizzardHttpClient(private val client: HttpClient, private val blizzardAut
             either {
                 logger.debug("getCharacterStats for $region $realm $character")
                 val tokenResponse = getAndUpdateToken().bind()
-                val partialURI = URI("/profile/wow/character/$realm/$character/statistics?locale=en_US")
+                val partialURI = URI("/profile/wow/character/$realm/${encodedName(character)}/statistics?locale=en_US")
                 val response = client.get(baseURI(region).toString() + partialURI.toString()) {
                     headers {
                         append(HttpHeaders.Authorization, "Bearer ${tokenResponse.tokenResponse.accessToken}")

@@ -118,6 +118,23 @@ class ViewsServiceTest {
                 assertEquals(basicSimpleLolViews, viewsService.getViews(Game.LOL, false))
             }
         }
+
+        @Test
+        fun `i can get views returns only wow featured views`() {
+            runBlocking {
+                val (_, viewsService) = createService(
+                    basicSimpleGameViews,
+                    emptyCharactersState,
+                    listOf(),
+                    emptyCredentialsInitialState
+                )
+
+                assertEquals(
+                    listOf(basicSimpleWowView.copy(id = "3", featured = true)),
+                    viewsService.getViews(Game.WOW, true)
+                )
+            }
+        }
     }
 
     @Nested

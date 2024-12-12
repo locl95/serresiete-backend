@@ -15,7 +15,7 @@ class ViewsController(
         client: String?,
         activities: Set<Activity>,
         game: Game?,
-        featured: Boolean?
+        featured: Boolean
     ): Either<ControllerError, List<SimpleView>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)

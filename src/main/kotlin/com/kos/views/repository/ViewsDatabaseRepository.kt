@@ -130,7 +130,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         name: String?,
         published: Boolean?,
         characters: List<Long>?,
-        featured: Boolean?
+        featured: Boolean
     ): ViewPatched {
         newSuspendedTransaction(Dispatchers.IO, db) {
             name?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.name] = it } }
@@ -142,7 +142,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
                     this[CharactersView.characterId] = cid
                 }
             }
-            featured?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.featured] = it } }
+            Views.update({ Views.id.eq(id) }) { statement -> statement[Views.featured] = featured }
         }
         return ViewPatched(id, name, published, characters, featured)
     }
@@ -152,19 +152,15 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         return ViewDeleted(id)
     }
 
-    override suspend fun getViews(game: Game?, featured: Boolean?): List<SimpleView> {
+    override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val baseQuery = Views.selectAll()
 
-            val filteredQuery = game.fold(
-                { baseQuery },
-                { baseQuery.adjustWhere { Views.game eq it.toString() } }
-            ).let { filteredQueryByGame ->
-                featured.fold(
-                    { filteredQueryByGame },
-                    { filteredQueryByGame.adjustWhere { Views.featured eq true } }
-                )
-            }
+            val filteredQuery =
+                game.fold(
+                    { baseQuery },
+                    { baseQuery.adjustWhere { Views.game eq it.toString() } })
+                    .adjustWhere { Views.featured eq featured }
 
             filteredQuery.map { resultRowToSimpleView(it) }
         }

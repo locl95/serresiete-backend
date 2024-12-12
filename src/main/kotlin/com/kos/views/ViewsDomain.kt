@@ -68,7 +68,7 @@ data class ViewPatchRequest(
     val published: Boolean? = null,
     val characters: List<CharacterCreateRequest>? = null,
     val game: Game,
-    val featured: Boolean? = null
+    val featured: Boolean
 )
 
 @Serializable
@@ -99,7 +99,7 @@ data class ViewPatched(
     val name: String?,
     val published: Boolean?,
     val characters: List<Long>?,
-    val featured: Boolean?
+    val featured: Boolean
 ) :
     ViewResult {
     override val isSuccess: Boolean = true

@@ -8,7 +8,7 @@ interface ViewsRepository : WithState<List<SimpleView>, ViewsRepository> {
     suspend fun get(id: String): SimpleView?
     suspend fun create(id: String, name: String, owner: String, characterIds: List<Long>, game: Game, featured: Boolean): SimpleView
     suspend fun edit(id: String, name: String, published: Boolean, characters: List<Long>, featured: Boolean): ViewModified
-    suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?, featured: Boolean?): ViewPatched
+    suspend fun patch(id: String, name: String?, published: Boolean?, characters: List<Long>?, featured: Boolean): ViewPatched
     suspend fun delete(id: String): ViewDeleted
-    suspend fun getViews(game: Game?, featured: Boolean?): List<SimpleView>
+    suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView>
 }

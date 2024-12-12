@@ -36,7 +36,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         val oldView = views[index]
         views.removeAt(index)
         views.add(index, SimpleView(id, name, oldView.owner, published, characters, oldView.game, featured))
-        return ViewModified(id, name, published, characters)
+        return ViewModified(id, name, published, characters, featured)
     }
 
     override suspend fun patch(
@@ -44,7 +44,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         name: String?,
         published: Boolean?,
         characters: List<Long>?,
-        featured: Boolean?
+        featured: Boolean
     ): ViewPatched {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
@@ -62,7 +62,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
             index,
             simpleView
         )
-        return ViewPatched(id, name, published, characters)
+        return ViewPatched(id, name, published, characters, featured)
     }
 
     override suspend fun delete(id: String): ViewDeleted {
@@ -71,7 +71,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return ViewDeleted(id)
     }
 
-    override suspend fun getViews(game: Game?, featured: Boolean?): List<SimpleView> {
+    override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         val allViews = views.toList()
 
         return game.fold(

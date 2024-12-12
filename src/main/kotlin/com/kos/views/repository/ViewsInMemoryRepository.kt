@@ -73,11 +73,12 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         val allViews = views.toList()
+        val maybeFeaturedViews = if(featured) allViews.filter { it.featured } else allViews
 
         return game.fold(
-            { allViews },
-            { views.filter { it.game == game } }
-        ).filter { it.featured == featured }
+            { maybeFeaturedViews },
+            { maybeFeaturedViews.filter { it.game == game } }
+        )
     }
 
     override suspend fun state(): List<SimpleView> {

@@ -77,12 +77,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return game.fold(
             { allViews },
             { views.filter { it.game == game } }
-        ).let { filteredByGame ->
-            featured.fold(
-                { filteredByGame },
-                { filteredByGame.filter { it.featured == featured } }
-            )
-        }
+        ).filter { it.featured == featured }
     }
 
     override suspend fun state(): List<SimpleView> {

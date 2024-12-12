@@ -56,7 +56,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
             published ?: oldView.published,
             characters ?: oldView.characterIds,
             oldView.game,
-            featured ?: oldView.featured
+            oldView.featured
         )
         views.add(
             index,
@@ -73,7 +73,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
 
     override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         val allViews = views.toList()
-        val maybeFeaturedViews = if(featured) allViews.filter { it.featured } else allViews
+        val maybeFeaturedViews = if (featured) allViews.filter { it.featured } else allViews
 
         return game.fold(
             { maybeFeaturedViews },

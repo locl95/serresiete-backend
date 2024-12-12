@@ -155,14 +155,12 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
     override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val baseQuery = Views.selectAll()
+            val maybeFeaturedViews = if (featured) baseQuery.adjustWhere { Views.featured eq true } else baseQuery
 
-            val filteredQuery =
-                game.fold(
-                    { baseQuery },
-                    { baseQuery.adjustWhere { Views.game eq it.toString() } })
-                    .adjustWhere { Views.featured eq featured }
-
-            filteredQuery.map { resultRowToSimpleView(it) }
+            game.fold(
+                { maybeFeaturedViews },
+                { maybeFeaturedViews.adjustWhere { Views.game eq it.toString() } })
+                .map { resultRowToSimpleView(it) }
         }
     }
 

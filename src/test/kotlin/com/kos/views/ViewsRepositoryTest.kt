@@ -1,6 +1,7 @@
 package com.kos.views
 
 import com.kos.views.ViewsTestHelper.basicSimpleGameViews
+import com.kos.views.ViewsTestHelper.basicSimpleLolView
 import com.kos.views.ViewsTestHelper.basicSimpleLolViews
 import com.kos.views.ViewsTestHelper.basicSimpleWowView
 import com.kos.views.ViewsTestHelper.featured
@@ -40,6 +41,20 @@ abstract class ViewsRepositoryTest {
             assertEquals(
                 listOf(basicSimpleWowView.copy(id = "3", featured = true)),
                 repositoryWithState.getViews(Game.WOW, true)
+            )
+        }
+    }
+
+    @Test
+    fun `i can get views returns all featured views`() {
+        runBlocking {
+            val featuredLolView = basicSimpleLolView.copy(id = "4", featured = true)
+            val featuredWowView = basicSimpleWowView.copy(id = "3", featured = true)
+
+            val repositoryWithState = repository.withState(basicSimpleGameViews.plus(featuredLolView))
+            assertEquals(
+                listOf(featuredWowView, featuredLolView),
+                repositoryWithState.getViews(null, true)
             )
         }
     }

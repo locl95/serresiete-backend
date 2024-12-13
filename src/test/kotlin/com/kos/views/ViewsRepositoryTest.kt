@@ -135,12 +135,14 @@ abstract class ViewsRepositoryTest {
         runBlocking {
             val repo = repository.withState(listOf(basicSimpleWowView))
             val patchedName = "new-name"
-            val patch = repo.patch(basicSimpleWowView.id, patchedName, null, null, false)
+            val expectedPatchedView = ViewPatched(basicSimpleWowView.id, patchedName, null, null, true)
+            val patch = repo.patch(basicSimpleWowView.id, patchedName, null, null, true)
             val patchedView = repo.state().first()
-            assertEquals(ViewPatched(basicSimpleWowView.id, patchedName, null, null, false), patch)
+            assertEquals(expectedPatchedView, patch)
             assertEquals(basicSimpleWowView.id, patchedView.id)
             assertEquals(basicSimpleWowView.published, patchedView.published)
             assertEquals(basicSimpleWowView.characterIds, patchedView.characterIds)
+            assertEquals(true, patchedView.featured)
             assertEquals(patchedName, patchedView.name)
         }
     }

@@ -130,7 +130,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
         name: String?,
         published: Boolean?,
         characters: List<Long>?,
-        featured: Boolean
+        featured: Boolean?
     ): ViewPatched {
         newSuspendedTransaction(Dispatchers.IO, db) {
             name?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.name] = it } }
@@ -142,7 +142,7 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
                     this[CharactersView.characterId] = cid
                 }
             }
-            Views.update({ Views.id.eq(id) }) { statement -> statement[Views.featured] = featured }
+            featured?.let { Views.update({ Views.id.eq(id) }) { statement -> statement[Views.featured] = it } }
         }
         return ViewPatched(id, name, published, characters, featured)
     }

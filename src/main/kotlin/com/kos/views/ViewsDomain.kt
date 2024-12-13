@@ -99,7 +99,7 @@ data class ViewPatched(
     val name: String?,
     val published: Boolean?,
     val characters: List<Long>?,
-    val featured: Boolean
+    val featured: Boolean?
 ) :
     ViewResult {
     override val isSuccess: Boolean = true

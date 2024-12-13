@@ -44,7 +44,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         name: String?,
         published: Boolean?,
         characters: List<Long>?,
-        featured: Boolean
+        featured: Boolean?
     ): ViewPatched {
         val index = views.indexOfFirst { it.id == id }
         val oldView = views[index]
@@ -56,7 +56,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
             published ?: oldView.published,
             characters ?: oldView.characterIds,
             oldView.game,
-            oldView.featured
+            featured ?: oldView.featured
         )
         views.add(
             index,

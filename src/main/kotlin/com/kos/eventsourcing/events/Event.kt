@@ -78,7 +78,7 @@ data class ViewToBePatchedEvent(
     val published: Boolean?,
     val characters: List<CharacterCreateRequest>?,
     val game: Game,
-    val featured: Boolean
+    val featured: Boolean?
 ) : EventData {
     override val eventType: EventType = EventType.VIEW_TO_BE_PATCHED
 }

@@ -7,13 +7,11 @@ import com.kos.common.ControllerError
 import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
 
-class EventSubscriptionController(
-    private val eventSubscriptionService: EventSubscriptionService
-) {
+class EventSubscriptionController(private val eventSubscriptionService: EventSubscriptionService) {
     suspend fun getQueueStatus(
         client: String?,
         activities: Set<Activity>
-    ): Either<ControllerError, List<Pair<String, SubscriptionState>>> {
+    ): Either<ControllerError, Map<String, SubscriptionState>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {

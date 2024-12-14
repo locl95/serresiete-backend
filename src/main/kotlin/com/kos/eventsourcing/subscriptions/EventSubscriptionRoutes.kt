@@ -8,10 +8,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.subscriptionsRouting(
-    eventSubscriptionController: EventSubscriptionController
-) {
-
+fun Route.subscriptionsRouting(eventSubscriptionController: EventSubscriptionController) {
     route("subscriptions") {
         route("/status") {
             authenticate("auth-jwt") {
@@ -21,14 +18,11 @@ fun Route.subscriptionsRouting(
                     eventSubscriptionController.getQueueStatus(
                         userWithActivities?.name,
                         userWithActivities?.activities.orEmpty()
-                    ).fold(
-                        {
-                            call.respondWithHandledError(it)
-                        },
-                        {
-                            call.respond(OK, it)
-                        }
-                    )
+                    ).fold({
+                        call.respondWithHandledError(it)
+                    }, {
+                        call.respond(OK, it)
+                    })
                 }
             }
         }

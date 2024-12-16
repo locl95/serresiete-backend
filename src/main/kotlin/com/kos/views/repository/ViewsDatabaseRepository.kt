@@ -1,6 +1,5 @@
 package com.kos.views.repository
 
-import com.kos.common.fold
 import com.kos.common.getOrThrow
 import com.kos.views.*
 import kotlinx.coroutines.Dispatchers
@@ -155,12 +154,15 @@ class ViewsDatabaseRepository(private val db: Database) : ViewsRepository {
     override suspend fun getViews(game: Game?, featured: Boolean): List<SimpleView> {
         return newSuspendedTransaction(Dispatchers.IO, db) {
             val baseQuery = Views.selectAll()
-            val maybeFeaturedViews = if (featured) baseQuery.adjustWhere { Views.featured eq true } else baseQuery
 
-            game.fold(
-                { maybeFeaturedViews },
-                { maybeFeaturedViews.adjustWhere { Views.game eq it.toString() } })
-                .map { resultRowToSimpleView(it) }
+            val featuredCondition: Op<Boolean>? = if (featured) Views.featured eq true else null
+            val gameCondition: Op<Boolean>? = game?.let { Views.game eq it.toString() }
+
+            baseQuery.adjustWhere {
+                Op.TRUE
+                    .andIfNotNull(featuredCondition)
+                    .andIfNotNull(gameCondition)
+            }.map { resultRowToSimpleView(it) }
         }
     }
 

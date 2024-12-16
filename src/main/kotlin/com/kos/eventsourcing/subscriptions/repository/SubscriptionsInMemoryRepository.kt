@@ -14,6 +14,10 @@ class SubscriptionsInMemoryRepository : SubscriptionsRepository, InMemoryReposit
         subscriptions[subscriptionName] = subscriptionState
     }
 
+    override suspend fun getEventSubscritpions(): Map<String, SubscriptionState> {
+        return subscriptions
+    }
+
     override suspend fun state(): Map<String, SubscriptionState> {
         return subscriptions
     }

@@ -1,4 +1,11 @@
 # Changelog
+
+## [4.2.2] 15-12-2024
+
+### Added
+- **Queue Status Endpoint**: Introduced a new endpoint to check the status of queues.
+    - This feature provides visibility into the progress and state of queued events.
+
 ## [4.2.0] 15-11-2024
 
 ### Added

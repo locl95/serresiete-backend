@@ -37,6 +37,7 @@ object Activities {
     const val getTask = "get task"
     const val getTasks = "get tasks"
     const val patchCredentials = "patch credentials"
+    const val getQueueStatus = "get queue status"
 }
 typealias Activity = String
 

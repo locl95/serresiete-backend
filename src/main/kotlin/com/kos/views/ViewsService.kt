@@ -4,12 +4,12 @@ import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.kos.characters.CharactersService
+import com.kos.clients.domain.Data
 import com.kos.common.*
 import com.kos.credentials.CredentialsService
 import com.kos.datacache.DataCacheService
 import com.kos.eventsourcing.events.*
 import com.kos.eventsourcing.events.repository.EventStore
-import com.kos.clients.domain.Data
 import com.kos.views.repository.ViewsRepository
 import java.util.*
 
@@ -22,7 +22,9 @@ class ViewsService(
 ) {
 
     suspend fun getOwnViews(owner: String): List<SimpleView> = viewsRepository.getOwnViews(owner)
-    suspend fun getViews(game: Game?): List<SimpleView> = viewsRepository.getViews(game)
+    suspend fun getViews(game: Game?, page: Int?, limit: Int?): List<SimpleView> =
+        viewsRepository.getViews(game, page, limit)
+
     suspend fun get(id: String): View? {
         return when (val simpleView = viewsRepository.get(id)) {
             null -> null
@@ -177,7 +179,7 @@ class ViewsService(
             val event = Event(
                 aggregateRoot,
                 operationId,
-                ViewPatchedEvent.fromViewPatched(operationId,viewToBePatchedEvent.game, patchedView)
+                ViewPatchedEvent.fromViewPatched(operationId, viewToBePatchedEvent.game, patchedView)
             )
             eventStore.save(event)
         }

@@ -11,11 +11,15 @@ class ViewsController(
     private val viewsService: ViewsService,
 ) {
 
-    suspend fun getViews(client: String?, activities: Set<Activity>, game: Game?): Either<ControllerError, List<SimpleView>> {
+    suspend fun getViews(client: String?,
+                         activities: Set<Activity>,
+                         game: Game?,
+                         page: Int?,
+                         limit: Int?): Either<ControllerError, List<SimpleView>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.getAnyViews)) Either.Right(viewsService.getViews(game))
+                if (activities.contains(Activities.getAnyViews)) Either.Right(viewsService.getViews(game, page, limit))
                 else if (activities.contains(Activities.getOwnViews)) Either.Right(viewsService.getOwnViews(client))
                 else Either.Left(NotEnoughPermissions(client))
             }

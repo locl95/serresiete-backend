@@ -57,7 +57,7 @@ class ViewsInMemoryRepository : ViewsRepository, InMemoryRepository {
         return ViewDeleted(id)
     }
 
-    override suspend fun getViews(game: Game?): List<SimpleView> {
+    override suspend fun getViews(game: Game?, page: Int?, limit: Int?): List<SimpleView> {
         val allViews = views.toList()
 
         return game.fold(

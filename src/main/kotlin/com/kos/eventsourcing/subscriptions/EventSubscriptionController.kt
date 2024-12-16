@@ -8,14 +8,14 @@ import com.kos.common.NotAuthorized
 import com.kos.common.NotEnoughPermissions
 
 class EventSubscriptionController(private val eventSubscriptionService: EventSubscriptionService) {
-    suspend fun getQueueStatus(
+    suspend fun getQueueStatuses(
         client: String?,
         activities: Set<Activity>
     ): Either<ControllerError, Map<String, SubscriptionState>> {
         return when (client) {
             null -> Either.Left(NotAuthorized)
             else -> {
-                if (activities.contains(Activities.getQueueStatus)) Either.Right(eventSubscriptionService.getQueueStatus())
+                if (activities.contains(Activities.getQueueStatus)) Either.Right(eventSubscriptionService.getQueueStatuses())
                 else Either.Left(NotEnoughPermissions(client))
             }
         }

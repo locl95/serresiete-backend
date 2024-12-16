@@ -10,20 +10,18 @@ import io.ktor.server.routing.*
 
 fun Route.subscriptionsRouting(eventSubscriptionController: EventSubscriptionController) {
     route("subscriptions") {
-        route("/status") {
-            authenticate("auth-jwt") {
-                get {
-                    val userWithActivities = call.principal<UserWithActivities>()
+        authenticate("auth-jwt") {
+            get {
+                val userWithActivities = call.principal<UserWithActivities>()
 
-                    eventSubscriptionController.getQueueStatus(
-                        userWithActivities?.name,
-                        userWithActivities?.activities.orEmpty()
-                    ).fold({
-                        call.respondWithHandledError(it)
-                    }, {
-                        call.respond(OK, it)
-                    })
-                }
+                eventSubscriptionController.getQueueStatuses(
+                    userWithActivities?.name,
+                    userWithActivities?.activities.orEmpty()
+                ).fold({
+                    call.respondWithHandledError(it)
+                }, {
+                    call.respond(OK, it)
+                })
             }
         }
     }

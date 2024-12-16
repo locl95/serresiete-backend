@@ -115,10 +115,6 @@ fun Application.module() {
         )
     val viewsController = ViewsController(viewsService)
 
-    val eventSubscriptionsRepository = SubscriptionsDatabaseRepository(db)
-    val eventSubscriptionsService = EventSubscriptionService(eventSubscriptionsRepository)
-    val eventSubscriptionController = EventSubscriptionController(eventSubscriptionsService)
-
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     val tasksRepository = TasksDatabaseRepository(db)
     val tasksService =
@@ -131,6 +127,9 @@ fun Application.module() {
 
     val subscriptionsRetryConfig = RetryConfig(10, 100)
     val subscriptionsRepository = SubscriptionsDatabaseRepository(db)
+    val eventSubscriptionsService = EventSubscriptionService(subscriptionsRepository)
+    val eventSubscriptionController = EventSubscriptionController(eventSubscriptionsService)
+
     val viewsEventSubscription = EventSubscription(
         "views",
         eventStore,

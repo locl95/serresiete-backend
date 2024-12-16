@@ -6,5 +6,5 @@ import com.kos.eventsourcing.subscriptions.repository.SubscriptionsRepository
 class EventSubscriptionService(
     private val subscriptionsRepository: SubscriptionsRepository
 ) : WithLogger("eventSubscriptionService") {
-    suspend fun getQueueStatuses(): Map<String, SubscriptionState> = subscriptionsRepository.state()
+    suspend fun getEventSubscritpions(): Map<String, SubscriptionState> = subscriptionsRepository.state()
 }

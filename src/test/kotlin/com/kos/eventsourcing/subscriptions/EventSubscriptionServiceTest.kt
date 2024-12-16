@@ -31,7 +31,7 @@ class EventSubscriptionServiceTest {
         fun `i can get queue status`() {
             runBlocking {
                 val eventSubscriptionService = createService(defaultSubscriptionState)
-                assertEquals(defaultSubscriptionState, eventSubscriptionService.getQueueStatuses())
+                assertEquals(defaultSubscriptionState, eventSubscriptionService.getEventSubscritpions())
             }
         }
     }

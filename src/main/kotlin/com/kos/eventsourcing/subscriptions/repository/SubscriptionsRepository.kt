@@ -6,5 +6,5 @@ import com.kos.eventsourcing.subscriptions.SubscriptionState
 interface SubscriptionsRepository: WithState<Map<String, SubscriptionState>, SubscriptionsRepository> {
     suspend fun getState(name: String): SubscriptionState?
     suspend fun setState(subscriptionName: String, subscriptionState: SubscriptionState)
-    suspend fun getQueueStatuses(): Map<String, SubscriptionState>
+    suspend fun getEventSubscritpions(): Map<String, SubscriptionState>
 }

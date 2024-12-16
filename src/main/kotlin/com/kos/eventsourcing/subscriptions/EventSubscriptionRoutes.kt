@@ -14,7 +14,7 @@ fun Route.subscriptionsRouting(eventSubscriptionController: EventSubscriptionCon
             get {
                 val userWithActivities = call.principal<UserWithActivities>()
 
-                eventSubscriptionController.getQueueStatuses(
+                eventSubscriptionController.getEventSubscritpions(
                     userWithActivities?.name,
                     userWithActivities?.activities.orEmpty()
                 ).fold({
